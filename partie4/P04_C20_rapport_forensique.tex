@@ -1,0 +1,741 @@
+% ============================================================================
+% Fichier  : partie4/P04_C20_rapport_forensique.tex
+% Titre    : Rédaction du Rapport Forensique
+% Auteur   : MINKA MI NGUIDJOÏ Thierry Emmanuel
+% Version  : 1.0 -- Juin 2026
+% ============================================================================
+
+\chapter{Rédaction du Rapport Forensique}
+\label{chap:rapport}
+
+\epigraph{%
+    « Un rapport forensique qui ne résiste pas à un contre-interrogatoire
+    ne vaut pas mieux qu'une analyse technique jamais documentée. »%
+}{Principe de la défendabilité forensique}
+
+\niveauChapitre{Intermédiaire}{%
+    Chapitres~8~(UE~SEC4031) (admissibilité) et
+    7~(UE~SEC4031) (distinction constatation/analyse)
+    indispensables. Ce chapitre synthétise toute la Partie~IV
+    en document juridiquement opposable.%
+}
+
+\begin{boxobjectifs}
+\begin{itemize}
+    \item Maîtriser l'architecture en trois niveaux du rapport
+          forensique~: synthèse exécutive, rapport technique,
+          dossier probatoire.
+    \item Appliquer rigoureusement la distinction entre
+          \termecle{Constatations} (faits vérifiables) et
+          \termecle{Analyse} (interprétations avec niveau de
+          confiance).
+    \item Structurer chaque section selon les exigences
+          d'admissibilité du droit camerounais et les standards
+          forensiques internationaux (NIST~SP~800-86~\cite{nist80086}).
+    \item Rédiger une synthèse exécutive lisible par un magistrat
+          sans formation technique.
+    \item Anticiper les attaques en contre-interrogatoire et
+          structurer les réponses dans le rapport lui-même.
+    \item Produire un rapport complet sur le cas MVOM en appliquant
+          l'intégralité des techniques présentées dans ce cours.
+\end{itemize}
+\end{boxobjectifs}
+
+\bigskip
+
+% ============================================================================
+\section*{Pourquoi le rapport est le vrai livrable du cours}
+% ============================================================================
+
+Toute l'investigation technique des Chapitres~\ref{chap:for-sys}
+à~\ref{chap:for-iot} ne produit qu'une chose visible pour le tribunal~:
+le rapport forensique. Une analyse brillante mal documentée ne vaut
+rien. Un rapport solide sur une analyse modeste peut convain­cre un juge.
+
+Le rapport forensique est le seul contact direct entre votre travail
+et la décision judiciaire. C'est aussi le document qui sera scruté
+mot à mot par l'avocat de la défense. Ce chapitre traite donc la
+rédaction non comme une formalité administrative mais comme
+une compétence technique à part entière.
+
+\separateur
+
+% ============================================================================
+\section{Architecture en Trois Niveaux}
+\label{sec:architecture-rapport}
+% ============================================================================
+
+Conformément aux principes du PIU (Ch.~6~(UE~SEC4031), étape~E12) et
+aux standards NIST~SP~800-86, le rapport forensique complet comprend
+trois niveaux de profondeur correspondant à trois audiences distinctes.
+
+\begin{tableaucours}{p{3.0cm}p{3.5cm}p{5.0cm}}{%
+    \tableauHeader{Niveau} &
+    \tableauHeader{Audience} &
+    \tableauHeader{Contenu et longueur indicative}
+}
+\textbf{Niveau~1}. Synthèse Exécutive &
+    Magistrat, partie civile, direction &
+    2--4~pages. Pas de technique. Conclusions, qualifications, preuves
+    clés, recommandations. Compréhensible par un non-technicien. \\
+\textbf{Niveau~2}. Rapport Technique &
+    Magistrat, avocat, expert adverse &
+    20--100~pages. Méthodologie, constatations horodatées, analyse.
+    Chaque affirmation référencée à une preuve. \\
+\textbf{Niveau~3}. Dossier Probatoire &
+    Expert adverse, tribunal &
+    Annexes~: images E01, logs bruts, captures d'écran, formulaires
+    de custody. Référencés depuis le Niveau~2. \\
+\end{tableaucours}
+\vspace{-0.8em}
+\begin{center}{\small\itshape Tableau~20.1. Architecture en trois niveaux du rapport forensique}\end{center}
+
+\begin{boiteRemarque}{Rédiger pour le bon destinataire}
+Le Niveau~1 est rédigé pour une personne qui ne sait pas ce qu'est
+un hash SHA-256. Le Niveau~2 est rédigé pour un technicien
+ou un avocat compétent qui \emph{voudra} comprendre la méthode.
+Le Niveau~3 est rédigé pour un expert qui \emph{voudra vérifier}
+chaque affirmation. Ces trois documents doivent être cohérents~:
+la même conclusion doit apparaître dans les trois niveaux, à des
+niveaux de détail différents.
+\end{boiteRemarque}
+
+% ============================================================================
+\section{Règle Fondamentale~: Constatation vs Analyse}
+\label{sec:constatation-analyse}
+% ============================================================================
+
+La distinction entre \textbf{Constatation} et \textbf{Analyse} est
+la règle la plus importante de la rédaction forensique. Issue de
+NIST~SP~800-86 (Ch.~7~(UE~SEC4031)), elle protège l'expert
+des attaques méthodologiques les plus fréquentes.
+
+\begin{boxdef}
+\textbf{Constatation}~: énoncé factuel, objectif, vérifiable
+indépendamment par tout technicien utilisant les mêmes outils
+sur les mêmes données. Doit pouvoir être confirmé ou infirmé
+sans ambiguïté. N'inclut aucune inférence.
+
+\textbf{Analyse}~: interprétation des constatations dans leur
+contexte. Comprend obligatoirement~: un niveau de confiance explicite
+(élevé / modéré / faible) et les hypothèses alternatives envisagées
+et réfutées (E9bis PIU).
+\end{boxdef}
+
+\begin{tableaucours}{p{5.5cm}p{5.5cm}}{%
+    \tableauHeader{Constatation (correct)} &
+    \tableauHeader{Mélange interdit (à éviter)}
+}
+« Le fichier \texttt{enc\_all.ps1} est présent dans
+\texttt{\%TEMP\%} avec un horodatage de création du
+13/03/2026~à~02h16:50 selon le \texttt{\$UsnJrnl}. » &
+« Le fichier \texttt{enc\_all.ps1} a été placé par l'attaquant
+dans \texttt{\%TEMP\%}. » (mélange fait + interprétation) \\
+« Le journal Prefetch enregistre une exécution de
+\texttt{enc\_all.ps1} à 02h17:44, avec un compteur
+d'exécution de~1. » &
+« L'attaquant a exécuté le ransomware à 02h17. »
+(l'identité de l'attaquant n'est pas dans le Prefetch) \\
+« Le \texttt{\$UsnJrnl} enregistre la modification de
+847~fichiers \texttt{.docx} entre 02h18:31 et 02h19:02. » &
+« L'attaquant a chiffré 847~fichiers en 31~secondes. »
+(``chiffré'' est une interprétation~; ``modifié'' est le fait) \\
+\end{tableaucours}
+\vspace{-0.8em}
+\begin{center}{\small\itshape Tableau~20.2. Exemples constatation vs mélange interdit}\end{center}
+
+\begin{boxalert}
+\textbf{La règle pratique~: le test du ``mais si''}
+
+Avant d'écrire une phrase dans la section Constatations, posez-vous~:
+``Mais si je me trompe sur l'interprétation, la phrase est-elle
+encore vraie~?''
+
+``\textit{Le fichier enc\_all.ps1 est présent dans \%TEMP\%}''
+$\to$ vrai indépendamment de toute interprétation. \textbf{Constatation.}
+
+``\textit{L'attaquant a déposé enc\_all.ps1 dans \%TEMP\%}''
+$\to$ suppose que l'auteur du dépôt est identifié. Si l'identification
+échoue, la phrase est fausse. \textbf{Analyse, pas constatation.}
+\end{boxalert}
+
+% ============================================================================
+\section{Structure Détaillée du Rapport Technique (Niveau~2)}
+\label{sec:structure-rapport}
+% ============================================================================
+
+\subsection{Page de garde et informations administratives}
+
+\begin{lstlisting}[language=bash_forensique,
+    caption={Métadonnées obligatoires -- page de garde}]
+RAPPORT D'EXPERTISE FORENSIQUE NUMERIQUE
+=========================================
+
+Numero de dossier    : DOS-2026-034
+Numero de rapport    : REP-DOS-2026-034-v1.0
+Date de redaction    : 20 mars 2026
+Affaire              : Opération MVOM -- ransomware TRANSBOIS SA
+
+EXPERT :
+Nom                  : [Nom Prénom]
+Titre/Grade          : OPJ / Expert judiciaire agrée [si applicable]
+Matricule            : PNC XXXX-X
+Organisme            : DCPJ Douala
+Contact              : [email officiel]  [telephone]
+
+COMMETTANT :
+Autorité mandante    : Parquet du TGI de Douala
+Référence judiciaire : [Numéro de réquisition / ordonnance]
+Date de la mission   : 13 mars 2026
+
+EVIDENCE(S) ANALYSEE(S) :
+EV-001 : Dell Inspiron 15 SN-GF8T3Y2 (image E01)
+         Hash MD5 : a3f7b29c8e1d4f56a2c8b7e3d9f0a142
+         Hash SHA-256 : 3d9c8f2b7e4a1c6d5f8e2b9a...
+EV-001bis : Dump RAM 16 Go (MBONGO_RAM_20260315.mem)
+         Hash SHA-256 : 4e8f3a1b2c9d7e5f6a0b1c2d...
+
+VERSION : v1.0 -- rapport initial
+          [v2.0 si rapport complémentaire requis]
+\end{lstlisting}
+
+\subsection{Section~1~: Contexte et Mission}
+
+\begin{lstlisting}[language=bash_forensique,
+    caption={Section Contexte et Mission -- exemple MVOM}]
+1. CONTEXTE ET MISSION
+======================
+
+1.1 Contexte factuel
+Le 13 mars 2026, TRANSBOIS SA (société d'exploitation forestière,
+Douala) a signalé une attaque ransomware ayant paralysé son système
+informatique. 847 fichiers de travail ont été rendus inaccessibles.
+
+1.2 Mission
+Conformément à la réquisition judiciaire N° [XXX] du Parquet du TGI
+de Douala en date du 13 mars 2026, l'expert soussigné a été mandaté
+pour :
+  (a) Établir les faits techniques liés à l'incident du 13 mars 2026 ;
+  (b) Identifier, si possible, l'origine de l'attaque ;
+  (c) Évaluer l'étendue des dommages.
+
+1.3 Périmètre et limitations
+L'analyse porte exclusivement sur l'evidence EV-001 (image E01 du
+serveur compromis) et EV-001bis (dump RAM).
+Limitation : la capture réseau contemporaine à l'incident n'était
+pas disponible. Les logs de pare-feu MTN pour la période ont été
+requis séparément (réquisition N° [YYY] du 14 mars 2026 ; réponse
+attendue).
+\end{lstlisting}
+
+\subsection{Section~2~: Méthodologie}
+
+\begin{lstlisting}[language=bash_forensique,
+    caption={Section Méthodologie -- exemple}]
+2. MÉTHODOLOGIE
+===============
+
+2.1 Standards appliqués
+- ISO/IEC 27037:2012 (collecte et préservation de l'evidence
+  numérique)
+- NIST SP 800-86 (intégration de la forensique dans la réponse
+  aux incidents)
+- RFC 3227 (ordre de collecte selon la volatilité)
+
+2.2 Outils utilisés (versions exactes)
+| Outil          | Version      | Usage                           |
+| FTK Imager     | 4.7.3.81     | Acquisition de l'image E01      |
+| Autopsy        | 4.21.0       | Analyse du système de fichiers  |
+| Volatility 3   | 2.4.1        | Analyse mémoire RAM             |
+| RegRipper      | 20230510     | Analyse du registre Windows     |
+| PECmd          | 1.5.0.0      | Analyse des fichiers Prefetch   |
+| MFTECmd        | 1.2.2.1      | Analyse du $MFT et $UsnJrnl     |
+| log2timeline   | 20230724     | Construction de la timeline     |
+| Systeme hôte   | Ubuntu 22.04 | Environnement d'analyse         |
+
+2.3 Intégrité des données
+Avant toute analyse, les hash SHA-256 des images E01 ont été
+recalculés et comparés aux valeurs enregistrées lors de
+l'acquisition (formulaire custody EV-001). Résultat :
+CORRESPONDANCE CONFIRMÉE.
+\end{lstlisting}
+
+\subsection{Section~3~: Constatations}
+
+La section Constatations est la plus importante du rapport~: elle
+constitue la base de toute conclusion judiciaire. Elle ne contient
+\textbf{que} des faits vérifiables, horodatés et référencés à une source.
+
+\begin{lstlisting}[language=bash_forensique,
+    caption={Section Constatations -- structure et exemple MVOM}]
+3. CONSTATATIONS
+================
+
+[Structure recommandée : une constatation = un fait = une source]
+
+3.1 État général du système
+C.01 : Le système d'exploitation est Windows Server 2022 Standard,
+       version 10.0.20348 Build 20348.
+       [Source : Volatility 3, windows.info]
+
+C.02 : Le compte utilisateur "admin" a été le dernier compte connecté
+       sur ce serveur, avec une session active au moment de
+       l'acquisition de la RAM.
+       [Source : Volatility 3, windows.logonsessions]
+
+3.2 Activité réseau identifiée
+C.03 : Le journal journald enregistre 7 tentatives de connexion SSH
+       échouées depuis l'IP 185.220.XX.XX entre 02h13:45 et 02h14:08.
+       [Source : journald, extrait en Annexe A, lignes 1247-1253]
+
+C.04 : Le journal journald enregistre une connexion SSH réussie au
+       compte "root" depuis l'IP 185.220.XX.XX à 02h14:09.
+       [Source : journald, extrait en Annexe A, ligne 1254]
+
+3.3 Fichiers et activité système
+C.05 : Le $UsnJrnl enregistre la création du fichier
+       "enc_all.ps1" dans C:\Users\admin\AppData\Local\Temp\
+       à 02h16:50.
+       [Source : MFTECmd, fichier $UsnJrnl, Annexe B]
+
+C.06 : Le journal Prefetch enregistre une exécution de "enc_all.ps1"
+       à 02h17:44. Le compteur d'exécution est 1 (première exécution).
+       Les fichiers accédés lors de cette exécution incluent
+       "encrypted_files_list.txt".
+       [Source : PECmd, ENC_ALL.PS1-3F8A2B91.pf, Annexe C]
+
+C.07 : Le $UsnJrnl enregistre la suppression du fichier "enc_all.ps1"
+       à 02h18:30.
+       [Source : MFTECmd, fichier $UsnJrnl, Annexe B]
+
+C.08 : Le $UsnJrnl enregistre la modification de 847 fichiers
+       d'extension ".docx" entre 02h18:31 et 02h19:02. Ces
+       fichiers portent désormais l'extension ".locked".
+       [Source : MFTECmd, fichier $UsnJrnl, Annexe B]
+
+C.09 : L'analyse Volatility (windows.netscan) révèle une connexion
+       TCP en état ESTABLISHED entre 10.0.0.15:49212 et
+       185.220.XX.XX:4444 au moment de la capture mémoire.
+       [Source : Volatility 3, windows.netscan, Annexe D]
+\end{lstlisting}
+
+\subsection{Section~4~: Analyse}
+
+L'analyse interprète les constatations~; elle doit~:
+(a)~citer les constatations sur lesquelles elle s'appuie~;
+(b)~exprimer un niveau de confiance~;
+(c)~mentionner les hypothèses alternatives et pourquoi elles ont été
+écartées (E9bis PIU).
+
+\begin{lstlisting}[language=bash_forensique,
+    caption={Section Analyse -- exemple MVOM}]
+4. ANALYSE
+==========
+
+4.1 Chronologie de l'incident (niveau de confiance : ÉLEVÉ)
+
+La convergence temporelle des sources C.03 à C.09 suggère, avec
+un niveau de confiance élevé, le scénario suivant :
+
+  [02h13:45 - 02h14:08] L'IP 185.220.XX.XX a procédé à plusieurs
+  tentatives d'authentification SSH (C.03), constituant un schéma
+  cohérent avec une attaque par force brute.
+
+  [02h14:09] Une connexion SSH réussie a été établie au compte
+  root depuis cette IP (C.04). La proximité temporelle (21 secondes
+  après la dernière tentative échouée) est cohérente avec un accès
+  obtenu par force brute.
+
+  [02h16:50 - 02h17:44] Un script PowerShell nommé "enc_all.ps1"
+  a été créé (C.05) puis exécuté (C.06) via la session SSH active.
+
+  [02h18:31 - 02h19:02] 847 fichiers .docx ont été modifiés et
+  renommés en .locked (C.08), schéma caractéristique d'un chiffrement
+  par ransomware.
+
+4.2 Hypothèse alternative écartée (falsification, E9bis PIU)
+
+H_alt : L'activité observée pourrait être le résultat d'une
+opération administrative légitime par l'administrateur système.
+
+Réfutation : (1) L'IP source (185.220.XX.XX) n'appartient pas
+au réseau interne de TRANSBOIS SA selon le schéma réseau fourni ;
+(2) Aucune fenêtre de maintenance n'était planifiée le 13/03/2026
+à 02h00 (attestation TRANSBOIS SA en Annexe E) ; (3) Le script
+"enc_all.ps1" n'est pas présent dans les procédures documentées
+de TRANSBOIS SA. Cette hypothèse est donc écartée avec un niveau
+de confiance élevé.
+
+4.3 Qualification technique
+
+La combinaison accès SSH non autorisé + déploiement de script de
+chiffrement + modification massive de fichiers constitue, sur le
+plan technique, une intrusion informatique suivie d'une attaque
+par ransomware. La qualification juridique de ces faits relève
+de l'autorité judiciaire mandante.
+\end{lstlisting}
+
+\begin{boxalert}
+\textbf{La qualification juridique n'appartient pas à l'expert}
+
+La section~4 de l'exemple ci-dessus se termine par~:
+``\textit{La qualification juridique de ces faits relève de
+l'autorité judiciaire mandante.}''
+
+Cette formule est obligatoire. L'expert dit ce qu'il a trouvé
+et ce que cela signifie techniquement. Il ne dit pas ``c'est
+une infraction à l'art.~65 de la Loi~2010/012~\cite{cameroun2010a}''. Ce serait
+outrepasser sa mission et fragiliser son témoignage.
+\end{boxalert}
+
+\subsection{Section~5~: Conclusions et Recommandations}
+
+\begin{lstlisting}[language=bash_forensique,
+    caption={Section Conclusions -- synthèse et recommandations}]
+5. CONCLUSIONS ET RECOMMANDATIONS
+==================================
+
+5.1 Réponses aux questions posées par l'autorité mandante
+
+Q1 : "Établir les faits techniques liés à l'incident."
+R1 : Les faits techniques établis sont les suivants [résumé de
+     l'analyse 4.1]. Ces faits sont établis avec un niveau de
+     confiance élevé, sur la base de la convergence de six sources
+     indépendantes (journald, $UsnJrnl, Prefetch, UserAssist,
+     Volatility netscan, Volatility filescan).
+
+Q2 : "Identifier l'origine de l'attaque."
+R2 : L'IP source identifiée est 185.220.XX.XX. L'attribution de
+     cette IP à un individu spécifique nécessite une réquisition
+     aux autorités compétentes du pays d'enregistrement de cette IP.
+     Cette démarche est hors du périmètre de la présente expertise.
+
+Q3 : "Évaluer l'étendue des dommages."
+R3 : 847 fichiers .docx ont été chiffrés et sont actuellement
+     inaccessibles. [Évaluation complémentaire de la valeur économique
+     des données hors périmètre de cette expertise.]
+
+5.2 Recommandations de sécurité
+[À inclure si demandé par le mandant -- ne pas inclure systématiquement
+car peut être perçu comme sortant du périmètre judiciaire]
+
+5.3 Réserves
+Le présent rapport est établi sur la base des éléments disponibles
+à la date de rédaction. Il est susceptible d'être complété si les
+logs de pare-feu requis (réquisition N° [YYY]) sont communiqués.
+\end{lstlisting}
+
+% ============================================================================
+\section{La Synthèse Exécutive (Niveau~1)~: Rédiger pour un Magistrat}
+\label{sec:synthese-executive}
+% ============================================================================
+
+La synthèse exécutive est lue en premier et détermine si le rapport
+sera compris. Elle ne contient aucun terme technique sans définition~;
+elle ne référence pas de hash ou de commandes.
+
+\begin{lstlisting}[language=bash_forensique,
+    caption={Modèle de synthèse exécutive -- cas MVOM}]
+SYNTHÈSE EXÉCUTIVE
+==================
+(À l'attention du Procureur de la République)
+
+AFFAIRE : Opération MVOM -- Ransomware TRANSBOIS SA
+DATE DE L'INCIDENT : 13 mars 2026, entre 02h14 et 02h19
+EXPERT : [Nom], [Titre]
+
+L'ESSENTIEL EN TROIS POINTS :
+
+1. UN ACCÈS NON AUTORISÉ A ÉTÉ ÉTABLI
+   Dans la nuit du 12 au 13 mars 2026, entre 02h14 et 02h19,
+   une personne non autorisée a accédé au système informatique
+   de TRANSBOIS SA depuis l'adresse Internet 185.220.XX.XX.
+   Cet accès a été obtenu en devinant le mot de passe du
+   compte administrateur après plusieurs tentatives.
+
+2. 847 FICHIERS ONT ÉTÉ CHIFFRÉS ET RENDUS INACCESSIBLES
+   L'intrus a utilisé un programme malveillant (ransomware)
+   pour rendre 847 documents de travail inaccessibles.
+   Ces documents portent désormais l'extension ".locked".
+
+3. LES PREUVES SONT SOLIDES ET CONVERGENTES
+   Six sources d'information indépendantes (journaux système,
+   historique des fichiers, analyse de la mémoire vive)
+   convergent vers les mêmes conclusions, avec un niveau de
+   confiance élevé.
+
+QUALIFICATION : La qualification juridique des faits relève
+de l'autorité judiciaire. L'expert note que les faits techniques
+établis correspondent à la description d'un accès informatique
+non autorisé suivi d'une atteinte à l'intégrité des données.
+
+PIÈCE CLEF : Le journal [LOGFILE] enregistre l'entrée de
+l'intrus à 02h14:09 depuis l'adresse Internet 185.220.XX.XX.
+Ce journal est annexé au présent rapport (Annexe A).
+
+POUR ALLER PLUS LOIN : voir Rapport Technique (Niveau 2),
+Section 3 (Constatations) et Section 4 (Analyse).
+\end{lstlisting}
+
+% ============================================================================
+\section{Annexes~: le Dossier Probatoire (Niveau~3)}
+\label{sec:dossier-probatoire}
+% ============================================================================
+
+Les annexes constituent la preuve que le rapport est vérifiable.
+Elles doivent être organisées, référencées et intègres.
+
+\begin{tableaucours}{p{2.5cm}p{4.0cm}p{5.0cm}}{%
+    \tableauHeader{Annexe} &
+    \tableauHeader{Contenu} &
+    \tableauHeader{Format et exigences}
+}
+\textbf{Annexe~A} & Extraits de logs cités dans les Constatations &
+    Texte brut~; horodatages lisibles~; lignes surlignées si nécessaire \\
+\textbf{Annexe~B} & Export CSV du \texttt{\$UsnJrnl} filtré &
+    CSV~; colonnes~: Timestamp, Filename, Reason~; trié par date \\
+\textbf{Annexe~C} & Rapport PECmd (Prefetch) &
+    Export CSV ou texte de PECmd \\
+\textbf{Annexe~D} & Captures d'écran Volatility &
+    PNG horodaté~; commande visible~; résultat complet \\
+\textbf{Annexe~E} & Attestation de l'entreprise victime &
+    Document signé par le responsable TRANSBOIS~SA \\
+\textbf{Annexe~F} & Formulaire de custody EV-001 et EV-001bis &
+    Formulaires remplis et signés (Ch.~8~(UE~SEC4031)) \\
+\textbf{Annexe~G} & Hash SHA-256 de toutes les pièces &
+    Fichier texte~: SHA-256~<espace>~<nom du fichier>~; signé par l'expert \\
+\end{tableaucours}
+\vspace{-0.8em}
+\begin{center}{\small\itshape Tableau~20.3. Organisation des annexes du dossier probatoire}\end{center}
+
+\begin{boiteRemarque}{L'Annexe G~: le hash de toutes les pièces}
+L'Annexe~G est la plus importante~: elle est le méta-garant de l'intégrité
+de toutes les autres. Elle contient un hash SHA-256 de chaque fichier
+annexé au rapport. Si un avocat affirme qu'une pièce a été modifiée,
+l'Annexe~G permet de le réfuter immédiatement en recalculant le hash.
+Produire l'Annexe~G signée par l'expert au début de l'audience.
+\end{boiteRemarque}
+
+% ============================================================================
+\section{Pièges de Rédaction et Comment les Éviter}
+\label{sec:pieges-redaction}
+% ============================================================================
+
+\begin{tableaucours}{p{3.8cm}p{3.5cm}p{4.5cm}}{%
+    \tableauHeader{Piège} &
+    \tableauHeader{Exemple fautif} &
+    \tableauHeader{Formulation correcte}
+}
+\textbf{Certitude excessive} &
+    ``L'attaquant est X.'' &
+    ``L'IP source est 185.220.XX.XX. L'attribution à une personne
+    physique nécessite des investigations complémentaires.'' \\
+\textbf{Jargon non défini} &
+    ``Le ransomware a modifié le MFT et les entrées USN.'' &
+    ``Les métadonnées de fichier (registre chronologique du système)
+    indiquent~\ldots'' puis définir les termes en note de bas de page. \\
+\textbf{Conclusion sans preuve} &
+    ``L'accès a été obtenu par force brute.'' &
+    ``7~tentatives échouées (C.03) suivies d'un succès (C.04)
+    constituent un schéma cohérent avec une attaque par force brute~;
+    d'autres explications sont théoriquement possibles mais
+    n'ont pas été corroborées.'' \\
+\textbf{Source non citée} &
+    ``Les logs montrent~\ldots'' &
+    ``Le journal \texttt{journald} (Annexe~A, lignes 1247--1254)
+    enregistre~\ldots'' \\
+\textbf{Hypothèse non réfutée} &
+    ``Le suspect est coupable.'' &
+    Présenter et réfuter explicitement les hypothèses alternatives
+    (cf. E9bis PIU). \\
+\textbf{Qualif. juridique par l'expert} &
+    ``Ce fait constitue une infraction à l'art.~65.'' &
+    ``La qualification juridique relève de l'autorité mandante.
+    L'expert note que~\ldots'' \\
+\end{tableaucours}
+\vspace{-0.8em}
+\begin{center}{\small\itshape Tableau~20.4. Pièges de rédaction et formulations correctes}\end{center}
+
+% ============================================================================
+\section{Cas MVOM~: le Rapport Sous Pression}
+\label{sec:rapport-pression}
+% ============================================================================
+
+\begin{boxscenario}{Affaire MVOM~: quand le rapport est contesté}
+L'expert NKENG a remis son rapport sur l'affaire MVOM (rançongiciel
+chez TRANSBOIS SA). La partie adverse produit une contre-expertise
+affirmant que les logs analysés par NKENG pourraient avoir été
+manipulés par TRANSBOIS SA \emph{après} l'incident.
+
+L'avocat de la défense pose trois questions en audience~:
+
+\textbf{Q1~:} ``Pouvez-vous prouver que les logs que vous avez
+analysés n'ont pas été modifiés par votre client après l'incident~?''
+
+\textbf{R (correcte)~:} ``Les logs ont été exportés depuis l'image
+E01 (EV-001) dont les hash SHA-256 ont été calculés lors de
+l'acquisition le 13 mars 2026 à 15h03 et sont documentés dans
+le formulaire de custody (Annexe~F). La valeur de hash calculée
+au moment de l'analyse le 15 mars 2026 est identique (Annexe~G).
+Toute modification des logs après l'acquisition aurait changé
+le hash et serait détectable. »
+
+\textbf{Q2~:} ``Vous utilisez Volatility 3. N'est-il pas vrai que
+ce logiciel modifie lui-même la mémoire pendant la capture~?''
+
+\textbf{R (correcte)~:} « La capture mémoire (EV-001bis) a été
+réalisée \emph{avant} toute autre opération sur le système, conformément
+à RFC~3227~\cite{rfc3227} (ordre de volatilité~: RAM en premier). La modification
+inhérente à l'outil de capture est documentée dans le formulaire
+de custody sous la note~: \textit{``légère modification de la RAM
+inhérente au processus de capture, conformément à ACPO~\cite{acpo2012} Principe~2''}
+(Annexe~F, ligne~12). Cette modification affecte quelques kilo-octets
+et n'altère pas les artefacts analysés. »
+
+\textbf{Q3~:} ``Votre rapport dit que l'attaque vient de l'IP
+185.220.XX.XX. Comment savez-vous qu'il ne s'agit pas d'un VPN
+utilisé par quelqu'un d'autre~?''
+
+\textbf{R (correcte)~:} « Je ne l'affirme pas dans mon rapport.
+La page~3 indique explicitement que l'attribution de cette IP à une
+personne physique est hors périmètre de cette expertise et nécessite
+une réquisition aux autorités compétentes. Je constate un fait~:
+l'IP source des connexions SSH. L'identification du titulaire relève
+d'une démarche distincte. »
+\end{boxscenario}
+
+\separateur
+
+% --- Encadré lab NDAP SUKULU ---
+\begin{boiteRemarque}{Notions mobilisées par le laboratoire INA-LAB-08}
+Le laboratoire fait relire un rapport avant son dépôt. Quatre contrôles
+suffisent à en ruiner la recevabilité s'ils sont oubliés.
+\begin{itemize}
+    \item \textbf{Constatation ou analyse}~: une phrase qui juge, affirme une
+          certitude ou prête une intention n'a pas sa place dans la section
+          Constatations.
+    \item \textbf{Attribution}~: une adresse IP n'identifie pas une personne
+          (VPN, relais, NAT, poste partagé)~; toute phrase qui en déduit un
+          auteur est infondée.
+    \item \textbf{Empreintes}~: l'empreinte reportée en annexe doit être
+          identique, jusqu'au dernier caractère, à celle du formulaire de
+          custody~; comparer les deux listes ligne à ligne.
+    \item \textbf{Ordre de volatilité} (RFC~3227)~: la mémoire d'un poste
+          doit être acquise avant son disque~; un délai long entre la fin de
+          l'action malveillante et l'acquisition est à justifier.
+\end{itemize}
+\end{boiteRemarque}
+
+\begin{boxresume}
+\textbf{Ce qu'il faut retenir de ce chapitre~:}
+\begin{itemize}
+    \item \textbf{Trois niveaux}~: Synthèse Exécutive (2--4 pages,
+          non-technicien)~; Rapport Technique (20--100 pages, technicien
+          ou avocat)~; Dossier Probatoire (annexes vérifiables).
+          Cohérents entre eux~; rédigés pour des audiences différentes.
+
+    \item \textbf{La règle d'or}~: Constatation = fait vérifiable
+          (horodaté, sourcé). Analyse = interprétation (niveau de
+          confiance + hypothèses alternatives réfutées). Ne jamais
+          mélanger. Tester chaque phrase~: ``mais si je me trompe,
+          la phrase est-elle encore vraie~?''
+
+    \item \textbf{Chaque constatation cite sa source}~: ``[Source~:
+          MFTECmd, fichier \$UsnJrnl, Annexe~B]''. Toujours. Sans
+          exception.
+
+    \item \textbf{Annexe~G obligatoire}~: hash SHA-256 de toutes les
+          pièces annexées. C'est la preuve de l'intégrité du dossier
+          probatoire lui-même.
+
+    \item \textbf{La qualification juridique n'appartient pas à l'expert.}
+          Finir la section Analyse par~: ``La qualification juridique
+          de ces faits relève de l'autorité judiciaire mandante.''
+
+    \item \textbf{Hypothèses alternatives obligatoires}~: présenter et
+          réfuter au moins une hypothèse alternative par conclusion
+          majeure. Sans cette réfutation, la conclusion est une
+          affirmation, pas une analyse.
+
+    \item \textbf{Synthèse exécutive}~: zéro jargon non défini~;
+          trois points maximum~; une pièce clé identifiée~;
+          une référence vers le rapport technique pour approfondir.
+\end{itemize}
+\end{boxresume}
+
+\bigskip
+
+\begin{boxexo}[title={\ding{45}\quad Exercice~20.1. Identifier constatation vs analyse \niveaubase}]
+Pour chacun des énoncés suivants, indiquez s'il s'agit d'une
+Constatation, d'une Analyse, ou d'un mélange interdit~; reformulez
+les mélanges~:
+\begin{enumerate}[(a)]
+    \item « Le fichier \texttt{malware.exe} a été exécuté par
+          MBONGO le 15 janvier 2026 à 14h28. »
+    \item « Le Prefetch \texttt{MALWARE.EXE-A1B2C3D4.pf} enregistre
+          une exécution à 14h28:33, compteur~= 1. »
+    \item « L'attaquant a tenté de couvrir ses traces en supprimant
+          le fichier enc\_all.ps1. »
+    \item « Le \texttt{\$UsnJrnl} enregistre la suppression du
+          fichier enc\_all.ps1 à 02h18:30, soit 46~secondes après
+          l'entrée \texttt{DataExtend|Close} (02h17:44). »
+    \item « Les logs de connexion montrent un accès suspect
+          depuis une IP russe. »
+\end{enumerate}
+\end{boxexo}
+
+\begin{boxexo}[title={\ding{45}\quad Exercice~20.2. Rédiger une section Constatations \niveaumoyen}]
+À partir des données suivantes (extraites des analyses MVOM),
+rédigez 5~constatations correctement structurées (fait + source
++ annexe)~:
+\begin{itemize}
+    \item UserAssist~: \texttt{AnyDesk.exe} exécuté 3~fois,
+          dernière à 02h10:15~;
+    \item Volatility netscan~: connexion ESTABLISHED vers
+          185.220.XX.XX:4444 à partir du PID~4892~;
+    \item Volatility pslist~: PID~4892 = svchost.exe,
+          PID parent~= 4888 (cmd.exe)~;
+    \item \$UsnJrnl~: création de \texttt{encrypted\_files\_list.txt}
+          à 02h18:31~;
+    \item journald~: SSH Accepted password pour root depuis
+          185.220.XX.XX à 02h14:09.
+\end{itemize}
+\end{boxexo}
+
+\begin{boxexo}[title={\ding{45}\quad Exercice~20.3. Rapport complet \niveauexpert}]
+Produisez le rapport forensique complet sur l'Opération MVOM
+(Chapitre~3~(UE~SEC4031)) en appliquant toutes les
+techniques de ce cours~:
+\begin{enumerate}[(a)]
+    \item \textbf{Synthèse Exécutive}~: 1~page maximum,
+          non-technicien, trois points, une pièce clé.
+    \item \textbf{Section Constatations}~: au moins 10~constatations
+          couvrant~: l'accès SSH, l'exécution du ransomware,
+          le chiffrement des fichiers, et la tentative de suppression
+          des traces. Chaque constatation cite sa source.
+    \item \textbf{Section Analyse}~: chronologie de l'incident avec
+          niveau de confiance explicite~; au moins une hypothèse
+          alternative présentée et réfutée (E9bis PIU).
+    \item \textbf{Section Conclusions}~: réponses aux 3~questions
+          du mandant~; qualification technique sans qualification
+          juridique.
+    \item \textbf{Plan des Annexes}~: liste les pièces à annexer
+          avec leur description et leur hash attendu.
+\end{enumerate}
+\textit{Note~: cet exercice peut être évalué comme devoir maison.}
+\end{boxexo}
+
+\bigskip
+
+\begin{boxinfo}
+\textbf{Transition.} Le cours dispose maintenant de toutes les
+briques de la Partie~IV~: investigation système, réseau, mobile,
+cloud et IoT, sources ouvertes, et le rapport qui les rassemble.
+Le chapitre suivant clôt cette partie par des cas intégrateurs qui
+mobilisent tout à la fois.
+
+La \textbf{Partie~V} traite ensuite les défis émergents~:
+anti-forensique (comment détecter l'effacement), intelligence
+artificielle, conteneurs et cloud-native, puis une comparaison
+internationale des systèmes d'investigation.
+\end{boxinfo}

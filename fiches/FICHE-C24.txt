@@ -1,0 +1,233 @@
+NDAP SUKULU · INA · fiche FICHE-C24
+Chapitre 24 : Forensique cloud natif et conteneurs
+
+Version papier, à utiliser en attendant l'ouverture du portail NDAP SUKULU.
+La fiche complète compte 40 questions. Répondez sur la grille en fin de fiche.
+Durée indicative : 60 minutes. Seuil de réussite : 60 %.
+Les corrections figurent dans le livret de correction du cours.
+
+========================================================================
+Questions à choix multiple (une seule bonne réponse)
+========================================================================
+
+ 1. Quel défi est poussé à l'extrême par les conteneurs ?
+      a) L'éphémérité, un conteneur pouvant disparaître en quelques secondes
+      b) Le poids des fichiers
+      c) La lenteur du réseau
+      d) Le coût du stockage
+
+ 2. Quelle couche héberge le code applicatif et s'analyse hors ligne comme un firmware ?
+      a) L'image
+      b) Le pod
+      c) Le cluster
+      d) Le nœud
+
+ 3. Que révèle la commande docker diff ?
+      a) Les fichiers ajoutés, modifiés ou supprimés par rapport à l'image d'origine
+      b) La liste des utilisateurs
+      c) Les adresses IP du réseau
+      d) Le mot de passe root
+
+ 4. Dans la sortie de docker diff, que signifie la lettre D devant un chemin ?
+      a) Fichier détruit, un indice d'anti-forensique possible
+      b) Fichier dupliqué
+      c) Fichier déplacé
+      d) Fichier décompressé
+
+ 5. Quand faut-il arrêter ou geler le conteneur suspect ?
+      a) Seulement après avoir capturé tout son état
+      b) Avant toute capture
+      c) Jamais
+      d) Dès la détection
+
+ 6. Pourquoi préférer docker pause à docker stop en premier réflexe ?
+      a) stop déclenche parfois des hooks de nettoyage, une anti-forensique involontaire
+      b) pause efface le conteneur
+      c) stop est plus lent
+      d) pause redémarre le conteneur
+
+ 7. Quelle commande exporte le système de fichiers complet d'un conteneur ?
+      a) docker export
+      b) docker login
+      c) docker pull
+      d) docker network
+
+ 8. Pourquoi la capture mémoire d'un conteneur cible ses processus depuis l'hôte ?
+      a) Un conteneur partage le noyau de l'hôte, sans hyperviseur séparé
+      b) Le conteneur n'a pas de mémoire
+      c) La mémoire est chiffrée
+      d) L'hôte n'a pas de mémoire
+
+ 9. Quelle source de logs Kubernetes est la plus importante pour la forensique ?
+      a) L'audit log de l'API Server
+      b) Les events, retenus une heure
+      c) Le cache d'images
+      d) Les variables d'environnement
+
+10. Que subissent les Pod logs à la suppression du Pod sans agrégation externe ?
+      a) Ils sont perdus
+      b) Ils sont archivés automatiquement
+      c) Ils sont chiffrés
+      d) Ils sont dupliqués dans etcd
+
+11. Dans l'audit log, quel sous-objet trahit une commande exécutée dans un Pod ?
+      a) La sous-ressource exec
+      b) Le champ image
+      c) Le champ label
+      d) Le champ port
+
+12. Qu'illustre la destruction automatique d'un Pod par éviction pendant une attaque ?
+      a) L'orchestrateur peut détruire lui-même la preuve principale
+      b) L'attaquant a gagné les accès root
+      c) Le cluster est hors service
+      d) Les logs sont falsifiés
+
+13. Comment examiner les couches de construction d'une image sans l'exécuter ?
+      a) Avec docker history --no-trunc
+      b) Avec docker run
+      c) Avec docker start
+      d) Avec docker ps
+
+14. Qu'advient-il d'un secret ajouté puis supprimé dans une couche ultérieure de l'image ?
+      a) Il reste accessible dans l'historique des couches
+      b) Il est effacé définitivement
+      c) Il est chiffré
+      d) Il est envoyé au registre
+
+15. Quel type d'outil détecte des secrets codés en dur dans une image ?
+      a) trufflehog ou gitleaks
+      b) Un pare-feu
+      c) Un antivirus de bureau
+      d) Un write blocker
+
+16. Quel outil scanne les CVE connues d'une image Docker ?
+      a) Trivy
+      b) Volatility
+      c) Wireshark
+      d) Autopsy
+
+17. Quel outil de sécurité runtime alerte en temps réel sur un shell inattendu dans un conteneur ?
+      a) Falco
+      b) Nmap
+      c) Hashcat
+      d) John
+
+18. Pourquoi la readiness prime-t-elle sur la réactivité en cloud natif ?
+      a) L'éphémérité extrême exige une architecture préventive posée avant l'incident
+      b) Les conteneurs ne laissent aucune trace
+      c) La loi l'impose
+      d) Les outils réactifs sont interdits
+
+19. Quelle mesure préserve l'état d'un conteneur compromis en cas d'incident ?
+      a) Désactiver temporairement l'auto-scaling et les redémarrages automatiques
+      b) Augmenter le trafic réseau
+      c) Supprimer le namespace
+      d) Redémarrer le cluster
+
+20. Quel composant conserve l'état complet du cluster, dont il faut faire des snapshots ?
+      a) etcd
+      b) Le kubelet
+      c) Le pod logs
+      d) Le cache d'images
+
+========================================================================
+Vrai ou faux
+========================================================================
+
+21. Il faut exécuter docker diff avant tout arrêt du conteneur.
+      Vrai / Faux
+
+22. L'orchestrateur ne détruit jamais un conteneur de lui-même.
+      Vrai / Faux
+
+23. L'audit log API Server peut être externalisé vers un SIEM distinct du cluster.
+      Vrai / Faux
+
+24. Supprimer un secret dans une couche ultérieure l'efface de l'image.
+      Vrai / Faux
+
+25. Un conteneur dispose de son propre hyperviseur isolé de l'hôte.
+      Vrai / Faux
+
+26. Les events Kubernetes sont très volatils, de l'ordre d'une heure par défaut.
+      Vrai / Faux
+
+27. La disparition du conteneur prouve l'absence d'incident.
+      Vrai / Faux
+
+28. Dans un cluster multi-tenant, l'investigation doit être cantonnée au namespace concerné.
+      Vrai / Faux
+
+29. L'externalisation des logs doit être mise en place avant l'incident.
+      Vrai / Faux
+
+30. docker history --no-trunc révèle les commandes ayant construit l'image.
+      Vrai / Faux
+
+========================================================================
+Textes à trous
+========================================================================
+
+31. La commande docker ______ révèle les fichiers modifiés par rapport à l'image.
+
+32. Le système qui crée et détruit automatiquement les conteneurs s'appelle ______.
+
+33. La base de données qui conserve l'état complet du cluster se nomme ______.
+
+34. L'outil de monitoring runtime qui alerte sur les comportements anormaux est ______.
+
+35. Le scanner de CVE d'images cité dans le chapitre est ______.
+
+36. La source probatoire la plus importante est l'audit log de l'API ______.
+
+37. La commande qui exporte le système de fichiers du conteneur est docker ______.
+
+38. Le défi central du cloud natif, poussé à l'extrême, est l'______ des conteneurs.
+
+39. Le groupe de conteneurs partageant réseau et volumes dans Kubernetes s'appelle un ______.
+
+40. Un secret reste visible dans l'______ des couches de l'image malgré sa suppression.
+
+========================================================================
+Grille de réponses   Nom : ............................  Matricule : ............
+========================================================================
+ 1. ............................................
+ 2. ............................................
+ 3. ............................................
+ 4. ............................................
+ 5. ............................................
+ 6. ............................................
+ 7. ............................................
+ 8. ............................................
+ 9. ............................................
+10. ............................................
+11. ............................................
+12. ............................................
+13. ............................................
+14. ............................................
+15. ............................................
+16. ............................................
+17. ............................................
+18. ............................................
+19. ............................................
+20. ............................................
+21. ............................................
+22. ............................................
+23. ............................................
+24. ............................................
+25. ............................................
+26. ............................................
+27. ............................................
+28. ............................................
+29. ............................................
+30. ............................................
+31. ............................................
+32. ............................................
+33. ............................................
+34. ............................................
+35. ............................................
+36. ............................................
+37. ............................................
+38. ............................................
+39. ............................................
+40. ............................................

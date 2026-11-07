@@ -1,0 +1,233 @@
+NDAP SUKULU · INA · fiche FICHE-C32
+Chapitre 32 : Cas pratique, audit formel d'un protocole multi-couches
+
+Version papier, à utiliser en attendant l'ouverture du portail NDAP SUKULU.
+La fiche complète compte 40 questions. Répondez sur la grille en fin de fiche.
+Durée indicative : 60 minutes. Seuil de réussite : 60 %.
+Les corrections figurent dans le livret de correction du cours.
+
+========================================================================
+Questions à choix multiple (une seule bonne réponse)
+========================================================================
+
+ 1. Sur quoi repose la signature BLS ?
+      a) Les couplages bilinéaires sur courbes elliptiques
+      b) La factorisation de grands entiers
+      c) Les fonctions de hachage seules
+      d) Le chiffrement symétrique AES
+
+ 2. Quelle propriété distinctive rend BLS adapté aux signatures à seuil ?
+      a) Ses signatures sont courtes et agrégeables
+      b) Elle est quantiquement sûre
+      c) Elle masque le message signé
+      d) Elle ne nécessite aucune clé
+
+ 3. Sur quelle courbe BLS est-il typiquement instancié ?
+      a) BLS12-381
+      b) Curve25519
+      c) secp256k1
+      d) P-192
+
+ 4. Sur quel problème calculatoire repose la sécurité classique de BLS ?
+      a) Le problème de Diffie-Hellman calculatoire sur courbes appariées
+      b) Le problème du sac à dos
+      c) Le problème SAT
+      d) Le problème du voyageur de commerce
+
+ 5. Quel algorithme quantique brise la sécurité de BLS ?
+      a) L'algorithme de Shor
+      b) L'algorithme de Grover
+      c) L'algorithme de Dijkstra
+      d) L'algorithme de Bellman-Ford
+
+ 6. Comment se manifeste la chute de sécurité de BLS face à Shor ?
+      a) Une rupture complète, pas une dégradation progressive
+      b) Une baisse lente sur plusieurs décennies
+      c) Aucun effet mesurable
+      d) Un simple ralentissement
+
+ 7. À quelle catégorie de primitives appartient BLS au regard de Shor ?
+      a) Les signatures fondées sur le logarithme discret, comme ECDSA
+      b) Les fonctions de hachage résistantes
+      c) Les primitives post-quantiques
+      d) Les chiffrements à usage unique
+
+ 8. Pourquoi la confidentialité (Conf) de BLS est-elle faible ?
+      a) Une signature ne masque pas le message, seule la clé privée reste secrète
+      b) La clé privée est publique
+      c) Le message est chiffré deux fois
+      d) BLS ne signe rien
+
+ 9. Comment est obtenu le positionnement CRO de BLS dans le chapitre ?
+      a) Qualitativement, par analogie avec ECDSA, faute de calcul publié
+      b) Par un calcul CLO publié bit par bit
+      c) Par un sondage d'experts
+      d) Par simulation quantique
+
+10. Quelle dimension CRO de BLS s'effondre une fois Shor opérationnel ?
+      a) La fiabilité (Rel)
+      b) La confidentialité (Conf)
+      c) L'opposabilité historique passée
+      d) Aucune
+
+11. Quel principe architectural justifie le couplage de BLS à une primitive post-quantique ?
+      a) La défense en profondeur
+      b) Le moindre privilège
+      c) La séparation des tâches
+      d) Le secret partagé
+
+12. Quelle signature post-quantique (FIPS 204) est proposée pour coupler avec BLS ?
+      a) Dilithium (ML-DSA)
+      b) RSA-2048
+      c) ECDSA
+      d) HMAC-SHA256
+
+13. Quelle logique impose de se méfier d'une signature BLS archivée à long terme ?
+      a) Harvest Now, Decrypt Later
+      b) Zero Trust
+      c) Security by Obscurity
+      d) Fail Fast
+
+14. Face à une signature BLS isolée destinée à l'archivage, que recommande le chapitre ?
+      a) Chercher une signature post-quantique complémentaire, sinon documenter son absence
+      b) La supprimer immédiatement
+      c) La considérer comme forgée
+      d) Ignorer la question quantique
+
+15. Combien de couches combine l'architecture ZK-NR décrite ?
+      a) Quatre couches
+      b) Deux couches
+      c) Six couches
+      d) Une seule couche
+
+16. Quel est le rôle probable de la couche STARK dans ZK-NR ?
+      a) Produire une preuve sans divulgation, transparente et sans trusted setup
+      b) Chiffrer les disques
+      c) Gérer le réseau
+      d) Stocker les journaux
+
+17. Quel rôle joue la couche Merkle dans l'architecture ?
+      a) Une structure d'engagement immuable
+      b) Une signature à seuil
+      c) Une résistance quantique
+      d) Un canal chiffré
+
+18. Que doit-on faire des lacunes non vérifiables lors de l'audit de ZK-NR ?
+      a) Les identifier explicitement, jamais les combler par des affirmations non sourcées
+      b) Les deviner plausiblement
+      c) Les ignorer
+      d) Les présenter comme établies
+
+19. Quel point de vigilance générique la checklist souligne-t-elle pour les architectures multi-couches ?
+      a) La présence de mécanismes de rotation et de révocation des clés
+      b) La couleur de l'interface
+      c) Le nom du développeur
+      d) La taille du disque
+
+20. Quels outils de vérification formelle le chapitre cite-t-il pour modéliser un protocole ?
+      a) Tamarin ou ProVerif
+      b) Wireshark ou tcpdump
+      c) Volatility ou Autopsy
+      d) Nmap ou Nessus
+
+========================================================================
+Vrai ou faux
+========================================================================
+
+21. BLS possède une protection structurelle particulière contre l'algorithme de Shor.
+      Vrai / Faux
+
+22. Les signatures BLS sont agrégeables en une signature compacte unique.
+      Vrai / Faux
+
+23. Aucune attaque classique efficace connue ne vise BLS12-381 à la date du cours.
+      Vrai / Faux
+
+24. Le positionnement CRO de BLS repose sur un calcul CLO publié et vérifiable bit par bit.
+      Vrai / Faux
+
+25. Coupler BLS à Dilithium illustre le principe de défense en profondeur.
+      Vrai / Faux
+
+26. Les STARKs requièrent un trusted setup, contrairement aux zk-SNARKs.
+      Vrai / Faux
+
+27. Une signature BLS valide aujourd'hui pourrait devenir forgeable à l'avenir.
+      Vrai / Faux
+
+28. L'exercice ZK-NR présente des résultats d'audit établis et vérifiés.
+      Vrai / Faux
+
+29. Dans un système à seuil, un signataire individuel ne peut pas signer seul.
+      Vrai / Faux
+
+30. La compétence unificatrice de la Partie VI est de distinguer l'établi de l'hypothétique.
+      Vrai / Faux
+
+========================================================================
+Textes à trous
+========================================================================
+
+31. Le sigle de la signature courte et agrégeable étudiée dans ce chapitre est ______.
+
+32. L'algorithme quantique qui brise BLS en temps polynomial se nomme ______.
+
+33. Le problème calculatoire fondant la sécurité de BLS porte le sigle ______.
+
+34. La signature post-quantique FIPS 204 couplée à BLS est ______.
+
+35. Le projet de recherche à quatre couches servant de cas pratique se nomme ______.
+
+36. La structure d'engagement immuable utilisée comme première couche est l'arbre de ______.
+
+37. La menace de collecte aujourd'hui pour déchiffrement futur se nomme Harvest Now, ______ Later.
+
+38. Deux outils de vérification formelle cités sont ProVerif et ______.
+
+39. Faute de calcul publié, BLS est positionné par analogie avec la primitive ______.
+
+40. La preuve sans divulgation de connaissance est dite preuve à divulgation ______.
+
+========================================================================
+Grille de réponses   Nom : ............................  Matricule : ............
+========================================================================
+ 1. ............................................
+ 2. ............................................
+ 3. ............................................
+ 4. ............................................
+ 5. ............................................
+ 6. ............................................
+ 7. ............................................
+ 8. ............................................
+ 9. ............................................
+10. ............................................
+11. ............................................
+12. ............................................
+13. ............................................
+14. ............................................
+15. ............................................
+16. ............................................
+17. ............................................
+18. ............................................
+19. ............................................
+20. ............................................
+21. ............................................
+22. ............................................
+23. ............................................
+24. ............................................
+25. ............................................
+26. ............................................
+27. ............................................
+28. ............................................
+29. ............................................
+30. ............................................
+31. ............................................
+32. ............................................
+33. ............................................
+34. ............................................
+35. ............................................
+36. ............................................
+37. ............................................
+38. ............................................
+39. ............................................
+40. ............................................

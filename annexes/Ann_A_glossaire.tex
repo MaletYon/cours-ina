@@ -1,0 +1,102 @@
+%% ============================================================================
+%% Fichier  : annexes/Ann_A_glossaire.tex
+%% Titre    : Glossaire
+%% Version  : 1.0 -- novembre 2026
+%% ============================================================================
+%% Définitions abrégées des notions du cours ; le chapitre de référence est
+%% indiqué. Alignée sur l'annexe A des autres cours de l'auteur.
+%% ============================================================================
+
+\chapter{Glossaire}
+\label{ann:glossaire}
+
+Ce glossaire reprend, sous une forme abrégée, les notions du cours. Les
+notions de base (acquisition, chaîne de custody, empreinte, bloqueur
+d'écriture) sont définies dans l'UE SEC4031. Le renvoi indique le chapitre
+où la notion est présentée~; c'est là qu'il faut lire la définition complète.
+
+\begin{description}
+    \item[\$MFT, \$UsnJrnl] Table maîtresse des fichiers et journal des
+          modifications du système de fichiers NTFS~; sources d'horodatages
+          (Ch.~\ref{chap:for-sys}).
+    \item[Anti-forensique] Ensemble des techniques qui visent à empêcher,
+          compliquer ou tromper l'investigation (Ch.~\ref{chap:anti-for}).
+    \item[Artefact d'exécution] Trace qui prouve qu'un programme a été lancé~:
+          Prefetch, Amcache, ShimCache, UserAssist (Ch.~\ref{chap:for-sys}).
+    \item[Attribution] Rattachement d'une action à une personne ou à un
+          groupe~; elle exige plus qu'une adresse IP (Ch.~\ref{chap:for-osint},
+          \ref{chap:rapport}).
+    \item[Beaconing] Connexions régulières d'un programme malveillant vers son
+          serveur de commande (Ch.~\ref{chap:for-res}).
+    \item[CloudTrail] Service de journalisation des appels d'interface d'un
+          fournisseur de nuage (Ch.~\ref{chap:for-cloud}).
+    \item[Conteneur] Processus isolé qui partage le noyau de l'hôte~; il peut
+          disparaître avec ses traces (Ch.~\ref{chap:containers}).
+    \item[Constatation et analyse] Le fait vérifiable, avec sa source~;
+          l'interprétation, avec un niveau de confiance (Ch.~\ref{chap:rapport}).
+    \item[Cryptanalyse] Étude des moyens de mettre en défaut un mécanisme
+          cryptographique (Ch.~\ref{chap:cryptanal}).
+    \item[Deepfake] Contenu audio ou vidéo synthétique qui imite une personne
+          réelle (Ch.~\ref{chap:ia-for}).
+    \item[Dossier probatoire] Les pièces du rapport, avec leurs empreintes,
+          qui permettent à un expert adverse de tout vérifier
+          (Ch.~\ref{chap:rapport}).
+    \item[Éphéméralité] Disparition rapide des données dans le nuage ou les
+          conteneurs, qui impose de conserver d'abord (Ch.~\ref{chap:for-cloud},
+          \ref{chap:containers}).
+    \item[Exfiltration] Sortie non autorisée de données d'un système
+          (Ch.~\ref{chap:for-res}).
+    \item[Firmware (micrologiciel)] Logiciel embarqué d'un équipement, à
+          extraire et à analyser dans l'investigation des objets connectés
+          (Ch.~\ref{chap:for-iot}).
+    \item[Fonction de hachage] Fonction qui associe à des données une empreinte
+          de taille fixe, résistante aux collisions (Ch.~\ref{chap:prim-crypt}).
+    \item[Hypothèse alternative] Explication concurrente que le rapport doit
+          examiner et, s'il le peut, réfuter (Ch.~\ref{chap:rapport}).
+    \item[IoT] Objets connectés~: routeurs, caméras, enregistreurs, capteurs
+          (Ch.~\ref{chap:for-iot}).
+    \item[Locard inversé] Toute tentative d'effacer une trace en produit de
+          nouvelles (Ch.~\ref{chap:anti-for}).
+    \item[Méthode formelle] Analyse mathématique d'un protocole à l'aide d'un
+          modèle et d'un outil de vérification (Ch.~\ref{chap:form-meth}).
+    \item[Mobile Money] Service de paiement par téléphone mobile, source
+          fréquente de preuves et de fraudes (Ch.~\ref{chap:for-mob}).
+    \item[Modèle de responsabilité partagée] Répartition des contrôles et des
+          journaux entre le fournisseur de nuage et son client
+          (Ch.~\ref{chap:for-cloud}).
+    \item[Non-répudiation] Propriété qui empêche l'auteur d'une action de
+          la nier de façon crédible (Ch.~\ref{chap:ZKNR}).
+    \item[NVR] Enregistreur vidéo en réseau des caméras de surveillance
+          (Ch.~\ref{chap:for-iot}).
+    \item[OSINT] Collecte et analyse d'informations issues de sources
+          légalement accessibles au public (Ch.~\ref{chap:for-osint}).
+    \item[Post-quantique] Se dit d'un algorithme conçu pour résister à un
+          ordinateur quantique (Ch.~\ref{chap:quantique}).
+    \item[Prefetch] Fichiers de Windows qui gardent la trace des programmes
+          lancés et de leur nombre d'exécutions (Ch.~\ref{chap:for-sys}).
+    \item[Preuve à divulgation nulle de connaissance] Preuve qui convainc
+          qu'une affirmation est vraie sans rien révéler d'autre
+          (Ch.~\ref{chap:prim-crypt}, \ref{chap:ZKNR}).
+    \item[Registre Windows] Base de configuration de Windows, riche en traces
+          d'activité (Ch.~\ref{chap:for-sys}).
+    \item[Rapport forensique] Livrable en trois niveaux~: synthèse,
+          rapport technique, dossier probatoire (Ch.~\ref{chap:rapport}).
+    \item[Signature BLS] Schéma de signature qui permet l'agrégation de
+          signatures (Ch.~\ref{chap:cas-zknr}).
+    \item[SQLite] Moteur de base de données embarqué dans la plupart des
+          applications mobiles (Ch.~\ref{chap:for-mob}).
+    \item[Timeline] Chronologie unique de toutes les sources, horloges
+          corrigées (Ch.~\ref{chap:for-sys}).
+    \item[Timestomping] Modification des horodatages d'un fichier pour
+          tromper la chronologie (Ch.~\ref{chap:anti-for}).
+    \item[Triage assisté] Classement d'un volume de données par pertinence
+          probable, sans écarter de pièce sans examen (Ch.~\ref{chap:ia-for}).
+    \item[Trilemme CRO, cadre CLO] Tension formalisée entre confidentialité,
+          fiabilité et opposabilité, et sa mesure (Ch.~\ref{chap:CRO}~;
+          \cite{minka2025cro}).
+    \item[Volatility] Cadriciel d'analyse de la mémoire vive
+          (Ch.~\ref{chap:for-sys}).
+    \item[ZK-NR] Architecture cryptographique en couches pour une
+          non-répudiation explicable, publiée en prépublication
+          (Ch.~\ref{chap:ZKNR}~; \cite{minka2025zknr}).
+\end{description}

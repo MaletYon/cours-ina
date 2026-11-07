@@ -1,0 +1,65 @@
+SPEC = [
+    {"k": "title", "tag": "Jour 21 / 30 · Séance de 2 heures", "title": "Conteneurs et cloud-native (2) : Kubernetes et capture",
+     "sub": "La préparation prime sur la réactivité.",
+     "right": "Partie V · Chapitre C24 §24.3-24.5"},
+    {"k": "synthese", "title": "Rappel de la séance précédente", "kicker": "Jour 20 · Conteneurs (1)", "items": [
+        "Cinq couches, cinq sources",
+        "L'orchestrateur **détruit** la preuve",
+        "**docker diff** en premier réflexe",
+    ]},
+    {"k": "agenda", "items": [
+        ("30 min", "**Journaux Kubernetes** : pod, events, audit log"),
+        ("25 min", "**Vecteurs d'attaque** : images compromises, secrets oubliés"),
+        ("25 min", "**Stratégie de capture** et les cinq premières minutes"),
+        ("40 min", "**Exercice intégrateur** · fiche C24 · LAB-11"),
+    ]},
+    {"k": "table", "title": "Trois sources de journaux", "kicker": "Section 24.3", "head": ["Source", "Durée", "Valeur probatoire"], "widths": [3.0, 3.6, 5.8], "rows": [
+        ["Journaux du pod", "Perdus à la suppression", "Utiles s'ils sont externalisés"],
+        ["Events", "Environ **une heure**", "Raisons des redémarrages et évictions"],
+        ["**Audit log de l'API**", "Externalisable, durable", "**La source la plus importante** : qui, quoi, quand"],
+    ]},
+    {"k": "points", "title": "Lire l'audit log", "kicker": "Notions du lab INA-LAB-11", "items": [
+        "Une session **kubectl exec** = un create sur la sous-ressource **pods/exec**",
+        "Le compte est dans **user.username** ; la commande dans l'URI (%2Fbin%2Fsh = /bin/sh)",
+        "Une éviction : la raison figure dans les **annotations** (reason)",
+        "Filtrer avec jq sur le namespace, le pod et la fenêtre de temps",
+    ]},
+    {"k": "points", "title": "Images compromises", "kicker": "Section 24.4", "items": [
+        "Image **substituée** : comparer le **digest** en exécution à celui du registre",
+        "Dépendances piégées, image publique douteuse : analyser l'image hors ligne",
+        "Un secret supprimé dans une couche **reste** dans les couches précédentes",
+        "docker history --no-trunc, trufflehog, gitleaks : l'équivalent du carving",
+    ]},
+    {"k": "steps", "title": "Les cinq premières minutes", "kicker": "Section 24.5 · checklist d'urgence", "items": [
+        ("0-1 min · geler", "Étiqueter le pod en quarantaine, l'isoler par NetworkPolicy, ne **pas** le supprimer."),
+        ("1-3 min · capturer", "docker diff, docker logs --timestamps, docker top."),
+        ("3-5 min · exporter", "docker export, sha256sum à la création."),
+        ("Après", "Analyse sans pression, selon les chapitres 14 et 15, sur les données exportées."),
+    ]},
+    {"k": "points", "title": "Préparer avant l'incident", "kicker": "Pourquoi la réaction ne suffit pas", "items": [
+        "**Externaliser** journaux de pods et audit log vers un stockage durable",
+        "Surveillance d'exécution (**Falco**) : l'alerte arrive pendant que le conteneur vit",
+        "Politiques d'éviction et de redémarrage **documentées**",
+        "Une annotation de préservation reconnue par les contrôleurs",
+    ]},
+    {"k": "exercice", "title": "Incident Kubernetes", "duree": "35 minutes, en équipe",
+     "text": "Startup de paiement mobile : un pod de transactions émet un pic de trafic sortant pendant 8 minutes, puis la liveness probe le redémarre. Le nouveau pod est « propre ». Les journaux de pods n'étaient pas externalisés.",
+     "questions": [
+        "Quelles sources restent ? Classez-les par fiabilité.",
+        "Quelles requêtes jq sur l'audit log pour la fenêtre de 8 minutes ?",
+        "Quelles obligations de la loi n° 2024/017 pour la notification ?",
+        "Rédigez la synthèse exécutive, limites comprises.",
+     ],
+     "notes": "Corrigé (exercice 24.3). Restent l'audit log, les journaux du nœud, les flux réseau du cloud, le registre d'images ; filtrer par namespace, pod, verbe et horodatage. Notification sans délai des violations de données (loi n° 2024/017). La synthèse dit honnêtement que l'état du pod original est perdu."},
+    {"k": "synthese", "items": [
+        "L'**audit log** de l'API : la source probatoire principale",
+        "Comparer les **digests** ; fouiller l'**historique des couches**",
+        "Cinq minutes : **geler, capturer, exporter, hacher**",
+        "La **préparation** prime sur la réactivité",
+    ]},
+    {"k": "maison", "lecture": ["Chapitre 24 et son encadré « Notions mobilisées par le laboratoire INA-LAB-11 »", "NDAP SUKULU : **fiche C24** et **INA-LAB-11**"]},
+    {"k": "fin", "next": "Jour 22 · Benchmarking international", "items": [
+        "États-Unis, Royaume-Uni, Allemagne, Singapour",
+        "Le panorama africain",
+        "Recommandations pour le Cameroun"]},
+]

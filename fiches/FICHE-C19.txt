@@ -1,0 +1,235 @@
+NDAP SUKULU · INA · fiche FICHE-C19
+Chapitre 19 : OSINT et compréhension des attaques
+
+Version papier, à utiliser en attendant l'ouverture du portail NDAP SUKULU.
+La fiche complète compte 40 questions. Répondez sur la grille en fin de fiche.
+Durée indicative : 60 minutes. Seuil de réussite : 60 %.
+Les corrections figurent dans le livret de correction du cours.
+
+========================================================================
+Questions à choix multiple (une seule bonne réponse)
+========================================================================
+
+ 1. Que désigne l'OSINT ?
+      a) Le renseignement en source ouverte
+      b) Un format d'image disque
+      c) Un algorithme de chiffrement
+      d) Un protocole réseau
+
+ 2. Quelle phrase résume la frontière de l'OSINT ?
+      a) On consulte ce qui est public, on n'accède pas à ce qui est protégé
+      b) Tout ce qui est en ligne est librement exploitable
+      c) La fin justifie l'accès
+      d) Un identifiant trouvé autorise l'accès
+
+ 3. Laquelle de ces actions ne relève PAS de l'OSINT ?
+      a) Créer un faux profil pour entrer dans un cercle fermé
+      b) Lire une publication rendue publique par son auteur
+      c) Consulter un enregistrement WHOIS
+      d) Résoudre un nom de domaine en adresse
+
+ 4. Que réprime l'article 65 alinéa 2 de la loi 2010/012 ?
+      a) L'accès sans droit à tout ou partie d'un système
+      b) La consultation d'une page publique
+      c) Le calcul d'un hash
+      d) La rédaction d'un rapport
+
+ 5. Selon la loi 2024/017, quel est le statut de l'adresse IP ?
+      a) C'est une donnée à caractère personnel
+      b) C'est une donnée publique sans protection
+      c) C'est un secret d'État
+      d) Ce n'est pas une donnée
+
+ 6. Comment qualifie-t-on une attaque, selon le chapitre ?
+      a) Par ses traces, non par le récit de l'attaquant
+      b) Par le récit de l'attaquant
+      c) Par l'intuition de l'enquêteur
+      d) Par le hasard
+
+ 7. Quel renseignement l'enregistrement WHOIS d'un domaine fournit-il, quand il n'est pas masqué ?
+      a) La date de création, le bureau d'enregistrement et les serveurs de noms
+      b) Le contenu des courriels
+      c) Le mot de passe du propriétaire
+      d) Les photos du titulaire
+
+ 8. Un domaine utilisé dans une campagne frauduleuse a été créé quelques jours avant celle-ci. Comment lire cette date de création ?
+
+      a) Comme un indice fort, à relever systématiquement
+      b) Comme une donnée sans intérêt
+      c) Comme une preuve d'innocence
+      d) Comme une erreur de WHOIS
+
+ 9. À quoi sert la consultation des registres régionaux d'adresses IP ?
+      a) Savoir à quel pays et à quel opérateur adresser la demande de coopération
+      b) Se connecter au serveur
+      c) Déchiffrer le trafic
+      d) Supprimer les logs
+
+10. Que dit le chapitre des moteurs d'inventaire des systèmes exposés ?
+      a) Les consulter est licite, s'y connecter ne l'est pas
+      b) S'y connecter est toujours autorisé
+      c) Ils sont interdits
+      d) Ils donnent le mot de passe
+
+11. Face à un site qui imite une marque, que faut-il éviter absolument ?
+      a) Se connecter à son espace d'administration ou soumettre de vraies données
+      b) Capturer la page publique
+      c) Calculer l'empreinte de la capture
+      d) Signaler le domaine
+
+12. Quel formalisme sous-tend la carte des liens entre entités ?
+      a) La théorie des graphes, G égale (V, E, w)
+      b) La transformée de Fourier
+      c) La compression de données
+      d) Le hachage
+
+13. Comment fige-t-on une constatation en ligne pour en garantir l'intégrité ?
+      a) En calculant l'empreinte SHA-256 du fichier au moment de l'enregistrement
+      b) En la décrivant de mémoire
+      c) En la racontant au juge
+      d) En la chiffrant sans clé
+
+14. Quel document donne sa valeur probante à une constatation en source ouverte ?
+      a) Un procès-verbal de constatation, avec adresse, date, captures et empreintes
+      b) Un simple courriel sans date
+      c) Une note orale
+      d) Rien n'est nécessaire
+
+15. Que dire de l'absence de métadonnées sur une image issue d'un réseau social ?
+      a) Ce n'est pas un indice négatif, les plateformes les suppriment souvent à l'upload
+      b) C'est la preuve d'un trucage
+      c) C'est impossible
+      d) Cela invalide la capture
+
+16. À quoi sert une grille de lecture d'attaque comme la Kill Chain, pour l'enquêteur ?
+      a) Savoir, pour chaque phase, quelle trace chercher et quel texte appliquer
+      b) Apprendre à conduire l'attaque
+      c) Remplacer la loi
+      d) Chiffrer les preuves
+
+17. L'enquêteur constate d'abord des fichiers chiffrés et une note de rançon. Comment lit-il la grille des phases ?
+
+      a) De bas en haut, en remontant de l'action finale vers l'origine
+      b) Il ignore les phases antérieures
+      c) Il part toujours de la reconnaissance
+      d) Il n'utilise aucune grille
+
+18. Que protège l'article 44 de la loi 2010/012 ?
+      a) L'interdiction d'intercepter ou de stocker des communications sans autorisation
+      b) Le droit d'accéder à tout système
+      c) La vente des données
+      d) La gratuité d'Internet
+
+19. Dans quelles phases du PIU la recherche en sources ouvertes s'inscrit-elle surtout ?
+      a) La phase 1 d'initialisation et la phase 2 d'acquisition
+      b) Uniquement la présentation au tribunal
+      c) Aucune phase
+      d) La seule phase de clôture
+
+20. Quelle est la contre-mesure à l'agrégation de données publiques qui reconstitue un profil privé ?
+      a) La finalité déterminée et la proportionnalité de la collecte
+      b) La collecte sans limite
+      c) La publication des résultats
+      d) L'absence de documentation
+
+========================================================================
+Vrai ou faux
+========================================================================
+
+21. La source ouverte affranchit l'enquêteur des obligations de la loi.
+      Vrai / Faux
+
+22. Utiliser un identifiant trouvé ailleurs pour entrer dans un compte privé reste une infraction.
+      Vrai / Faux
+
+23. Une constatation en ligne non documentée est recevable telle quelle.
+      Vrai / Faux
+
+24. La consultation des enregistrements WHOIS et DNS n'implique aucun accès à un système.
+      Vrai / Faux
+
+25. Soumettre de vraies données au formulaire d'un site frauduleux fausse la preuve.
+      Vrai / Faux
+
+26. Recalculer l'empreinte d'un fichier à l'audience permet de prouver qu'il n'a pas changé.
+      Vrai / Faux
+
+27. L'adresse IP n'est pas considérée comme une donnée personnelle au Cameroun.
+      Vrai / Faux
+
+28. Se connecter à un service repéré par un moteur d'inventaire est licite.
+      Vrai / Faux
+
+29. On qualifie une attaque par le récit de l'attaquant plutôt que par ses traces.
+      Vrai / Faux
+
+30. La présence de métadonnées sur une image est un indice positif à documenter.
+      Vrai / Faux
+
+========================================================================
+Textes à trous
+========================================================================
+
+31. Le renseignement en source ouverte porte le sigle ______.
+
+32. Le protocole qui renseigne sur l'enregistrement d'un nom de domaine s'appelle ______.
+
+33. Chaque fichier enregistré reçoit une empreinte calculée avec l'algorithme SHA-______.
+
+34. L'accès sans droit à un système est réprimé par l'article ______ de la loi 2010/012.
+
+35. La représentation des entités et de leurs relations s'appelle une carte des ______.
+
+36. La résolution d'un nom en adresse et la lecture des enregistrements associés relèvent du ______.
+
+37. La constatation en source ouverte se formalise dans un ______ de constatation.
+
+38. Le modèle de description d'attaque en phases successives, déjà vu pour MVOM, s'appelle la Kill ______.
+
+39. Le flux de cryptoactifs se trace sur une chaîne de ______ publique.
+
+40. La ligne de conduite du chapitre oppose consulter le public à ______ ce qui est protégé.
+
+========================================================================
+Grille de réponses   Nom : ............................  Matricule : ............
+========================================================================
+ 1. ............................................
+ 2. ............................................
+ 3. ............................................
+ 4. ............................................
+ 5. ............................................
+ 6. ............................................
+ 7. ............................................
+ 8. ............................................
+ 9. ............................................
+10. ............................................
+11. ............................................
+12. ............................................
+13. ............................................
+14. ............................................
+15. ............................................
+16. ............................................
+17. ............................................
+18. ............................................
+19. ............................................
+20. ............................................
+21. ............................................
+22. ............................................
+23. ............................................
+24. ............................................
+25. ............................................
+26. ............................................
+27. ............................................
+28. ............................................
+29. ............................................
+30. ............................................
+31. ............................................
+32. ............................................
+33. ............................................
+34. ............................................
+35. ............................................
+36. ............................................
+37. ............................................
+38. ............................................
+39. ............................................
+40. ............................................

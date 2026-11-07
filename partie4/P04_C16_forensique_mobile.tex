@@ -1,0 +1,805 @@
+% ============================================================================
+% Fichier  : partie4/P04_C16_forensique_mobile.tex
+% Titre    : Forensique Mobile -- Android et iOS
+% Auteur   : MINKA MI NGUIDJOÏ Thierry Emmanuel
+% Version  : 1.0 -- Juin 2026
+% ============================================================================
+
+\chapter{Forensique Mobile, Android et iOS}
+\label{chap:for-mob}
+
+\epigraph{%
+    « Le téléphone portable est le journal intime du XXI\textsuperscript{e}
+    siècle et bien plus révélateur. »%
+}{Adage de la forensique mobile}
+
+\niveauChapitre{Intermédiaire}{%
+    Chapitre~9~(UE~SEC4031) (acquisition mobile~: ADB, 4~niveaux,
+    iOS) indispensable. Ce chapitre couvre l'analyse post-acquisition.%
+}
+
+\begin{boxobjectifs}
+\begin{itemize}
+    \item Comprendre l'architecture de stockage Android~: partitions,
+          systèmes de fichiers, emplacements des données applicatives.
+    \item Analyser les bases de données SQLite des applications
+          critiques~: SMS, WhatsApp, contacts, calendrier.
+    \item Reconstruire une chronologie d'activité mobile depuis
+          les journaux système Android et les métadonnées EXIF.
+    \item Identifier et exploiter les artefacts de géolocalisation~:
+          historique GPS, réseaux Wi-Fi, antennes GSM.
+    \item Analyser les artefacts spécifiques Mobile Money (MTN MoMo,
+          Orange Money) pour les fraudes financières numériques.
+    \item Maîtriser les particularités forensiques d'iOS~: sauvegarde
+          iTunes, données iCloud, limitations techniques.
+\end{itemize}
+\end{boxobjectifs}
+
+\bigskip
+
+% ============================================================================
+\section*{Positionnement~: de l'extraction à l'analyse}
+% ============================================================================
+
+Le Chapitre~9~(UE~SEC4031) s'est terminé sur \texttt{adb pull /sdcard/}
+et la liste des 9~commandes ADB essentielles. Ce chapitre part de là~:
+vous avez l'extraction. Que contient-elle~? Où sont les preuves~? Comment
+les lire, les dater, les corroborer~?
+
+En Afrique subsaharienne, l'écrasante majorité des infractions numériques
+implique un téléphone mobile plutôt qu'un ordinateur~: fraudes MoMo,
+harcèlement sur WhatsApp, arnaques Facebook, SIM~swapping. Maîtriser
+la forensique mobile n'est pas optionnel, c'est la compétence la
+plus immédiatement utile sur le terrain camerounais.
+
+\separateur
+
+% ============================================================================
+\section{Architecture de Stockage Android}
+\label{sec:architecture-android}
+% ============================================================================
+
+\subsection{Les partitions essentielles}
+
+Un téléphone Android typique présente plusieurs partitions dont deux
+sont centrales pour la forensique~:
+
+\begin{tableaucours}{p{2.8cm}p{3.5cm}p{5.5cm}}{%
+    \tableauHeader{Partition} &
+    \tableauHeader{Contenu} &
+    \tableauHeader{Accessibilité forensique}
+}
+\texttt{/data} & Données applicatives, comptes,
+    bases de données SQLite, paramètres &
+    \textbf{Nécessite root ou extraction physique.}
+    Contient les données les plus sensibles~: messages,
+    mots de passe, tokens d'authentification. \\
+\texttt{/sdcard} (\texttt{/storage/emulated/0}) &
+    Photos, vidéos, téléchargements, backups WhatsApp &
+    \textbf{Accessible via ADB sans root.}
+    \texttt{adb pull /sdcard/} \\
+\texttt{/system} & OS Android, applications système &
+    Lecture seule~; peu utile en investigation courante \\
+\texttt{/cache} & Cache des applications &
+    Volatile~; contenu non garanti après redémarrage \\
+\end{tableaucours}
+\vspace{-0.8em}
+\begin{center}{\small\itshape Tableau~16.1. Partitions Android et accessibilité forensique}\end{center}
+
+\begin{boxalert}
+\textbf{La limite fondamentale de l'extraction ADB sans root}
+
+\texttt{adb pull /sdcard/} donne accès à la carte SD virtuelle
+(\texttt{/storage/emulated/0}). Les données applicatives les plus
+importantes (SMS, contacts, messages WhatsApp, tokens de connexion) sont dans \texttt{/data/data/<package>} et \textbf{ne sont pas
+accessibles sans root}.
+
+\textbf{Conséquence pratique~:} pour une affaire impliquant les messages
+d'une application (WhatsApp, SMS, Messenger), l'extraction ADB logique
+est insuffisante sauf si~: (a)~le téléphone était rooté, (b)~une
+sauvegarde ADB a été activée~(\texttt{adb backup -all -shared}), ou
+(c)~les backups WhatsApp ont été sauvegardés sur \texttt{/sdcard}
+(comportement par défaut de WhatsApp).
+\end{boxalert}
+
+\subsection{Emplacements clés des données applicatives}
+
+\begin{tableaucours}{p{3.5cm}p{4.0cm}p{4.0cm}}{%
+    \tableauHeader{Application} &
+    \tableauHeader{Chemin (root requis)} &
+    \tableauHeader{Chemin accessible sans root}
+}
+SMS & \texttt{/data/data/com.android.providers.telephony/databases/mmssms.db} &
+    \texttt{adb shell content query --uri content://sms/} \\
+Contacts & \texttt{/data/data/com.android.providers.contacts/databases/contacts2.db} &
+    \texttt{adb shell content query --uri content://contacts/} \\
+WhatsApp messages & \texttt{/data/data/com.whatsapp/databases/msgstore.db} &
+    \texttt{/sdcard/WhatsApp/Databases/msgstore.db.crypt15} (chiffré) \\
+WhatsApp médias & \texttt{/data/data/com.whatsapp/} &
+    \texttt{/sdcard/WhatsApp/Media/} (non chiffré) \\
+Appels & \texttt{/data/data/com.android.providers.contacts/databases/contacts2.db} &
+    \texttt{adb shell content query --uri content://call\_log/} \\
+Localisation (Google) & \texttt{/data/data/com.google.android.gms/} &
+    Google Timeline via réquisition (legalprocess.google.com) \\
+\end{tableaucours}
+\vspace{-0.8em}
+\begin{center}{\small\itshape Tableau~16.2. Emplacements des données applicatives}\end{center}
+
+% ============================================================================
+\section{Analyse des Bases de Données SQLite}
+\label{sec:sqlite}
+% ============================================================================
+
+Les applications Android stockent la quasi-totalité de leurs données
+dans des fichiers SQLite (extension \texttt{.db}). Ces bases de données
+sont le c\oe ur de l'analyse forensique mobile.
+
+\subsection{Analyser les SMS~: \texttt{mmssms.db}}
+
+\begin{boxoutils}{Analyse de mmssms.db, base de données SMS}
+\begin{lstlisting}[language=bash_forensique]
+# Ouverture de la base de donnees SMS (extraite via ADB ou backup)
+sqlite3 /output/extraction/mmssms.db
+
+# Structure de la table SMS
+.schema sms
+-- CREATE TABLE sms (
+--   _id INTEGER PRIMARY KEY,
+--   thread_id INTEGER,  -- identifiant conversation
+--   address TEXT,       -- numero de telephone
+--   date INTEGER,       -- timestamp Unix en millisecondes
+--   date_sent INTEGER,
+--   protocol INTEGER,
+--   read INTEGER,       -- 1=lu, 0=non lu
+--   type INTEGER,       -- 1=recu, 2=envoye, 3=brouillon
+--   body TEXT,          -- contenu du message
+-- )
+
+-- Tous les SMS avec horodatage lisible
+SELECT
+    datetime(date/1000, 'unixepoch', 'localtime') AS date_heure,
+    address AS correspondant,
+    CASE type
+        WHEN 1 THEN 'Recu'
+        WHEN 2 THEN 'Envoye'
+        WHEN 3 THEN 'Brouillon'
+    END AS type_sms,
+    body AS contenu
+FROM sms
+ORDER BY date;
+
+-- SMS contenant des mots-cles suspects
+SELECT datetime(date/1000, 'unixepoch') AS date,
+       address, body
+FROM sms
+WHERE body LIKE '%code%' OR body LIKE '%OTP%'
+   OR body LIKE '%virement%' OR body LIKE '%MoMo%'
+ORDER BY date;
+\end{lstlisting}
+\end{boxoutils}
+
+\subsection{Analyser WhatsApp~: \texttt{msgstore.db}}
+
+\begin{boiteRemarque}{Le déchiffrement des backups WhatsApp}
+WhatsApp stocke ses backups locaux au format \texttt{msgstore.db.crypt15}
+(chiffrement AES-256-GCM). La clé est stockée dans
+\texttt{/data/data/com.whatsapp/files/key}, inaccessible sans root.
+
+\textbf{Cas où le backup est analysable sans root~:}
+\begin{enumerate}
+    \item Téléphone \textbf{rooté}~: extraire directement \texttt{msgstore.db}
+          depuis \texttt{/data/data/com.whatsapp/databases/}.
+    \item \textbf{Sauvegarde ADB} (si activée)~: \texttt{adb backup
+          -apk com.whatsapp} extrait l'application et ses données.
+    \item \textbf{WhatsApp Web actif}~: la session Web peut révéler
+          le contenu en temps réel (pas forensique, mais utile en
+          surveillance légale autorisée).
+    \item \textbf{Déchiffrement avec la clé extraite}~: si root obtenu
+          via exploit, extraire \texttt{key} puis déchiffrer avec
+          l'outil \texttt{whatsapp-viewer}.
+\end{enumerate}
+\end{boiteRemarque}
+
+\begin{boxoutils}{WhatsApp, base non chiffrée (root) ou médias}
+\begin{lstlisting}[language=bash_forensique]
+-- Analyse de msgstore.db (WhatsApp, necesssite root ou backup)
+sqlite3 /output/msgstore.db
+
+-- Messages recus et envoyes avec horodatage
+SELECT
+    datetime(timestamp/1000, 'unixepoch', 'localtime') AS date_heure,
+    jid AS correspondant,    -- format : 237XXXXXXXXX@s.whatsapp.net
+    CASE from_me
+        WHEN 0 THEN 'Recu'
+        WHEN 1 THEN 'Envoye'
+    END AS direction,
+    data AS message_texte
+FROM messages
+WHERE data IS NOT NULL
+ORDER BY timestamp;
+
+-- Groupes WhatsApp et participants
+SELECT
+    g.subject AS nom_groupe,
+    m.jid AS membre,
+    datetime(m.timestamp/1000, 'unixepoch') AS date_ajout
+FROM group_participants_history m
+JOIN chat g ON g.jid = m.gjid
+ORDER BY g.subject, m.timestamp;
+
+-- Medias envoyes/recus (avec chemins de fichier)
+SELECT
+    datetime(timestamp/1000, 'unixepoch') AS date,
+    jid, message_type, media_caption, local_path
+FROM messages
+WHERE message_type IN (1,2,3)  -- image, audio, video
+ORDER BY timestamp;
+\end{lstlisting}
+
+\textbf{Médias WhatsApp accessibles sans root~:}
+\begin{lstlisting}[language=bash_forensique]
+# Les medias (photos, videos, documents) envoyes/recus par WhatsApp
+# sont stockes en CLAIR sur /sdcard/WhatsApp/Media/
+ls /mnt/extraction/WhatsApp/Media/
+# WhatsApp Images/
+# WhatsApp Video/
+# WhatsApp Documents/
+# WhatsApp Audio/
+
+# Hash SHA-256 de tous les medias
+find /mnt/extraction/WhatsApp/Media/ -type f \
+    -exec sha256sum {} \; > /output/whatsapp_media_hashes.txt
+
+# Verification sur VirusTotal (documents/APK suspects)
+# Extraction des metadonnees EXIF des images
+exiftool /mnt/extraction/WhatsApp/Media/WhatsApp\ Images/*.jpg \
+    | grep -i "GPS\|Date\|Camera\|Make"
+\end{lstlisting}
+\end{boxoutils}
+
+\subsection{Analyser les journaux d'appels}
+
+\begin{lstlisting}[language=bash_forensique,
+    caption={Extraction des journaux d'appels}]
+# Via ADB content query (sans root)
+adb shell content query --uri content://call_log/calls \
+    --projection "number,type,date,duration,name" \
+    > /output/call_log.txt
+
+# Interpretation du champ type :
+# 1 = Appel entrant
+# 2 = Appel sortant
+# 3 = Appel manque
+# 4 = Messagerie vocale
+
+# Analyse des appels vers un numero suspect
+adb shell content query --uri content://call_log/calls \
+    --where "number='23767XXXXXXX'" \
+    --projection "date,type,duration"
+
+# Convertir les timestamps
+# date en millisecondes Unix -> datetime
+python3 -c "
+from datetime import datetime
+with open('/output/call_log.txt') as f:
+    for line in f:
+        if 'date' in line:
+            ts = int(line.split('=')[1].split(',')[0])
+            print(datetime.fromtimestamp(ts/1000))
+"
+\end{lstlisting}
+
+% ============================================================================
+\section{Géolocalisation et Mobilité}
+\label{sec:geolocalisation}
+% ============================================================================
+
+\subsection{Métadonnées EXIF des photos}
+
+Les photos prises avec un smartphone embarquent souvent les coordonnées
+GPS dans les métadonnées EXIF, une source précieuse pour établir
+où se trouvait le suspect (ou la victime) à un moment donné.
+
+\begin{boxoutils}{Extraction et visualisation des métadonnées EXIF}
+\begin{lstlisting}[language=bash_forensique]
+# Extraire les metadonnees GPS de toutes les photos
+exiftool -csv -GPS* /mnt/extraction/DCIM/Camera/*.jpg \
+    > /output/photo_gps.csv
+
+# Contenu type du CSV :
+# SourceFile,GPSLatitude,GPSLongitude,GPSAltitude,DateTimeOriginal
+# IMG_20260313_021705.jpg,3.8480 N,11.5021 E,741 m,2026:03:13 02:17:05
+
+# Convertir en format decimal pour Google Maps
+exiftool -p '$GPSLatitude#,$GPSLongitude#,$DateTimeOriginal $FileName' \
+    /mnt/extraction/DCIM/Camera/*.jpg
+
+# Photo prise a 02:17:05 le 13 mars 2026 -> coordonnees GPS
+# Utiliser Google Maps ou QGIS pour visualiser le trajet
+\end{lstlisting}
+\end{boxoutils}
+
+\begin{boxscenario}{Cas MBONGO. localisation via EXIF}
+L'extraction ADB du téléphone de MBONGO Joseph (EV-002,
+Chapitre~8~(UE~SEC4031)) révèle 15~photos dans
+\texttt{/sdcard/WhatsApp/Media/WhatsApp Images/}. L'analyse EXIF
+de \texttt{IMG-20260115-WA0003.jpg} (une photo d'un relevé bancaire)
+montre~:
+
+\begin{lstlisting}[language=bash_forensique]
+exiftool IMG-20260115-WA0003.jpg
+# GPS Latitude   : 4 deg 2' 52.80" N    (4.0480 N)
+# GPS Longitude  : 9 deg 41' 45.60" E   (9.6960 E)
+# Create Date    : 2026:01:15 14:28:33
+# Camera Model   : Samsung Galaxy A53
+\end{lstlisting}
+
+\textbf{Constatation~:} la photo \texttt{IMG-20260115-WA0003.jpg}
+a été prise le 15~janvier~2026 à 14h28~min~33s à des coordonnées GPS
+de \texttt{4.0480°N / 9.6960°E}, correspondant au quartier Akwa,
+Douala (vérification sur OpenStreetMap~; l'option \texttt{exiftool -n}
+affiche directement les degrés décimaux). Le suspect affirmait être à
+Yaoundé ce jour-là. La date et les coordonnées sont en cohérence directe
+avec l'horodatage de l'email de phishing analysé dans l'affaire WOURI
+(14h28~min, même secteur géographique).
+\end{boxscenario}
+
+\subsection{Historique de localisation Google}
+
+Google enregistre la position des appareils Android dans Google Maps
+Timeline (si la fonction est activée). Ces données sont accessibles
+de deux façons~:
+
+\begin{enumerate}
+    \item \textbf{Via le compte Google du suspect} (si ses identifiants
+          sont connus ou si son téléphone est déverrouillé)~:
+          \texttt{myactivity.google.com} ou \texttt{timeline.google.com}.
+    \item \textbf{Via réquisition légale à Google}~:
+          \texttt{legalprocess.google.com}, délai~: 10--30~jours~;
+          base légale~: art.~57 \loicam{2010/012}~\cite{cameroun2010a} (réquisition aux
+          fournisseurs de services numériques).
+\end{enumerate}
+
+\subsection{Données réseau~: Wi-Fi et antennes GSM}
+
+\begin{boxoutils}{Artefacts réseau sur Android}
+\begin{lstlisting}[language=bash_forensique]
+# Historique des reseaux Wi-Fi connus (sans root)
+adb shell cat /data/misc/wifi/WifiConfigStore.xml
+# Ou accessible dans le backup ADB :
+# /apps/com.android.providers.settings/db/settings.db
+
+# Analyse du fichier wpa_supplicant (reseaux Wi-Fi)
+# Contient : SSID, BSSID, mot de passe (hash), dates de connexion
+# Chaque SSID peut etre localise via les bases BSSID publiques
+# (Wigle.net, Google Maps Wi-Fi API)
+
+# Journaux des antennes GSM (Cell ID log)
+# Disponible via Google Location History (réquisition)
+# Ou sur certains appareils dans /data/logger/
+# Format : timestamp, MCC, MNC, LAC, Cell_ID
+# Convertir Cell_ID en position via opencellid.org
+
+# Exemple de requete OpenCelliD API
+curl "https://opencellid.org/cell/get?key=YOUR_KEY
+    &mcc=624&mnc=01&lac=9001&cellid=12345"
+# -> latitude, longitude de l'antenne (precision : 50-1000 m)
+\end{lstlisting}
+\end{boxoutils}
+
+\begin{boxjuris}
+\textbf{Données de localisation et vie privée~: cadre légal camerounais}
+
+Les données de localisation (GPS, antennes GSM, Wi-Fi) constituent des
+données à caractère personnel au sens de l'art.~5 de la \loicam{2024/017}~\cite{cameroun2024donnees}
+(\textit{toute information permettant d'identifier directement ou
+indirectement une personne physique}). Leur collecte et traitement
+en contexte forensique doivent respecter~:
+\begin{itemize}
+    \item Art.~52 \loicam{2010/012}~: autorisation judiciaire préalable~;
+    \item Art.~57 \loicam{2010/012}~: réquisition formelle à l'opérateur~;
+    \item Art.~9--11 \loicam{2024/017}~: finalité et proportionnalité.
+\end{itemize}
+\textbf{Point de vigilance~:} l'historique de localisation obtenu depuis
+le téléphone saisi est admissible (l'appareil a été légalement saisi).
+Mais demander l'historique de localisation à l'opérateur ou à Google
+nécessite une réquisition judiciaire distincte.
+\end{boxjuris}
+
+% ============================================================================
+\section{Artefacts Mobile Money~: MoMo, Orange Money}
+\label{sec:mobile-money}
+% ============================================================================
+
+Les fraudes Mobile Money représentent la majorité des affaires numériques
+en Afrique subsaharienne. La forensique mobile appliquée à ces fraudes
+présente des spécificités importantes.
+
+\subsection{Où sont stockées les données Mobile Money}
+
+\begin{tableaucours}{p{3.5cm}p{4.0cm}p{4.5cm}}{%
+    \tableauHeader{Opérateur / Données} &
+    \tableauHeader{Source primaire} &
+    \tableauHeader{Source secondaire (réquisition)}
+}
+MTN MoMo. SMS de confirmation & \texttt{mmssms.db} &
+    MTN Cameroun~; art.~57 Loi~2010 \\
+MTN MoMo. Historique transactions &
+    Application MTN MoMo (\texttt{/data/data/com.mtn.mobile.cm/}) &
+    Réquisition MTN Cameroun (CELLCOM) \\
+Orange Money. SMS &
+    \texttt{mmssms.db} (SMS OTP, confirmations) &
+    Orange Cameroun~; art.~57 Loi~2010 \\
+Orange Money. Transactions &
+    Application Orange Money &
+    Réquisition Orange Cameroun \\
+Historique USSD &
+    Non stocké sur l'appareil & \textbf{Uniquement via l'opérateur}~;
+    réquisition indispensable \\
+\end{tableaucours}
+\vspace{-0.8em}
+\begin{center}{\small\itshape Tableau~16.3. Sources des données Mobile Money}\end{center}
+
+\begin{boxoutils}{Extraction des SMS MoMo depuis mmssms.db}
+\begin{lstlisting}[language=bash_forensique]
+-- Tous les SMS de MTN MoMo (numeroMTN = +237 670 000 000)
+SELECT
+    datetime(date/1000, 'unixepoch', 'localtime') AS date_heure,
+    address AS expediteur,
+    body AS contenu_sms
+FROM sms
+WHERE address = '670000000'      -- numero MoMo MTN Cameroun
+   OR address LIKE '+23767%'
+   OR body LIKE '%MoMo%' OR body LIKE '%MTN%'
+ORDER BY date;
+
+-- Resultat type (fraude par phishing OTP) :
+-- 2026-01-15 14:22:11  670000000
+--   "Votre code OTP MoMo est 847293. Ne le partagez jamais."
+-- 2026-01-15 14:22:45  670000000
+--   "Vous avez envoye 250000 FCFA a 677XXXXXX. Solde : 12500 FCFA"
+
+-- Reconstituer la chronologie d'une fraude MoMo
+SELECT
+    datetime(date/1000, 'unixepoch', 'localtime') AS date_heure,
+    CASE type
+        WHEN 1 THEN 'SMS recu'
+        WHEN 2 THEN 'SMS envoye'
+    END AS direction,
+    body
+FROM sms
+WHERE (body LIKE '%OTP%' OR body LIKE '%code%'
+    OR body LIKE '%envoye%' OR body LIKE '%recu%')
+  AND date BETWEEN
+    strftime('%s','2026-01-15 14:00:00')*1000 AND
+    strftime('%s','2026-01-15 15:00:00')*1000
+ORDER BY date;
+\end{lstlisting}
+\end{boxoutils}
+
+\begin{boxPNC}
+\textbf{Réquisition aux opérateurs Mobile Money~: que demander}
+
+La réquisition judiciaire (art.~57 \loicam{2010/012}) à MTN ou Orange
+pour une fraude MoMo doit précisément demander~:
+\begin{enumerate}
+    \item \textbf{Historique des transactions} du numéro victime
+          sur la période (30~jours recommandés + 15~jours avant)~;
+    \item \textbf{Identité et photo} associées au numéro bénéficiaire
+          (numéro ayant reçu les fonds)~;
+    \item \textbf{Logs de connexion} à l'application ou aux services
+          USSD du numéro bénéficiaire~;
+    \item \textbf{Carte SIM associée}~: série SIM (ICCID) et historique
+          des échanges SIM (SIM~swapping)~;
+    \item \textbf{IMEI} du téléphone utilisé avec ce numéro.
+\end{enumerate}
+\textbf{L'IMEI est la clé~:} si le fraudeur a changé de SIM mais
+gardé son téléphone, l'IMEI identifie le téléphone physique à travers
+les changements de numéro.
+\end{boxPNC}
+
+% ============================================================================
+\section{Forensique iOS~: Spécificités et Limitations}
+\label{sec:forensique-ios}
+% ============================================================================
+
+\subsection{Architecture et contraintes forensiques}
+
+iOS présente une architecture de sécurité qui complique significativement
+la forensique par rapport à Android~:
+
+\begin{tableaucours}{p{3.5cm}p{4.0cm}p{4.0cm}}{%
+    \tableauHeader{Mécanisme iOS} &
+    \tableauHeader{Impact forensique} &
+    \tableauHeader{Contournement}
+}
+Chiffrement hardware AES-256 & Toutes les données sont chiffrées
+    sur la puce~; inaccessibles sans code PIN & Nécessite
+    Cellebrite UFED ou GrayKey~; ou accès au code PIN \\
+Secure Enclave & Stocke les clés de déchiffrement~;
+    inaccessible même avec root &
+    Impossible à contourner sans exploit spécifique \\
+App Sandbox & Chaque application est isolée~;
+    aucun accès inter-app sans jailbreak &
+    Exploitation jailbreak (iOS 16--17) \\
+Effacement après 10~erreurs & 10~tentatives PIN incorrectes
+    $\to$ effacement total &
+    \textbf{Ne jamais tenter le brute-force PIN manuellement} \\
+\end{tableaucours}
+\vspace{-0.8em}
+\begin{center}{\small\itshape Tableau~16.4. Contraintes forensiques iOS}\end{center}
+
+\subsection{Sauvegarde iTunes/Finder~: extraction logique iOS}
+
+Si le téléphone est \textbf{déverrouillé} et que l'utilisateur fait
+confiance à l'ordinateur de l'investigateur~:
+
+\begin{boxoutils}{Extraction via sauvegarde iTunes (macOS/Windows)}
+\begin{lstlisting}[language=bash_forensique]
+# PREREQUIS : telephone deverrouille + "Faire confiance" accepte
+
+# macOS -- sauvegarde via Finder
+# Ouvrir Finder -> iPhone -> Sauvegarder maintenant
+# Emplacement : ~/Library/Application Support/MobileSync/Backup/
+
+# Windows -- sauvegarde via iTunes
+# Emplacement : %APPDATA%\Apple Computer\MobileSync\Backup\
+
+# Extraire la sauvegarde avec iMazing (ou outil forensique)
+# ou parser manuellement avec libimobiledevice :
+idevicebackup2 backup /output/ios_backup/
+
+# Parser la sauvegarde iOS avec iBackupBot ou iPhone Backup Extractor
+# Structure de la sauvegarde :
+# - Manifest.db (SQLite) : inventaire de tous les fichiers
+# - Manifest.plist : informations de l'appareil
+# - <domain>/<hash> : fichiers individuels
+
+# Interroger le Manifest.db
+sqlite3 ~/Library/Application\ Support/MobileSync/Backup/<UDID>/Manifest.db
+SELECT relativePath, domain, flags, fileID
+FROM Files
+WHERE relativePath LIKE '%Messages%'
+ORDER BY relativePath;
+\end{lstlisting}
+\end{boxoutils}
+
+\subsection{Analyse des bases iOS~: Messages et iCloud}
+
+\begin{boxoutils}{Analyse de sms.db iOS (messages iMessage et SMS)}
+\begin{lstlisting}[language=bash_forensique]
+-- Localiser le fichier Messages dans la sauvegarde
+-- Domain : HomeDomain, relativePath : Library/SMS/sms.db
+
+-- Extraire les messages
+sqlite3 /output/ios_backup/sms.db
+
+SELECT
+    datetime(date/1000000000 + 978307200, 'unixepoch',
+        'localtime') AS date_heure,
+    -- iOS date = secondes depuis 01/01/2001 (pas Unix epoch)
+    CASE is_from_me
+        WHEN 0 THEN h.id   -- expediteur (numero)
+        WHEN 1 THEN 'Moi'
+    END AS expediteur,
+    text AS message
+FROM message m
+LEFT JOIN handle h ON h.rowid = m.handle_id
+ORDER BY date;
+
+-- Attention a l'epoch iOS : +978307200 secondes (offset 2001 vs 1970)
+
+-- Contacts iOS (AddressBook.sqlitedb)
+SELECT
+    ABPerson.First, ABPerson.Last,
+    ABMultiValue.value AS telephone
+FROM ABPerson
+JOIN ABMultiValue ON ABMultiValue.record_id = ABPerson.rowid
+WHERE ABMultiValue.property = 3  -- propriete telephone
+ORDER BY ABPerson.Last;
+\end{lstlisting}
+\end{boxoutils}
+
+\begin{boiteRemarque}{L'epoch iOS~: piège fréquent}
+iOS utilise une epoch différente de Unix~: les timestamps iOS sont
+comptés \textbf{depuis le 1er~janvier~2001} (et non le
+1er~janvier~1970). L'offset est de 978~307~200~secondes.
+Ne pas appliquer cette conversion donne des dates situées en 1970,
+erreur immédiatement identifiable mais qui fragilise un rapport non relu.
+Pour les messages (iMessage), il faut en plus diviser par~$10^9$
+(nanoseconde~$\to$ seconde).
+\end{boiteRemarque}
+
+% ============================================================================
+\section{Autopsy pour la Forensique Mobile}
+\label{sec:autopsy-mobile}
+% ============================================================================
+
+\termecle{Autopsy}\index{Autopsy} (Brian Carrier, Basis Technology)
+intègre depuis la version~4 des modules d'analyse mobile qui automatisent
+une grande partie des analyses SQLite présentées dans ce chapitre.
+
+\begin{boxoutils}{Autopsy, analyse d'une extraction Android}
+\begin{lstlisting}[language=bash_forensique]
+# Workflow Autopsy pour forensique mobile :
+# 1. New Case -> Add Data Source -> Logical Files
+#    -> Selectionner le repertoire d'extraction ADB
+
+# 2. Modules a activer :
+#    - Android Analyzer : parse automatiquement mmssms.db, call_log,
+#      contacts, browser history
+#    - EXIF Parser : extrait toutes les metadonnees GPS
+#    - Keyword Search : recherche de termes (numeros, noms, montants)
+#    - Communication : reconstruit les conversations
+
+# 3. Resultats automatiques :
+#    Reports -> Data Artifacts -> Text Messages
+#                              -> Call Logs
+#                              -> Contacts
+#                              -> GPS Tracks (carte interactive)
+
+# Limitation importante :
+# Autopsy ne peut parser que ce qui est ACCESSIBLE
+# (extraction /sdcard)
+# Pour /data/data (root requis), il faut l'image complete du FS
+# via extraction physique (Cellebrite, UFED)
+
+# Export du rapport HTML pour le dossier judiciaire :
+# Generate Report -> HTML Report
+# Inclut horodatages, sources, et résumé par artefact
+\end{lstlisting}
+\end{boxoutils}
+
+\separateur
+
+% --- Encadré lab NDAP SUKULU ---
+\begin{boiteRemarque}{Notions mobilisées par le laboratoire INA-LAB-04}
+\begin{itemize}
+    \item \textbf{Dates Android}~: les bases (\texttt{mmssms.db},
+          \texttt{calllog.db}) stockent les dates en millisecondes depuis
+          le 1\textsuperscript{er}~janvier~1970, \emph{en UTC}. On divise
+          par~1000 (\texttt{datetime(date/1000,'unixepoch')}), puis on
+          ajoute l'heure légale du Cameroun (UTC$+$1). L'option
+          \texttt{'localtime'} dépend du fuseau de la machine d'analyse~:
+          la préciser dans le rapport.
+    \item \textbf{Écart entre deux événements}~: la différence de deux champs
+          \texttt{date}, divisée par~1000, donne des secondes~; un délai très
+          court entre la réception d'un code OTP et un débit trahit un
+          automate ou un complice en ligne.
+    \item \textbf{Table des appels}~: le champ \texttt{type} distingue les
+          appels entrants (1), sortants (2) et manqués (3)~; le champ
+          \texttt{duration} est en secondes.
+    \item \textbf{EXIF}~: \texttt{exiftool -n} affiche les coordonnées en
+          degrés décimaux, à reporter sur une carte~; le modèle d'appareil
+          figure dans le champ \texttt{Model}.
+\end{itemize}
+\end{boiteRemarque}
+
+\begin{boxresume}
+\textbf{Ce qu'il faut retenir de ce chapitre~:}
+\begin{itemize}
+    \item \textbf{Limite ADB sans root~:} \texttt{adb pull /sdcard/}
+          donne les médias et backups WhatsApp, mais pas les messages
+          chiffrés ni les données \texttt{/data/data}. La sauvegarde
+          \texttt{adb backup -all -apk} peut donner accès aux données
+          applicatives selon les réglages de l'application.
+
+    \item \textbf{SQLite = c\oe ur de l'analyse mobile~:} SMS
+          (\texttt{mmssms.db}), WhatsApp (\texttt{msgstore.db}),
+          appels, contacts, navigateur -- tout est en SQLite.
+          Les requêtes de ce chapitre sont directement réutilisables
+          en investigation.
+
+    \item \textbf{WhatsApp~:} médias en clair sur \texttt{/sdcard/WhatsApp/Media/}~;
+          messages chiffrés dans \texttt{.crypt15}. Clé dans
+          \texttt{/data/data/com.whatsapp/files/key} (root requis).
+          Documenter la situation dans le rapport~: ``messages non
+          déchiffrés faute de clé accessible''.
+
+    \item \textbf{EXIF GPS}~: chaque photo peut contenir des
+          coordonnées GPS précises. Utiliser \texttt{exiftool -csv -GPS*}
+          pour extraire en masse~; visualiser sur OpenStreetMap.
+
+    \item \textbf{Mobile Money}~: fraudes MoMo~$\to$ toujours
+          analyser \texttt{mmssms.db} (SMS OTP~; confirmations
+          de transactions) ET requérir les logs opérateur
+          (art.~57 Loi~2010). L'IMEI du téléphone fraudeur
+          est la clé de l'identification même si la SIM a changé.
+
+    \item \textbf{iOS~:} ne jamais tenter le brute-force PIN
+          (10~erreurs~$\to$ effacement). Extraction via sauvegarde
+          iTunes si téléphone déverrouillé. Attention à l'epoch
+          iOS~: offset +978~307~200~secondes vs Unix.
+
+    \item \textbf{Autopsy~:} automatise l'analyse des extractions
+          Android (SMS, appels, GPS, contacts, navigateur). Limitation~:
+          ne traite que ce qui est accessible (pas le \texttt{/data/data}
+          sans root).
+\end{itemize}
+\end{boxresume}
+
+\bigskip
+
+\begin{boxexo}[title={\ding{45}\quad Exercice~16.1. Requêtes SQLite \niveaubase}]
+Vous disposez de \texttt{mmssms.db} extrait du téléphone de BELLO Armand
+(Opération TANGUE). Rédigez les requêtes SQLite permettant de~:
+\begin{enumerate}[(a)]
+    \item Lister tous les SMS reçus entre le 1\textsuperscript{er} et
+          le 15~mars~2026, avec horodatage lisible et expéditeur.
+    \item Extraire tous les SMS contenant les mots ``code'', ``OTP'',
+          ou ``virement''.
+    \item Calculer le nombre de SMS échangés avec le numéro
+          \texttt{+237677XXXXXX} par jour (un résultat par jour).
+    \item Identifier tous les SMS d'un expéditeur qui a envoyé
+          plus de 50~messages en un seul jour (indicateur d'automatisation).
+\end{enumerate}
+\end{boxexo}
+
+\begin{boxexo}[title={\ding{45}\quad Exercice~16.2. Fraude MoMo \niveaumoyen}]
+Dans l'affaire BAOBAB, la victime FOUDA Clément a perdu 250~000~FCFA.
+L'analyse de son téléphone révèle les SMS suivants dans \texttt{mmssms.db}~:
+\begin{lstlisting}[language=bash_forensique]
+-- Extrait :
+date_heure            expediteur    contenu
+2026-01-15 14:22:11   670000000
+    "Votre code OTP MoMo est 847293. Ne le partagez jamais."
+2026-01-15 14:22:15   +237677000123
+    "Salut. Je travaille chez MTN. Donnez-moi votre code pour
+     verifier votre compte."
+2026-01-15 14:22:45   670000000
+    "Vous avez envoye 250000 FCFA a 677000123. Solde : 3400 FCFA"
+\end{lstlisting}
+\begin{enumerate}[(a)]
+    \item Qualifiez juridiquement les infractions commises (articles
+          précis des Lois~2010 et~2024).
+    \item Que demandez-vous dans la réquisition à MTN Cameroun~?
+          Listez les 5~informations indispensables.
+    \item Comment l'IMEI peut-il aider l'enquête si le fraudeur
+          a changé de SIM après la fraude~?
+    \item Rédigez la constatation forensique correspondante à partir
+          des SMS ci-dessus, en appliquant la distinction
+          constatation/interprétation.
+\end{enumerate}
+\end{boxexo}
+
+\begin{boxexo}[title={\ding{45}\quad Exercice~16.3. Investigation mobile complète \niveauexpert}]
+Vous avez en custody le téléphone Samsung Galaxy A53 de MBONGO Joseph
+(EV-002, Chapitre~8~(UE~SEC4031)). L'extraction ADB a produit
+les données suivantes dans \texttt{/output/extraction\_EV002/}~:
+\begin{itemize}
+    \item \texttt{/sdcard/} (photos, téléchargements, backups WhatsApp)~;
+    \item \texttt{mmssms.db}, \texttt{call\_log.db}, \texttt{contacts2.db}~;
+    \item \texttt{/sdcard/WhatsApp/Databases/msgstore.db.crypt15}~;
+    \item \texttt{/sdcard/WhatsApp/Media/WhatsApp Images/} (23~images).
+\end{itemize}
+\begin{enumerate}[(a)]
+    \item Planifiez l'analyse~: dans quel ordre analyser ces sources~?
+          Quelle question investigative posez-vous à chaque source~?
+    \item Les messages WhatsApp sont dans \texttt{.crypt15} (chiffrés).
+          Quelles sont vos options légales et techniques pour y accéder~?
+          Que documentez-vous si l'accès est impossible~?
+    \item \texttt{exiftool} révèle que la photo
+          \texttt{IMG-20260115-WA0003.jpg} a des coordonnées GPS
+          situées à 200~mètres du siège de SONATRAV~SA à 14h28.
+          L'affaire principale concerne un virement frauduleux
+          depuis les comptes de SONATRAV. Quelle valeur probatoire
+          accordez-vous à cette photo~? Rédigez la constatation et
+          l'analyse correspondantes.
+    \item Rédigez la section ``Artefacts mobiles'' du rapport d'expertise,
+          couvrant les 4~sources analysées, avec pour chacune~:
+          méthode d'extraction, artefacts trouvés, valeur probatoire.
+\end{enumerate}
+\end{boxexo}
+
+\bigskip
+
+\begin{boxinfo}
+\textbf{Transition.} Une grande partie des données du téléphone
+ne réside plus sur l'appareil~: sauvegardes, messageries et comptes
+sont synchronisés chez des fournisseurs étrangers. Le chapitre
+suivant traite cette forensique du cloud. Plus loin, le
+Chapitre~\ref{chap:anti-for} (Anti-Forensique et Contre-Mesures)
+reviendra sur les techniques d'effacement propres aux téléphones
+(factory reset, applications «~vault~», suppression sélective) et
+sur la manière d'en documenter l'existence.
+\end{boxinfo}

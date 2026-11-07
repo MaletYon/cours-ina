@@ -1,0 +1,65 @@
+SPEC = [
+    {"k": "title", "tag": "Jour 4 / 30 · Séance de 2 heures", "title": "Forensique réseau (2) : sessions, journaux, corrélation",
+     "sub": "Chaque source seule est un fragment ; la corrélation révèle l'image.",
+     "right": "Partie IV · Chapitre C15 §15.4-15.6"},
+    {"k": "synthese", "title": "Rappel de la séance précédente", "kicker": "Jour 3 · Sonde et flux", "items": [
+        "SPAN, TAP, agent, journaux : **ce qu'on voit, ce qu'on rate**",
+        "Métriques d'anomalie ; **Follow TCP Stream**",
+        "Exfiltration, **tunnel DNS**, **beaconing**",
+    ]},
+    {"k": "agenda", "items": [
+        ("25 min", "**Reconstituer un courriel SMTP** : WOURI"),
+        ("10 min", "**FTP** : des transferts en clair"),
+        ("25 min", "**Sans capture** : pare-feu, proxy, DNS"),
+        ("25 min", "**Corrélation** multi-sources et horloges"),
+        ("15 min", "**Admissibilité** des journaux réseau"),
+        ("20 min", "**Exercice** : plan WOURI · fiche C15 · LAB-03"),
+    ]},
+    {"k": "scenario", "title": "Reconstituer un courriel frauduleux", "label": "WOURI · capture de SOTRADI SA", "text": [
+        "Repérer la session **SMTP** suspecte, puis Follow TCP Stream : enveloppe et en-têtes.",
+        "**MAIL FROM** : contact@medequip-portugal.com ; **X-Originating-IP** : 91.XXX.XX.XX ; **Received** : transit par des serveurs étrangers.",
+        "Constatation : l'en-tête désigne une adresse **enregistrée** dans un pays selon le WHOIS consulté à une date donnée ; ni l'identité ni la nationalité de l'auteur ne sont établies."]},
+    {"k": "compare", "title": "Enveloppe et en-têtes", "kicker": "Les marqueurs d'usurpation",
+     "left": {"head": "Ce qui se falsifie", "items": ["L'expéditeur **affiché** (From)", "Le nom du fournisseur imité", "Le domaine voisin (typosquatting)"]},
+     "right": {"head": "Ce qui trahit", "items": ["L'écart entre **MAIL FROM** et From", "**Received** : la chaîne des relais", "**X-Originating-IP** : l'adresse d'origine", "SPF, DKIM, DMARC en échec"]}},
+    {"k": "table", "title": "Travailler sans capture", "kicker": "La situation la plus courante", "head": ["Source", "Ce qu'elle donne", "Usage"], "widths": [2.8, 4.6, 5.0], "rows": [
+        ["Pare-feu", "Flux autorisés ou refusés, IP, ports, octets", "Volumes sortants, destinations, heures"],
+        ["Proxy web", "URL, méthode, User-Agent, octets", "POST volumineux, User-Agent inhabituel (python-requests)"],
+        ["DNS", "Noms résolus, client, heure", "Domaines rares, tunnels, préparation d'une connexion"],
+    ], "note": "Moins riches qu'une capture, mais **souvent disponibles** et **conservés** par l'exploitation normale du réseau."},
+    {"k": "table", "title": "Corréler les sources", "kicker": "Section 15.6", "head": ["Source", "Apport", "Exemple de corrélation"], "widths": [2.4, 3.6, 6.4], "rows": [
+        ["Capture", "IP, ports, contenu", "Connexion à 02:14:09 ↔ SSH Accepted dans journald à 02:14:09"],
+        ["Pare-feu", "Volumes", "45 Mo sortants à 02:19 ↔ accès à 847 fichiers à 02:18"],
+        ["DNS", "Noms résolus", "Résolution à 02:13 → connexion vers cette adresse à 02:14"],
+        ["Proxy", "URL, User-Agent", "python-requests depuis le poste du comptable : inhabituel"],
+    ], "note": "Avant de fusionner : mesurer l'**écart d'horloge** de chaque source sur un événement commun, puis corriger toutes ses heures."},
+    {"k": "scenario", "title": "MVOM : réseau et système fusionnés", "label": "La séquence complète", "text": [
+        "02:13 : résolution DNS préparatoire. 02:14 : accès **root** par force brute SSH, puis canal de commande (port 4444).",
+        "02:16-02:18 : téléchargement et exécution du rançongiciel.",
+        "02:19 : **45 Mo** exfiltrés, vraisemblablement avant chiffrement ; fermeture du canal à 02:19:48."]},
+    {"k": "points", "title": "Admissibilité des journaux réseau", "kicker": "Droit camerounais", "items": [
+        "Des **données informatiques** au sens de la loi n° 2010/012 (art. 4)",
+        "**Origine légale** : conservés dans l'exploitation normale (loi n° 2024/017, art. 27 : traçabilité)",
+        "**Intégrité** : empreinte SHA-256 à la saisie ; **custody** du serveur au tribunal",
+        "Un **expert agréé** atteste l'authenticité et l'interprétation",
+    ]},
+    {"k": "exercice", "title": "Plan d'investigation WOURI", "duree": "20 minutes, en binôme",
+     "text": "Sources : capture sotradi.pcap (14-15 janvier), journaux pare-feu, proxy et DNS (30 jours), image du poste du comptable, RAM du serveur de messagerie.",
+     "questions": [
+        "Dans quel ordre analyser, avec quelle question pour chaque source ?",
+        "Comment corréler le DNS et le SMTP de la capture ?",
+        "Analyse CRO de l'ouverture des pièces jointes : qui, quelle base légale ?",
+     ],
+     "notes": "Corrigé (exercice 15.3). RAM d'abord, puis capture (SMTP), DNS, proxy et pare-feu, image du poste. Écart d'horloge sur une résolution vue des deux côtés, UTC, timeline unique. Pièces jointes : accès limité, environnement isolé, autorisation du magistrat."},
+    {"k": "synthese", "items": [
+        "**SMTP** : MAIL FROM, Received, X-Originating-IP ; une IP n'est pas une personne",
+        "**Sans capture** : pare-feu, proxy, DNS",
+        "**Corréler** après avoir corrigé les horloges",
+        "Les journaux sont des preuves : **origine, intégrité, custody, expert**",
+    ]},
+    {"k": "maison", "lecture": ["Chapitre 15 et son encadré « Notions mobilisées par les laboratoires INA-LAB-02 et 03 »", "NDAP SUKULU : **fiche C15** et **INA-LAB-03** (journaux sans capture)"]},
+    {"k": "fin", "next": "Jour 5 · Forensique mobile (1)", "items": [
+        "L'architecture de stockage Android",
+        "Interroger les bases SQLite",
+        "Géolocalisation et EXIF"]},
+]

@@ -1,0 +1,561 @@
+% ============================================================================
+% Fichier  : partie6/P06_C26_impact_quantique.tex
+% Titre    : Impact du Quantique sur l'Investigation Numérique
+% Auteur   : MINKA MI NGUIDJOÏ Thierry Emmanuel
+% Version  : 1.0 -- Juin 2026
+% ============================================================================
+
+\chapter{Impact du Quantique sur l'Investigation Numérique}
+\label{chap:quantique}
+
+\epigraph{%
+    « Quantum computing will change everything we know about digital
+    security and forensics. Preparation isn't optional, it's
+    essential. »%
+}{Whitfield Diffie}
+
+\niveauChapitre{Expert}{%
+    Notions de cryptographie symétrique et asymétrique requises.
+    Chapitres~8~(UE~SEC4031) (hash, intégrité) et
+    11~(UE~SEC4031) (eIDAS, signatures qualifiées) indispensables~:
+    ce chapitre interroge leur pérennité à long terme.%
+}
+
+\begin{boxobjectifs}
+\begin{itemize}
+    \item Comprendre, sans détail mathématique excessif, pourquoi
+          les algorithmes de Shor et Grover menacent la cryptographie
+          actuelle et selon quel calendrier réaliste.
+    \item Identifier précisément quels mécanismes forensiques du
+          cours reposent sur une cryptographie potentiellement
+          vulnérable~: hash, signatures, horodatage.
+    \item Comprendre la menace ``\textit{Harvest Now, Decrypt Later}''
+          et son impact sur les preuves numériques actuelles et futures.
+    \item Connaître les standards de cryptographie post-quantique
+          (PQC) effectivement normalisés par le NIST.
+    \item Évaluer de façon critique les affirmations sur l'imminence
+          de la menace quantique, en distinguant le consensus
+          scientifique des spéculations commerciales.
+    \item Formuler des recommandations pragmatiques pour la
+          pratique forensique camerounaise actuelle.
+\end{itemize}
+\end{boxobjectifs}
+
+\bigskip
+
+% ============================================================================
+\section*{Pourquoi ce chapitre ouvre la Partie~VI}
+% ============================================================================
+
+Tout au long de ce cours, le hash SHA-256 a été présenté comme la
+garantie ultime de l'intégrité d'une preuve (Ch.~8~(UE~SEC4031))~;
+la signature électronique qualifiée comme la garantie ultime de
+l'authenticité d'un document (Ch.~11~(UE~SEC4031))~. Ces garanties
+reposent sur une hypothèse implicite~: qu'aucun adversaire ne dispose
+de la puissance de calcul nécessaire pour les casser. L'informatique
+quantique, si elle atteint la maturité technique annoncée, lève
+précisément cette hypothèse.
+
+Ce chapitre ne prétend pas résoudre cette question, elle reste,
+en juin~2026, un sujet de recherche actif et débattu. Il vise à vous
+donner les moyens de comprendre l'enjeu, d'évaluer les affirmations
+que vous rencontrerez sur ce sujet avec un esprit critique, et
+d'adopter dès aujourd'hui des pratiques raisonnables sans céder
+à un alarmisme commercial.
+
+\separateur
+
+% ============================================================================
+\section{La Menace Quantique~: ce que Disent Réellement Shor et Grover}
+\label{sec:menace-quantique}
+% ============================================================================
+
+\subsection{L'algorithme de Shor}
+
+\begin{boxdef}
+\textbf{Algorithme de Shor}\index{Shor, algorithme de} (Peter Shor,
+1994)~: algorithme quantique permettant de factoriser de grands
+nombres entiers et de résoudre le problème du logarithme discret
+en temps polynomial, contre un temps exponentiel pour les
+meilleurs algorithmes classiques connus. Sa portée pratique dépend
+entièrement de la disponibilité d'un \textbf{ordinateur quantique
+suffisamment puissant et stable} pour l'exécuter sur des clés de
+taille réelle, ce qui n'est pas le cas en~2026.
+\end{boxdef}
+
+L'algorithme de Shor menace directement les cryptosystèmes à clé
+publique fondés sur la difficulté de factorisation ou du logarithme
+discret~:
+
+\begin{tableaucours}{p{3.0cm}p{3.5cm}p{4.5cm}}{%
+    \tableauHeader{Algorithme} &
+    \tableauHeader{Fondement mathématique} &
+    \tableauHeader{Usage forensique concerné (ce cours)}
+}
+\textbf{RSA} & Factorisation de grands entiers &
+    Signatures électroniques (Ch.~11~(UE~SEC4031)),
+    chiffrement TLS (Ch.~\ref{chap:for-res}) \\
+\textbf{ECC / ECDSA} & Logarithme discret sur courbes elliptiques &
+    Signatures électroniques modernes, Bitcoin (Ch.~\ref{chap:for-cloud})~;
+    plus efficace que RSA, donc largement adopté \\
+\textbf{Diffie-Hellman} & Logarithme discret &
+    Établissement de clés pour connexions chiffrées (VPN, TLS) \\
+\end{tableaucours}
+\vspace{-0.8em}
+\begin{center}{\small\itshape Tableau~26.1. Cryptosystèmes vulnérables à Shor}\end{center}
+
+\begin{boxalert}
+\textbf{Sur les chiffres de qubits~: prudence méthodologique}
+
+Des estimations publiées dans la littérature scientifique évoquent
+des ordres de grandeur de plusieurs milliers de \textbf{qubits
+logiques} (et non physiques) nécessaires pour casser RSA-2048 dans
+des délais opérationnels. Ces estimations varient significativement
+selon les hypothèses techniques retenues (taux de correction
+d'erreur, architecture). \textbf{Aucun consensus scientifique
+ferme} n'existe en~2026 sur un calendrier précis. Méfiez-vous de
+toute affirmation présentant une date exacte (``RSA cassé en~2035'')
+comme un fait établi~: il s'agit, au mieux, de projections
+spéculatives sujettes à révision constante.
+\end{boxalert}
+
+\subsection{L'algorithme de Grover}
+
+\begin{boxdef}
+\textbf{Algorithme de Grover}\index{Grover, algorithme de}
+(Lov Grover, 1996)~: algorithme quantique offrant une
+\textbf{accélération quadratique} (et non exponentielle) pour
+la recherche dans une base de données non structurée. Appliqué
+au cassage de clés symétriques, il réduit effectivement la
+sécurité d'une clé de $n$~bits à environ~$n/2$~bits
+``équivalent classique''.
+\end{boxdef}
+
+\begin{boxCRO}
+\textbf{Analyse CRO. Pourquoi Grover est une menace bien moindre que Shor}
+
+L'accélération de Grover est \textbf{quadratique}, pas exponentielle.
+Concrètement~: une clé AES-256 (utilisée dans le chiffrement
+BitLocker du Ch.~9~(UE~SEC4031), le principe 3-2-1 du
+Ch.~6~(UE~SEC4031)) offrirait, face à un ordinateur quantique
+exploitant Grover, une sécurité ``équivalente'' à environ
+128~bits classiques, ce qui reste largement considéré comme
+sûr selon les standards actuels.
+
+$\mathcal{R}$~: la menace de Grover sur AES-256 est gérable
+simplement en doublant la longueur de clé (AES-128~$\to$~AES-256)~;
+elle ne nécessite pas de nouvel algorithme.
+
+$\mathcal{O}$/$\mathcal{C}$~: la véritable rupture concerne la
+cryptographie asymétrique (Shor), pas symétrique (Grover), une
+distinction souvent floutée dans les discours non spécialisés.
+
+\cro{$\sim$ non affecté}{$\sim$ AES-256 reste robuste}{$\sim$ non affecté}
+
+\textbf{Conséquence pratique~:} pour le chiffrement symétrique
+utilisé en forensique (BitLocker, VeraCrypt, Ch.~6~(UE~SEC4031)),
+l'usage déjà recommandé d'AES-256 plutôt qu'AES-128 constitue
+une protection raisonnable face à Grover. La vraie urgence
+concerne les signatures et le chiffrement asymétrique.
+\end{boxCRO}
+
+% ============================================================================
+\section{``Harvest Now, Decrypt Later''~: Implication pour les Preuves}
+\label{sec:harvest-now}
+% ============================================================================
+
+\subsection{Le mécanisme de la menace}
+
+\begin{boxdef}
+\textbf{Harvest Now, Decrypt Later}\index{Harvest Now, Decrypt Later}~:
+stratégie consistant, pour un adversaire, à intercepter et stocker
+aujourd'hui des communications chiffrées qu'il ne peut pas
+déchiffrer actuellement, dans l'attente qu'un ordinateur quantique
+suffisamment puissant devienne disponible pour les déchiffrer
+\textit{a posteriori}.
+\end{boxdef}
+
+Cette stratégie est documentée comme une préoccupation sérieuse
+des agences de sécurité nationale (notamment américaines et
+britanniques, qui ont publiquement justifié leurs feuilles de
+route de migration PQC par ce risque), indépendamment de
+l'incertitude sur le calendrier exact de la menace.
+
+\subsection{Implication directe pour la forensique}
+
+\begin{boxCRO}
+\textbf{Analyse CRO. Harvest Now, Decrypt Later et preuves numériques}
+
+Cette menace inverse une intuition habituelle du cours~: jusqu'ici,
+le risque pour une preuve portait sur son \textbf{intégrité présente}
+(a-t-elle été altérée~?). La menace HNDL porte sur sa
+\textbf{confidentialité future}~: des données chiffrées aujourd'hui
+de façon réputée sûre (communications interceptées légalement,
+Ch.~\ref{chap:for-res}~; données saisies chiffrées, Ch.~9~(UE~SEC4031))
+pourraient devenir lisibles dans~10 à~20~ans par un tiers ayant
+conservé une copie.
+
+$\mathcal{C}$~: pour des données à \textbf{durée de sensibilité
+longue} (affaires d'État, données de santé du Ch.~\ref{chap:for-iot},
+secrets industriels), cette menace est directement pertinente
+\emph{dès aujourd'hui}, car le chiffrement appliqué maintenant
+devra rester sûr pendant des décennies.
+
+$\mathcal{R}$/$\mathcal{O}$~: pour la plupart des affaires
+forensiques courantes traitées dans ce cours (fraude MoMo,
+ransomware, BEC), l'horizon temporel pertinent
+(quelques années jusqu'au jugement) rend cette menace moins
+urgente que pour des données à très longue durée de sensibilité.
+
+\cro{$\downarrow\downarrow$ pour données longue durée}{$\sim$}{$\sim$}
+\end{boxCRO}
+
+% ============================================================================
+\section{Impact sur la Chaîne de Custody et l'Intégrité Long Terme}
+\label{sec:impact-custody}
+% ============================================================================
+
+\subsection{Trois mécanismes du cours potentiellement concernés}
+
+\begin{tableaucours}{p{3.5cm}p{4.0cm}p{4.5cm}}{%
+    \tableauHeader{Mécanisme (chapitre)} &
+    \tableauHeader{Fondement cryptographique} &
+    \tableauHeader{Vulnérabilité quantique}
+}
+Hash SHA-256
+    (Ch.~8~(UE~SEC4031)) & Fonction de hachage, pas de
+    clé publique/privée &
+    \textbf{Non vulnérable à Shor.} Affaibli par Grover, mais
+    SHA-256 offre une marge de sécurité suffisante
+    (cf.~Analyse CRO ci-dessus) \\
+Signature électronique
+    qualifiée eIDAS
+    (Ch.~11~(UE~SEC4031)) & Typiquement RSA ou ECDSA &
+    \textbf{Vulnérable à Shor} si et quand un ordinateur quantique
+    suffisant existe \\
+Horodatage qualifié
+    (Ch.~11~(UE~SEC4031)) & Repose sur une signature
+    (RSA/ECDSA) de l'autorité d'horodatage &
+    \textbf{Vulnérable indirectement}, via la signature
+    sous-jacente \\
+\end{tableaucours}
+\vspace{-0.8em}
+\begin{center}{\small\itshape Tableau~26.2. Mécanismes forensiques et vulnérabilité quantique}\end{center}
+
+\begin{boiteRemarque}{Une nuance importante~: hash et signature ne sont
+pas équivalents face au quantique}
+Une confusion fréquente mérite d'être dissipée~: le \textbf{hash
+SHA-256} qui garantit l'intégrité d'une image E01 (Ch.~9~(UE~SEC4031))
+n'est \textbf{pas} menacé de la même façon qu'une \textbf{signature
+RSA/ECDSA} qui authentifie un document. Les fonctions de hachage
+ne reposent pas sur la difficulté de factorisation, elles
+résistent structurellement mieux à l'algorithme de Shor. C'est
+la cryptographie asymétrique (signatures, échange de clés) qui
+constitue le point de rupture principal, pas le hachage utilisé
+quotidiennement en forensique.
+\end{boiteRemarque}
+
+\subsection{Le problème du re-timestamping}
+
+Si l'algorithme de signature sous-jacent à un horodatage qualifié
+devient un jour cassable, l'horodatage perd sa valeur probatoire
+de \textit{preuve d'antériorité}. La pratique de
+\textbf{re-timestamping périodique} (réappliquer un nouvel
+horodatage, avec un algorithme à jour, sur une preuve archivée
+avant que l'algorithme original ne soit compromis) est une
+recommandation déjà formulée par certaines autorités
+d'archivage à long terme (notamment dans le domaine de
+l'archivage légal électronique), indépendamment du calendrier
+précis de la menace quantique.
+
+% ============================================================================
+\section{Cryptographie Post-Quantique~: Standards Réellement Normalisés}
+\label{sec:pqc-standards}
+% ============================================================================
+
+\subsection{Les standards NIST FIPS}
+
+Contrairement à une partie significative du discours sur le sujet,
+le NIST a effectivement publié des \textbf{standards finalisés}
+de cryptographie post-quantique (PQC), et non de simples
+propositions~:
+
+\begin{tableaucours}{p{3.2cm}p{2.8cm}p{4.5cm}}{%
+    \tableauHeader{Algorithme} &
+    \tableauHeader{Standard NIST} &
+    \tableauHeader{Usage}
+}
+\textbf{CRYSTALS-Kyber} & FIPS~203
+    (\textit{ML-KEM}) & Encapsulation de clés (échange de
+    clés sécurisé), standard principal \\
+\textbf{CRYSTALS-Dilithium} & FIPS~204
+    (\textit{ML-DSA}) & Signatures numériques, standard
+    principal \\
+\textbf{SPHINCS+} & FIPS~205
+    (\textit{SLH-DSA}) & Signatures fondées sur le hachage
+    (alternative, plus conservatrice mathématiquement) \\
+\textbf{FALCON} & En cours de
+    standardisation & Signatures compactes, fondées sur les
+    réseaux euclidiens (NTRU) \\
+\end{tableaucours}
+\vspace{-0.8em}
+\begin{center}{\small\itshape Tableau~26.3. Standards PQC du NIST}\end{center}
+
+\begin{boiteRemarque}{Ce qui distingue un standard authentique d'une
+affirmation marketing}
+La publication d'un \textbf{FIPS} (\textit{Federal Information
+Processing Standard}) par le NIST est un processus public,
+documenté, avec plusieurs années de revue par la communauté
+cryptographique internationale. Quand vous rencontrez une
+affirmation sur un algorithme ``post-quantique'', vérifiez
+systématiquement~: s'agit-il d'un FIPS publié (vérifiable sur
+\texttt{csrc.nist.gov}), d'un candidat encore en évaluation, ou
+d'une simple allégation commerciale~? Cette vérification est
+une application directe de l'esprit critique developpé tout au
+long de ce cours (Ch.~7~(UE~SEC4031)~: distinguer un standard
+réel d'une affirmation non sourcée).
+\end{boiteRemarque}
+
+\subsection{Migration hybride~: la pratique recommandée actuelle}
+
+La transition recommandée par les agences de cybersécurité
+occidentales (NSA, ANSSI, NCSC-UK) n'est \textbf{pas} un
+remplacement immédiat et total de la cryptographie classique,
+mais une approche \textbf{hybride}~: combiner un algorithme
+classique éprouvé (RSA ou ECC) avec un algorithme post-quantique
+normalisé, de sorte que la sécurité globale repose sur la
+robustesse du \emph{plus fort} des deux mécanismes.
+
+\begin{boxoutils}{Principe de la migration hybride (vue conceptuelle)}
+\begin{lstlisting}[language=bash_forensique]
+# PRINCIPE (illustration conceptuelle, pas une implementation a
+# copier telle quelle -- toujours utiliser des bibliotheques
+# cryptographiques auditees et maintenues, jamais de code
+# cryptographique fait maison)
+
+# Etablissement de cle hybride classique + post-quantique :
+# 1. Generer un secret partage via ECDH (classique, eprouve)
+# 2. Generer un secret partage via Kyber/ML-KEM (post-quantique)
+# 3. Combiner les deux secrets (ex: via une fonction de derivation
+#    de cle type HKDF) pour obtenir la cle finale
+#
+# Securite resultante = securite du MEILLEUR des deux mecanismes
+# Un attaquant doit casser LES DEUX pour compromettre la cle
+
+# Implementations reelles et auditees (a la date de redaction) :
+# - OpenSSL 3.2+ : support experimental ML-KEM
+# - liboqs (Open Quantum Safe project, OQS) : bibliotheque
+#   de reference pour l'experimentation PQC
+# - Signal Protocol : a deploye PQXDH (hybride X25519 + Kyber)
+#   en production des 2023 pour l'echange de cles
+\end{lstlisting}
+\end{boxoutils}
+
+% ============================================================================
+\section{``Quantum Forensics''~: Distinguer Recherche et Pratique Établie}
+\label{sec:quantum-forensics-critique}
+% ============================================================================
+
+\begin{boxalert}
+\textbf{Mise en garde sur les affirmations de ``forensique quantique''}
+
+Certains discours évoquent des concepts comme l'``authentification
+quantique inviolable'', le ``scellement quantique de preuves''
+(\textit{quantum seal}) ou la détection automatisée de génération
+quantique aléatoire par de simples tests statistiques de seuil.
+
+\textbf{Évaluation critique, conforme à la méthode de ce cours
+(distinction constatation/analyse, Ch.~7~(UE~SEC4031))~:}
+\begin{itemize}
+    \item Ces concepts relèvent, en~2026, de la \textbf{recherche
+          exploratoire}, pas de pratiques forensiques établies
+          ou normalisées~;
+    \item Aucun standard international (ISO, NIST) ne définit
+          actuellement de procédure de ``scellement quantique''
+          opérationnelle pour la chaîne de custody~;
+    \item La distinction entre un générateur de nombres aléatoires
+          quantique (QRNG) et un générateur pseudo-aléatoire
+          classique (PRNG) sophistiqué par de simples tests
+          statistiques de surface est un sujet de recherche actif
+          et non trivial, une affirmation présentant cela comme
+          une procédure forensique simple et fiable doit être
+          accueillie avec un scepticisme appuyé.
+\end{itemize}
+\textbf{Posture recommandée~:} appliquer ici exactement le même
+principe qu'au Ch.~\ref{chap:rapport} pour toute affirmation
+technique dans un rapport forensique, citer la source, le
+niveau de maturité réel (norme publiée~? article de recherche~?
+communiqué commercial~?), et ne jamais présenter une hypothèse
+de recherche comme une pratique établie.
+\end{boxalert}
+
+% ============================================================================
+\section{Recommandations Pragmatiques pour la Pratique Actuelle}
+\label{sec:recommandations-pratiques}
+% ============================================================================
+
+\subsection{Ce qui est raisonnable de faire dès aujourd'hui}
+
+\begin{enumerate}
+    \item \textbf{Continuer à utiliser SHA-256 (voire SHA-512)}
+          pour le hachage d'intégrité (Ch.~8~(UE~SEC4031))~:
+          ces fonctions ne sont pas la priorité de la menace
+          quantique et restent le standard recommandé.
+    \item \textbf{Privilégier AES-256 à AES-128} pour le chiffrement
+          symétrique de longue conservation (sauvegardes
+          forensiques, Ch.~6~(UE~SEC4031))~: marge de sécurité
+          suffisante face à Grover, sans coût opérationnel
+          significatif.
+    \item \textbf{Pour les preuves à très longue durée de
+          sensibilité} (affaires d'État, données de santé,
+          secrets industriels, Ch.~\ref{chap:for-iot})~: envisager
+          un re-timestamping périodique et suivre l'évolution
+          des recommandations PQC des autorités internationales
+          de référence.
+    \item \textbf{Documenter dans le rapport forensique}
+          (Ch.~\ref{chap:rapport}) l'algorithme de signature
+          utilisé pour tout horodatage qualifié, afin de faciliter
+          une future ré-authentification si nécessaire.
+    \item \textbf{Ne pas céder à l'urgence commerciale}~: pour
+          la quasi-totalité des affaires traitées dans ce cours
+          (durée de pertinence~: quelques années), la menace
+          quantique n'impose aucun changement de pratique immédiat
+          au-delà des bonnes pratiques déjà recommandées
+          (SHA-256, AES-256).
+\end{enumerate}
+
+\begin{boxjuris}
+\textbf{Application au cadre camerounais}
+
+La \loicam{2024/017}~\cite{cameroun2024donnees} (Ch.~12~(UE~SEC4031)) impose, en son
+art.~27, des ``mesures techniques et organisationnelles
+appropriées'' pour la sécurité des données. Cette obligation
+de proportionnalité s'applique également à l'anticipation
+quantique~: un responsable de traitement gérant des données de
+santé ou des secrets d'État doit raisonnablement intégrer cette
+menace à son analyse de risque~; un commerce de détail traitant
+des données clients courantes n'a pas la même urgence. La
+proportionnalité, principe déjà rencontré au Ch.~12~(UE~SEC4031),
+s'applique pleinement à la planification de la transition PQC.
+\end{boxjuris}
+
+\separateur
+
+\begin{boxresume}
+\textbf{Ce qu'il faut retenir de ce chapitre~:}
+\begin{itemize}
+    \item \textbf{Shor menace la cryptographie asymétrique}
+          (RSA, ECC, signatures, échange de clés), rupture
+          potentiellement totale, mais sans calendrier scientifique
+          consensuel précis.
+
+    \item \textbf{Grover affaiblit la cryptographie symétrique}
+          de façon \textbf{quadratique seulement}~: AES-256 reste
+          robuste face à cette menace (équivalent~128~bits classiques).
+          Ne pas confondre l'ampleur des deux menaces.
+
+    \item \textbf{Le hash SHA-256} qui garantit l'intégrité des
+          preuves (Ch.~8~(UE~SEC4031)) n'est \textbf{pas}
+          structurellement menacé comme une signature RSA/ECDSA~:
+          distinction essentielle souvent confondue.
+
+    \item \textbf{Harvest Now, Decrypt Later}~: pertinent dès
+          aujourd'hui pour les données à \emph{longue} durée de
+          sensibilité~; moins urgent pour la majorité des affaires
+          forensiques courantes de ce cours.
+
+    \item \textbf{Standards PQC réels~:} FIPS~203 (Kyber/ML-KEM),
+          FIPS~204 (Dilithium/ML-DSA), FIPS~205 (SPHINCS+/SLH-DSA), vérifiables sur \texttt{csrc.nist.gov}. La migration
+          recommandée est \textbf{hybride}, pas un remplacement brutal.
+
+    \item \textbf{Posture critique obligatoire}~: distinguer
+          systématiquement un standard publié d'une affirmation
+          commerciale ou d'une hypothèse de recherche
+          (``quantum seal'', ``authentification quantique
+          inviolable''), même méthode que la distinction
+          constatation/analyse du Ch.~\ref{chap:rapport}.
+
+    \item \textbf{Recommandations pragmatiques}~: SHA-256/512
+          et AES-256 restent appropriés aujourd'hui~; re-timestamping
+          périodique pour les preuves à très longue durée de
+          sensibilité~; documentation systématique des algorithmes
+          utilisés~; proportionnalité du risque (art.~27
+          Loi~2024/017).
+\end{itemize}
+\end{boxresume}
+
+\bigskip
+
+\begin{boxexo}[title={\ding{45}\quad Exercice~26.1. Distinguer les menaces \niveaubase}]
+Pour chacun des mécanismes suivants, rencontrés dans ce cours,
+indiquez s'il est principalement menacé par Shor, par Grover,
+par les deux, ou par aucun des deux, et justifiez~:
+\begin{enumerate}[(a)]
+    \item Le hash SHA-256 d'une image E01 (Ch.~9~(UE~SEC4031)).
+    \item Une signature électronique qualifiée eIDAS sur un
+          document européen (Ch.~11~(UE~SEC4031)).
+    \item Le chiffrement BitLocker (AES-256) d'un disque dur
+          saisi (Ch.~6~(UE~SEC4031)).
+    \item L'établissement d'une connexion TLS lors d'une capture
+          réseau (Ch.~\ref{chap:for-res}).
+\end{enumerate}
+\end{boxexo}
+
+\begin{boxexo}[title={\ding{45}\quad Exercice~26.2. Esprit critique appliqué \niveaumoyen}]
+Un fournisseur de solutions de sécurité vous présente la publicité
+suivante~: ``Notre coffre-fort numérique offre une authentification
+quantique inviolable grâce à notre technologie de scellement
+quantique propriétaire, garantissant une protection absolue
+contre toute menace présente et future.''
+\begin{enumerate}[(a)]
+    \item Appliquez la grille d'évaluation critique de la
+          Section~\ref{sec:quantum-forensics-critique}~: quelles
+          questions précises poseriez-vous à ce fournisseur~?
+    \item Quels éléments de cette publicité relèvent du marketing
+          plutôt que d'un standard vérifiable~?
+    \item Si vous deviez recommander une solution de protection
+          réelle pour des preuves à longue durée de sensibilité,
+          que recommanderiez-vous à la place, en vous appuyant
+          sur les standards effectivement normalisés
+          (Section~\ref{sec:pqc-standards})~?
+\end{enumerate}
+\end{boxexo}
+
+\begin{boxexo}[title={\ding{45}\quad Exercice~26.3. Politique d'archivage à long terme \niveauexpert}]
+L'hôpital de l'affaire SANAGA (Ch.~\ref{chap:cas-int}) doit conserver
+les dossiers patients chiffrés pendant~30~ans conformément à la
+réglementation sur les données de santé. Vous êtes consulté pour
+définir une politique de protection cryptographique à long terme.
+\begin{enumerate}[(a)]
+    \item Appliquez le principe de proportionnalité
+          (\loicam{2024/017}, art.~27)~: en quoi ce cas diffère-t-il
+          d'une PME traitant des données clients courantes en
+          termes d'urgence quantique~?
+    \item Proposez une stratégie de chiffrement combinant
+          chiffrement symétrique (pour les données elles-mêmes)
+          et signature/horodatage (pour leur intégrité et
+          antériorité), en justifiant chaque choix d'algorithme
+          par les éléments de ce chapitre.
+    \item À quelle fréquence recommanderiez-vous un re-timestamping~?
+          Sur quels critères objectifs baseriez-vous cette
+          fréquence (plutôt qu'une date arbitraire)~?
+    \item Rédigez un paragraphe destiné au rapport d'audit de
+          sécurité de l'hôpital, distinguant clairement ce qui
+          relève de mesures établies et vérifiables de ce qui
+          relève d'une anticipation prudente face à une incertitude
+          scientifique persistante.
+\end{enumerate}
+\end{boxexo}
+
+\bigskip
+
+\begin{boxinfo}
+\textbf{Transition.} Ce chapitre a montré que les garanties
+cryptographiques de la preuve (empreintes, signatures, horodatages)
+ne sont pas absolues~: elles dépendent d'hypothèses sur la puissance
+de l'adversaire et, plus profondément, d'un arbitrage entre
+confidentialité, fiabilité et opposabilité. Le chapitre suivant
+formalise cet arbitrage~: le Trilemme CRO et son cadre CLO, avec
+les outils de la théorie de l'information qui permettent d'en
+démontrer les bornes.
+\end{boxinfo}

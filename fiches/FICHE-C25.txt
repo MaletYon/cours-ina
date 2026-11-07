@@ -1,0 +1,233 @@
+NDAP SUKULU · INA · fiche FICHE-C25
+Chapitre 25 : Benchmarking mondial des pratiques forensiques
+
+Version papier, à utiliser en attendant l'ouverture du portail NDAP SUKULU.
+La fiche complète compte 40 questions. Répondez sur la grille en fin de fiche.
+Durée indicative : 60 minutes. Seuil de réussite : 60 %.
+Les corrections figurent dans le livret de correction du cours.
+
+========================================================================
+Questions à choix multiple (une seule bonne réponse)
+========================================================================
+
+ 1. Quel est l'objectif principal du benchmarking institutionnel de ce chapitre ?
+      a) La compréhension structurelle des écarts, pas le classement
+      b) Attribuer une note chiffrée à chaque pays
+      c) Désigner le meilleur pays
+      d) Copier le modèle le plus cher
+
+ 2. Pourquoi le chapitre évite-t-il les classements numériques précis ?
+      a) Ils donnent une fausse impression de précision à des comparaisons qualitatives
+      b) Ils sont interdits par la loi
+      c) Ils sont trop faciles à calculer
+      d) Les pays les refusent
+
+ 3. Quelle force distinctive caractérise le modèle américain ?
+      a) La recherche et la normalisation technique, portées par le NIST
+      b) L'absence de loi cyber
+      c) La centralisation totale
+      d) Le refus de la coopération
+
+ 4. Quelle est une limite structurelle du modèle américain ?
+      a) La fragmentation entre les cinquante États et le niveau fédéral
+      b) L'absence totale de laboratoires
+      c) Le manque de budget
+      d) L'interdiction de la recherche
+
+ 5. Quel cadre procédural le Royaume-Uni a-t-il diffusé mondialement ?
+      a) Les quatre principes ACPO
+      b) Le RGPD
+      c) Le NIST SP 800-86
+      d) La convention de Malabo
+
+ 6. Quelle obligation structure toute la pratique forensique britannique ?
+      a) Le disclosure, la communication des preuves à la défense
+      b) Le secret total
+      c) L'interdiction d'expertise
+      d) La destruction des preuves
+
+ 7. Quelle dimension CRO le système accusatoire britannique privilégie-t-il ?
+      a) L'opposabilité
+      b) La confidentialité
+      c) La rapidité seule
+      d) Le coût
+
+ 8. Quelle leçon le modèle allemand offre-t-il à un pays de tradition civil law ?
+      a) La maturité s'atteint par codification précise, sans jurisprudence accumulée
+      b) Il faut adopter le common law
+      c) La loi est inutile
+      d) Seul le budget compte
+
+ 9. Pourquoi Singapour est-il pertinent comme cas d'étude pour le Cameroun ?
+      a) Pays de taille moyenne ayant construit sa capacité depuis un point de départ comparable
+      b) Il a le même PIB que le Cameroun
+      c) Il partage la même langue
+      d) Il est voisin du Cameroun
+
+10. Quelle est la vraie leçon transposable du modèle singapourien ?
+      a) La méthode du ciblage de capacités prioritaires, pas le montant investi
+      b) Investir autant que Singapour
+      c) Couvrir tout le spectre d'emblée
+      d) Supprimer la coopération
+
+11. Quel pays possède le système forensique le plus abouti d'Afrique subsaharienne ?
+      a) L'Afrique du Sud
+      b) Le Cameroun
+      c) Le Tchad
+      d) Le Gabon
+
+12. Quel secteur a accéléré les capacités anti-fraude du Kenya ?
+      a) L'écosystème fintech, avec M-Pesa
+      b) L'industrie minière
+      c) Le tourisme
+      d) L'agriculture
+
+13. Qu'est-ce qui compte davantage que l'ampleur initiale des moyens ?
+      a) La continuité institutionnelle sur dix à quinze ans
+      b) Le nombre d'ordinateurs
+      c) La taille du pays
+      d) Le nombre d'habitants
+
+14. Pourquoi n'existe-t-il pas de modèle national universellement optimal ?
+      a) Chaque système reflète un arbitrage CRO façonné par son contexte propre
+      b) Tous les modèles sont identiques
+      c) Aucun pays n'a de modèle
+      d) Le meilleur modèle est secret
+
+15. Quel atout camerounais est souvent sous-estimé selon le chapitre ?
+      a) Un cadre légal récent et codifié, les lois 2010/012 et 2024/017
+      b) Un budget illimité
+      c) Un réseau de laboratoires national
+      d) Une industrie cyber privée massive
+
+16. Quel domaine économique stratégique le chapitre suggère-t-il de cibler en premier ?
+      a) La fraude Mobile Money
+      b) Les jeux vidéo
+      c) Le commerce de détail
+      d) Le transport aérien
+
+17. Quel rôle le chapitre assigne-t-il à la coopération régionale pour le Cameroun ?
+      a) Un levier, pas un substitut à l'expertise locale
+      b) Un substitut complet à toute capacité nationale
+      c) Un obstacle à éviter
+      d) Une obligation sans intérêt
+
+18. Quel constat le chapitre tire-t-il sur la certification des experts ?
+      a) Aucun modèle mature ne s'est passé d'un système de qualification reconnu
+      b) La certification est inutile
+      c) Elle freine la forensique
+      d) Elle remplace la loi
+
+19. Comment lire les discours de rattrapage technologique rapide et non étayés ?
+      a) Avec une lecture critique systématique des contraintes réelles
+      b) En les adoptant sans réserve
+      c) En les ignorant totalement
+      d) En les interdisant
+
+20. Que montre le nombre de condamnations annulées pour vices de procédure aux USA ?
+      a) La sophistication technique n'élimine pas le risque d'erreur procédurale
+      b) Que la justice y est parfaite
+      c) Que la forensique y est interdite
+      d) Que les experts sont incompétents
+
+========================================================================
+Vrai ou faux
+========================================================================
+
+21. Le but du chapitre est de classer les pays du meilleur au pire.
+      Vrai / Faux
+
+22. Un système civil law peut atteindre une forte maturité forensique par la codification précise.
+      Vrai / Faux
+
+23. La leçon de Singapour est d'investir le même montant que ce pays.
+      Vrai / Faux
+
+24. La continuité institutionnelle explique mieux la progression que des pics d'investissement ponctuels.
+      Vrai / Faux
+
+25. Le cadre légal camerounais est considéré comme un atout réel.
+      Vrai / Faux
+
+26. Il existe un modèle national optimal valable pour tous les pays.
+      Vrai / Faux
+
+27. Les principes ACPO sont adoptés bien au-delà du Royaume-Uni.
+      Vrai / Faux
+
+28. La maturité forensique se construit sur le temps long par des choix cohérents maintenus.
+      Vrai / Faux
+
+29. La coopération régionale dispense de construire une expertise locale durable.
+      Vrai / Faux
+
+30. Les budgets et effectifs forensiques nationaux sont rarement publiés par les agences.
+      Vrai / Faux
+
+========================================================================
+Textes à trous
+========================================================================
+
+31. Les quatre principes procéduraux diffusés par le Royaume-Uni portent le sigle ______.
+
+32. L'agence américaine qui publie et maintient les standards forensiques est le ______.
+
+33. L'obligation de communiquer les preuves à la défense se nomme en anglais le ______.
+
+34. Au Cameroun, le domaine économique à cibler en priorité est la fraude ______ Money.
+
+35. Le service de paiement mobile kényan cité comme moteur fintech est ______.
+
+36. Chaque système national reflète un arbitrage ______ façonné par son contexte.
+
+37. La vraie leçon de Singapour est le ______ d'un nombre restreint de capacités prioritaires.
+
+38. La tradition juridique du Cameroun et de l'Allemagne est le droit ______ law.
+
+39. Les deux lois camerounaises citées comme atout sont la 2010/012 et la ______.
+
+40. Il faut se méfier des discours promettant un ______ technologique rapide non étayé.
+
+========================================================================
+Grille de réponses   Nom : ............................  Matricule : ............
+========================================================================
+ 1. ............................................
+ 2. ............................................
+ 3. ............................................
+ 4. ............................................
+ 5. ............................................
+ 6. ............................................
+ 7. ............................................
+ 8. ............................................
+ 9. ............................................
+10. ............................................
+11. ............................................
+12. ............................................
+13. ............................................
+14. ............................................
+15. ............................................
+16. ............................................
+17. ............................................
+18. ............................................
+19. ............................................
+20. ............................................
+21. ............................................
+22. ............................................
+23. ............................................
+24. ............................................
+25. ............................................
+26. ............................................
+27. ............................................
+28. ............................................
+29. ............................................
+30. ............................................
+31. ............................................
+32. ............................................
+33. ............................................
+34. ............................................
+35. ............................................
+36. ............................................
+37. ............................................
+38. ............................................
+39. ............................................
+40. ............................................

@@ -1,0 +1,597 @@
+% ============================================================================
+% Fichier  : partie4/P04_C19_OSINT_Comprehension_Attaques.tex
+% Titre    : OSINT et Compréhension des Attaques
+% Auteur   : MINKA MI NGUIDJOÏ Thierry Emmanuel
+% Version  : 1.0 -- Octobre 2026
+% ============================================================================
+\chapter{OSINT et Compréhension des Attaques}
+\label{chap:for-osint}
+
+\epigraph{%
+    « La source ouverte n'affranchit pas de la loi ; elle l'oblige davantage. »%
+}{Thierry MINKA}
+
+
+\noindent\textbf{Niveau :} Intermédiaire • Lecture des Chapitres 4 (fondements théoriques), 6 (Processus Investigatif Universel), 8 (chaîne de custody) et 12 (droit camerounais) de l'UE SEC4031 recommandée. Ce chapitre applique les fondements de la Partie I et les procédures de la Partie II à une technique d'investigation spécifique : le renseignement en source ouverte et la lecture d'une attaque par ses traces.
+
+\begin{boxobjectifs}
+À la fin de ce chapitre, l'étudiant sait :
+\begin{itemize}
+\item distinguer ce qui relève de la source ouverte de ce qui relève d'un acte d'enquête soumis à autorisation ;
+\item conduire une recherche en sources ouvertes sur une personne, une organisation, un domaine ou une adresse, selon le cycle du renseignement ;
+\item cartographier les liens entre identités, comptes et infrastructures ;
+\item tracer un flux de cryptoactifs sur une chaîne de blocs publique et identifier le point où l'entraide devient nécessaire ;
+\item documenter une constatation en ligne de façon qu'elle ait une valeur probante : source, date, empreinte, procès-verbal ;
+\item reconnaître les phases d'une attaque à partir de leurs traces et rattacher chaque comportement à un texte de la Loi 2010/012~\cite{cameroun2010a} ou du Code pénal ;
+\item analyser un courriel et un site frauduleux et en tirer les demandes utiles à l'enquête ;
+\item lire et discuter le rapport d'un expert en intrusion selon la distinction \emph{Examination / Analysis} du NIST SP 800-86~\cite{nist80086}.
+\end{itemize}
+\end{boxobjectifs}
+
+\section{Introduction}
+
+Dans une enquête de cybercriminalité, une part déterminante de l'information est accessible sans acte coercitif : identité derrière un pseudonyme, ancienneté d'un domaine frauduleux, localisation d'un hébergeur, parcours d'un flux de cryptoactifs, marque imitée par une page de collecte. Ces éléments se lisent dans des sources ouvertes, sans réquisition ni mandat. Encore faut-il les rechercher avec méthode, les recouper avec prudence et documenter chaque constatation de manière à ce qu'elle survive à l'épreuve de l'audience.
+
+L'autre versant de ce chapitre répond à une question structurelle : face à un système compromis, comment reconstituer une attaque, dans quel ordre, et sous quelle qualification ? L'enquêteur n'est pas un attaquant et ne saurait le devenir. Il doit en revanche reconnaître les phases d'une intrusion à partir des traces qu'elles laissent, savoir quel texte réprime chaque comportement, et lire un rapport d'expert sans se laisser impressionner par le vocabulaire technique.
+
+Deux principes structurent la démarche :
+
+\begin{enumerate}
+\item \textbf{La source ouverte n'affranchit pas de la loi.} Une information rendue publique par son sujet se consulte ; y accéder par un compte forcé, un faux profil ou une intrusion demeure une infraction. La frontière entre \emph{consulter} et \emph{accéder} est la ligne de conduite de tout le chapitre.
+\item \textbf{On qualifie une attaque par ses traces, non par le récit de l'attaquant.} Chaque phase d'une intrusion laisse des traces identifiables (Ch. 14 et 15) ; chacune se rattache à un texte précis (Ch. 12, UE SEC4031). L'enquête consiste à relier les deux.
+\end{enumerate}
+
+\begin{boxinfo}
+\textbf{Transition depuis la Partie IV.} Les Chapitres 14 à 18 ont couvert l'analyse forensique des systèmes, réseaux, mobiles, cloud et IoT. Ce chapitre complète la Partie IV en traitant une source d'information complémentaire, les sources ouvertes, et en formalisant la lecture d'une attaque comme grille de qualification. Il prolonge directement la démarche du Chapitre 3 de l'UE SEC4031 (analyse de la Kill Chain dans l'affaire MVOM) et prépare le Chapitre 20 (rédaction du rapport forensique).
+\end{boxinfo}
+
+\section{Fondements de l'OSINT et cadre légal}
+
+\subsection{Définition et périmètre}
+
+\begin{boxdef}
+\textbf{Renseignement en source ouverte (OSINT)}~:
+Collecte et analyse d'informations accessibles au public, sans recourir à un acte coercitif ni à un accès réservé : sites web, profils publics de réseaux sociaux, registres officiels, archives, bases de données publiques, décisions de justice publiées, résultats de moteurs de recherche.
+\end{boxdef}
+
+La source ouverte se définit autant par ce qu'elle exclut. Ne relèvent pas de l'OSINT et supposent un acte d'enquête ou une autorisation : l'accès à un compte privé, même au moyen d'un identifiant trouvé ailleurs ; la création d'un faux profil pour entrer dans un cercle fermé ; l'interception d'une communication ; l'obtention des données d'un opérateur ; l'accès à un système en s'affranchissant d'une mesure de sécurité. La frontière tient en une phrase : \textbf{on consulte ce qui est public, on n'accède pas à ce qui est protégé.}
+
+\subsection{La recherche en sources ouvertes parmi les actes d'enquête}
+
+La recherche en sources ouvertes est un acte d'enquête comme un autre : elle se rattache à une procédure, s'exécute sur instructions ou sous la direction de l'OPJ et se consigne dans un procès-verbal. Elle n'échappe ni au secret de l'enquête ni aux règles de protection des données : la systématisation d'une collecte, son croisement avec des données non publiques ou son emploi à une autre fin que l'enquête en cours peuvent entrer en conflit avec la Loi 2024/017~\cite{cameroun2024donnees}.
+
+Dans le cadre du Processus Investigatif Universel (Ch. 6, UE SEC4031), la recherche en sources ouvertes s'inscrit principalement dans la \textbf{Phase 1 (Initialisation et Cadrage)}, pour l'évaluation préliminaire et la planification, et dans la \textbf{Phase 2 (Acquisition et Préservation)}, pour la collecte d'éléments probatoires. Elle intervient également dans l'\textbf{Étape E6 (Identification et Cartographie des Parties Prenantes)} de la Phase 2.
+
+\subsection{La frontière entre consultation et accès}
+
+\begin{longtable}{p{0.48\linewidth}p{0.48\linewidth}}
+\rowcolor{TableauEntete}\textcolor{white}{\bfseries Consultation licite en source ouverte} & \textcolor{white}{\bfseries Accès ou acte soumis à autorisation} \\ \hline
+Lire un profil ou une publication réglés sur « public » & Se connecter à un compte, même avec un identifiant trouvé ailleurs \\
+Consulter un registre officiel, une archive, un résultat de moteur & Créer un faux profil pour entrer dans un cercle fermé \\
+Lire les transactions publiques d'une chaîne de blocs & Obtenir l'identité d'un client auprès d'une plateforme \\
+Relever les services exposés par une adresse dans un moteur d'inventaire & Se connecter à un service exposé sans droit \\
+Consulter les informations d'enregistrement publiques d'un domaine & Intercepter une communication \\
+\end{longtable}
+
+\begin{boxjuris}
+\textbf{Les textes qui tracent la frontière}
+\textbf{Art. 65 (2) Loi 2010/012} : l'accès sans droit à tout ou partie d'un réseau, d'un système d'information ou d'un équipement terminal est puni de cinq à dix ans d'emprisonnement et de 5 à 10 millions de francs d'amende, ou de l'une de ces peines. \textbf{Art. 65 (4)} : la même peine frappe l'accès « par défi intellectuel ». \textbf{Art. 69} : l'accès sans droit et en violation des mesures de sécurité, afin d'obtenir des informations, est puni de cinq à dix ans et de 10 à 100 millions. Le sursis est exclu pour ces infractions \textbf{[art. 89]}.
+\end{boxjuris}
+
+\begin{boxalert}
+L'article 65 (4) réprime l'accès « par défi intellectuel », sans mobile de gain ni de nuisance. Un enquêteur qui, ayant repéré un système exposé, s'y connecte « pour vérifier » commet l'infraction qu'il est chargé de poursuivre. Le repérage se consigne ; l'accès se demande par la voie légale.
+\end{boxalert}
+
+\subsection{Vie privée et protection des données}
+
+La collecte en sources ouvertes touche à des données à caractère personnel. Deux corps de règles l'encadrent.
+
+\begin{itemize}
+\item \textbf{Le respect de la vie privée} est protégé par la Loi 2010/012 : droit au respect de la vie privée \textbf{[art. 41]}, confidentialité des communications \textbf{[art. 42]}, interdiction d'intercepter, d'écouter ou de stocker des communications sans consentement ou autorisation légale \textbf{[art. 44]}, répression des atteintes à l'intimité et de la collecte de données nominatives par des moyens illicites \textbf{[art. 74]}.
+\item \textbf{La protection des données à caractère personnel} relève de la Loi 2024/017. La collecte frauduleuse ou déloyale de données est réprimée \textbf{[art. 63]} ; le traitement doit répondre à une finalité déterminée et l'usage des données recueillies pour l'enquête ne peut être détourné vers une autre fin. L'adresse IP est explicitement une donnée personnelle \textbf{[art. 5]}.
+\end{itemize}
+
+\begin{boxCRO}
+\textbf{Analyse CRO · Recherche en sources ouvertes}
+\textbf{Confidentialité (C)} : la recherche en sources ouvertes ne collecte que des informations publiques, mais leur agrégation et leur croisement peuvent révéler des éléments relevant de la vie privée. La proportionnalité de la collecte (art. 9-11 Loi 2024/017) est la contre-mesure.
+
+\textbf{Fiabilité (R)} : les informations publiques sont par nature de fiabilité variable (déclaratif, possible usurpation d'identité). Le recoupement multi-sources et la distinction constatation/analyse sont les garanties de fiabilité.
+
+\textbf{Opposabilité (O)} : la documentation rigoureuse (procès-verbal, capture horodatée, empreinte) est la condition de l'opposabilité. Sans elle, la constatation est irrecevable.
+
+\textbf{Impact CRO} : \texttt{C: ↓ proportionnalité \quad R: ~ recoupement \quad O: ↑↑ documentation}
+\end{boxCRO}
+
+\begin{boxexo}
+\textbf{Exercice~:Tracer la frontière}
+Pour chacune des situations suivantes :
+\begin{enumerate}
+\item l'administrateur présumé d'un site frauduleux a un compte de réseau social public : que pouvez-vous en faire sans autorisation ?
+\item son compte de messagerie exige une invitation : que ne pouvez-vous pas faire et par quelle voie obtenir l'information recherchée ?
+\item une adresse Bitcoin est publique : jusqu'où va la consultation et à partir de quand faut-il une réquisition ou l'entraide ?
+\end{enumerate}
+Pour chaque réponse, citez le texte applicable.
+
+\textbf{Durée :} 40 minutes. Corrigé en séance.
+\end{boxexo}
+
+\begin{boxresume}
+\begin{itemize}
+\item On consulte ce qui est public, on n'accède pas à ce qui est protégé.
+\item La recherche en sources ouvertes est un acte d'enquête : procédure, direction de l'OPJ, procès-verbal.
+\item Vie privée et données personnelles : Lois 2010/012 et 2024/017.
+\item Identité d'un compte, interception, infiltration, accès : chacun exige son acte ou son autorisation.
+\item Analyser chaque technique selon le Trilemme CRO (Confidentialité · Fiabilité · Opposabilité).
+\end{itemize}
+\end{boxresume}
+
+\section{Recherche sur les personnes et les organisations}
+
+\subsection{Rechercher par le nom et l'identité}
+
+\begin{longtable}{p{0.28\linewidth}p{0.68\linewidth}}
+\rowcolor{TableauEntete}\textcolor{white}{\bfseries Source} & \textcolor{white}{\bfseries Usage} \\ \hline
+Moteurs de recherche & Rechercher le nom exact entre guillemets, avec ses variantes (accents, alias) ; croiser avec la ville, l'employeur, une fonction. Restreindre à un site ou à un type de fichier pour retrouver un document précis. \\
+Journal officiel et registres & Journal officiel : nominations, actes officiels. Registre du commerce et du crédit mobilier : dirigeants et sociétés. Ces sources publiques identifient les responsables d'une entreprise mise en cause. \\
+Décisions publiées & Décisions de justice et actes administratifs rendus publics, utiles pour un antécédent connu ou une fonction. \\
+Archives web & Copies archivées de pages supprimées, qui rétablissent un contenu retiré depuis la commission des faits. \\
+\end{longtable}
+
+Une adresse électronique ou un numéro relie souvent plusieurs comptes. Des services publics permettent de savoir si une adresse figure dans une fuite de données connue, ce qui révèle les services où un compte a été ouvert. Ces indications orientent l'enquête ; elles ne valent pas identification et se recoupent.
+
+\subsection{Les réseaux sociaux}
+
+Les profils réglés sur « public » sont consultables : publications, photographies, lieux mentionnés, relations affichées, dates. Chaque réseau se recherche avec ses propres outils de recherche interne. Deux règles : ne consulter que le public ; dater et capturer chaque contenu (une publication publique aujourd'hui peut disparaître demain).
+
+\begin{boxalert}
+Un nom affiché, une photographie de profil et une biographie sont déclaratifs. Un compte peut être ouvert sous une fausse identité, une photographie peut être empruntée, une localisation peut être paramétrée. Le compte est un point de départ ; l'identité se démontre par le recoupement et, en définitive, par une réquisition auprès de la plateforme.
+\end{boxalert}
+
+\subsection{Relier des comptes par le pseudonyme et par l'image}
+
+Une même personne réutilise souvent le même pseudonyme sur plusieurs plateformes. Des outils libres recherchent un nom d'utilisateur donné sur un grand nombre de sites et signalent où il existe un compte. Le résultat est une \textbf{liste de pistes à vérifier}, non une preuve d'appartenance : deux personnes peuvent partager un pseudonyme et un compte peut être une usurpation.
+
+La recherche d'image inversée retrouve les autres pages où une même photographie apparaît : elle révèle une photographie de profil volée, d'autres comptes utilisant la même image, ou une origine plus ancienne.
+
+\begin{boxartefact}{Métadonnées EXIF d'une image}
+\textbf{Localisation :} intégrées au fichier image (EXIF), accessibles par \texttt{exiftool}.
+
+\textbf{Informations typiquement contenues :} date et heure de prise de vue, coordonnées GPS, marque et modèle de l'appareil, paramètres de prise de vue.
+
+\textbf{Valeur forensique :} les coordonnées GPS peuvent localiser précisément une personne à une date donnée (cf. Opération MBONGO, Ch. 16).
+
+\textbf{Fragilité :} les métadonnées sont souvent supprimées par les plateformes de réseaux sociaux lors du téléversement. Leur absence n'est pas un indice négatif ; leur présence est un indice positif à documenter.
+\end{boxartefact}
+
+\subsection{Les organisations}
+
+Pour une société, croiser le registre du commerce (dirigeants, siège), le site officiel, les mentions légales, les profils professionnels des dirigeants et les documents publics. L'objectif est d'établir qui décide, qui signe et qui détient, éléments utiles à la qualification et à la désignation des personnes à entendre.
+
+\begin{boxCRO}
+\textbf{Analyse CRO · Recherche sur les personnes}
+\textbf{C} : l'agrégation d'informations publiques sur une personne peut reconstituer un profil relevant de la vie privée. La finalité déterminée (art. 9-11 Loi 2024/017) et la proportionnalité limitent cette atteinte.
+
+\textbf{R} : les informations déclaratives (nom affiché, photo) sont de fiabilité faible. Le recoupement multi-sources (registres officiels + réseaux sociaux + archives) élève la fiabilité.
+
+\textbf{O} : la documentation (procès-verbal, capture horodatée, empreinte) et la distinction constatation/analyse sont les conditions de l'opposabilité devant le tribunal.
+
+\textbf{Impact CRO} : \texttt{C: ↓ finalité \quad R: ↑ recoupement \quad O: ↑↑ documentation}
+\end{boxCRO}
+
+\begin{boxexo}
+\textbf{Exercice~:Construire un faisceau}
+Sur un ensemble de comptes fictifs préparés pour l'exercice :
+\begin{enumerate}
+\item relevez toutes les informations publiques et capturez chacune avec sa source et sa date ;
+\item déterminez ce que la recherche d'image établit sur la photographie de profil ;
+\item distinguez, dans vos constatations, ce qui est établi, ce qui est probable et ce qui reste une simple piste ;
+\item dressez la liste des réquisitions qui permettraient de confirmer l'identité, en indiquant le destinataire de chacune.
+\end{enumerate}
+\end{boxexo}
+
+\begin{boxresume}
+\begin{itemize}
+\item Nom, adresse, numéro, pseudonyme et image sont des points de départ à recouper.
+\item Registres officiels camerounais pour les personnes et les sociétés.
+\item Un pseudonyme partagé est une piste, pas une preuve d'appartenance.
+\item Une photographie de profil peut être empruntée : la recherche inversée le montre.
+\item L'identité d'un compte se confirme par réquisition auprès de la plateforme.
+\end{itemize}
+\end{boxresume}
+
+\section{Recherche sur les infrastructures}
+
+\subsection{Le nom de domaine}
+
+Les informations publiques d'enregistrement d'un domaine (protocole WHOIS) indiquent, quand elles ne sont pas masquées par un service de confidentialité, la date de création et d'expiration, le bureau d'enregistrement et les serveurs de noms. La \textbf{date de création} est un renseignement précieux : un domaine créé quelques jours avant une campagne frauduleuse est un indice fort.
+
+Résolution d'un nom en adresse et lecture des enregistrements associés (adresses, serveurs de messagerie, enregistrements de vérification) : ces consultations sont publiques. Elles relient un domaine à des adresses et à une infrastructure de messagerie, sans aucun accès à un système.
+
+\subsection{L'historique, les sous-domaines et les certificats}
+
+L'historique des enregistrements révèle les adresses successives d'un domaine, même changées depuis les faits et les services d'hébergement utilisés. Les registres de certificats publient les certificats émis pour un domaine et font apparaître ses sous-domaines ; ils servent aussi à repérer des domaines qui imitent une marque, en recherchant les certificats émis pour des noms voisins. Les archives web conservent l'état passé d'un site disparu.
+
+\subsection{L'adresse et son propriétaire}
+
+Une adresse IP appartient à un bloc attribué à un opérateur, dans une région donnée. Les registres régionaux (dont le registre africain) indiquent, pour un bloc, l'organisation attributaire et le pays. Cette information oriente la coopération : elle dit à quel État et à quel fournisseur adresser la demande (Ch. 10, UE SEC4031). Les moteurs d'inventaire des systèmes exposés indiquent les services publiquement visibles sur une adresse, ce qui aide à comprendre une infrastructure ; les consulter est licite, s'y connecter ne l'est pas.
+
+\begin{boxalert}
+Le pays d'une adresse IP est celui de l'attribution du bloc, souvent celui de l'hébergeur, non nécessairement celui de la personne. Un service d'anonymisation ou un hébergement à l'étranger déplace l'adresse sans déplacer l'auteur. L'adresse désigne un point du réseau à un instant ; l'identification passe par le fournisseur.
+\end{boxalert}
+
+\subsection{Reconnaître un site qui imite une marque}
+
+\begin{longtable}{p{0.34\linewidth}p{0.62\linewidth}}
+\rowcolor{TableauEntete}\textcolor{white}{\bfseries Indice} & \textcolor{white}{\bfseries Lecture} \\ \hline
+Le nom de domaine & Comparer au domaine légitime : ajout de mots (« -secure », « -login »), extension différente, faute discrète. \\
+La date de création & Un domaine récent imitant une marque ancienne est suspect. \\
+Le certificat & Émis récemment, pour un nom voisin de la marque. \\
+Le contenu & Copie de l'apparence de la marque ; formulaire qui recueille identifiants ou informations de paiement. \\
+L'hébergement & Souvent distinct de celui de la marque légitime. \\
+\end{longtable}
+
+Un site frauduleux est éphémère. Dès son signalement, en constater et en capturer le contenu (section suivante) : l'apparence, l'adresse, le formulaire, le code de la page tel qu'il est servi. Signaler ensuite le domaine à l'organisme national compétent et au titulaire de la marque imitée ; lorsque l'hébergeur est à l'étranger, demander la conservation par le réseau 24/7 ou l'entraide (Ch. 10, UE SEC4031).
+
+\begin{boxCRO}
+\textbf{Analyse CRO · Consultation d'infrastructures}
+\textbf{C} : les informations WHOIS, DNS et certificats sont publiques par conception. L'atteinte à la confidentialité est nulle.
+
+\textbf{R} : les données WHOIS peuvent être masquées (protection de confidentialité) ; les certificats sont fiables mais ne prouvent pas l'identité du titulaire. Le recoupement avec les archives web et les moteurs d'inventaire élève la fiabilité.
+
+\textbf{O} : la consultation est licite et documentable. La capture horodatée et le procès-verbal de constatation sont les conditions de l'opposabilité.
+
+\textbf{Impact CRO} : \texttt{C: → neutre \quad R: ↑ recoupement \quad O: ↑↑ documentation}
+\end{boxCRO}
+
+\begin{boxexo}
+\textbf{Exercice~:Lire une infrastructure}
+Sur un ensemble de domaines fictifs :
+\begin{enumerate}
+\item relevez la date de création, le bureau d'enregistrement, les serveurs de noms et l'adresse de chaque domaine ;
+\item déterminez le pays et l'hébergeur de chaque adresse et dites à quel État adresser une demande de conservation ;
+\item établissez en quoi un domaine donné est un site imitant une marque ;
+\item rédigez la liste des démarches, dans l'ordre : capture, signalement, conservation, entraide.
+\end{enumerate}
+\end{boxexo}
+
+\begin{boxresume}
+\begin{itemize}
+\item La date de création d'un domaine est un indice à relever systématiquement.
+\item Historique, sous-domaines et certificats se consultent publiquement.
+\item Le pays d'une adresse oriente l'entraide ; il ne localise pas la personne.
+\item Un site imitant une marque se capture d'abord, se signale et se fait conserver ensuite.
+\end{itemize}
+\end{boxresume}
+
+\section{Cartographie des liens et traçage des cryptoactifs}
+
+\subsection{Cartographier les liens}
+
+Au fil de la recherche, les entités se multiplient : personnes, pseudonymes, adresses électroniques, numéros, domaines, adresses IP, adresses de portefeuille. Une \textbf{carte des liens} les représente et fait apparaître les relations. La théorie des graphes (Ch. 4 de l'UE SEC4031, section 4.3) fournit le formalisme : $G = (V, E, w)$ où $V$ est l'ensemble des entités, $E$ l'ensemble des relations, $w$ le poids de chaque relation.
+
+Sur la carte, chaque trait est justifié par une source, exactement comme chaque ligne d'un rapport. Un lien « probable » se distingue d'un lien « établi » par un trait différent ou une mention. La carte est une synthèse, non une preuve : elle guide l'enquête et illustre le rapport.
+
+\subsection{Lire une chaîne de blocs publique}
+
+Les principales chaînes de blocs sont publiques et permanentes : toute transaction est visible avec l'adresse concernée, ses entrées, ses sorties et ses montants. Un explorateur de chaîne de blocs affiche ces informations sans aucun accès réservé.
+
+\begin{longtable}{p{0.30\linewidth}p{0.66\linewidth}}
+\rowcolor{TableauEntete}\textcolor{white}{\bfseries Notion} & \textcolor{white}{\bfseries Ce qu'il faut retenir} \\ \hline
+Adresse & Chaîne de caractères recevant et envoyant des fonds ; ce n'est pas une identité. \\
+Transaction & Transfert horodaté entre adresses, avec les montants. \\
+Regroupement & Des adresses utilisées ensemble appartiennent souvent à un même portefeuille ; le regroupement est une hypothèse à corroborer. \\
+Plateforme d'échange & Service qui convertit des cryptoactifs en monnaie ; soumis, selon l'État, à des obligations d'identification de ses clients. \\
+\end{longtable}
+
+Depuis l'adresse connue, suivre les transactions sortantes jusqu'à une adresse contrôlée par une plateforme d'échange : c'est le point où les fonds entrent dans un service qui connaît, en principe, l'identité de son client. La consultation de la chaîne s'arrête là ; l'identité du client s'obtient auprès de la plateforme par réquisition, ou par entraide lorsqu'elle est établie à l'étranger (Ch. 10, UE SEC4031).
+
+\begin{boxalert}
+Une adresse de portefeuille n'est pas une identité. Les fonds peuvent passer par de nombreuses adresses, par des services qui mêlent les transactions pour brouiller le suivi, ou par plusieurs plateformes. Le traçage établit un chemin de fonds entre des adresses ; il ne nomme personne. Le nom vient de la plateforme, sur réquisition ou entraide.
+\end{boxalert}
+
+\subsection{Le point de bascule vers l'acte d'enquête}
+
+\begin{longtable}{p{0.40\linewidth}p{0.56\linewidth}}
+\rowcolor{TableauEntete}\textcolor{white}{\bfseries Ce que fait la source ouverte} & \textcolor{white}{\bfseries Ce qui exige un acte} \\ \hline
+Établir le chemin des fonds entre adresses & Obtenir l'identité du client d'une plateforme \\
+Identifier la plateforme réceptrice & Obtenir les journaux de connexion de ce client \\
+Dater les transferts & Faire geler ou saisir des avoirs \\
+\end{longtable}
+
+Le traçage prépare la demande : il dit à quelle plateforme s'adresser, pour quelle adresse et pour quelle période. La demande elle-même suit le régime des réquisitions et de l'entraide (Ch. 10 et 12, UE SEC4031).
+
+\begin{boxCRO}
+\textbf{Analyse CRO · Traçage blockchain}
+\textbf{C} : les transactions blockchain sont publiques et pseudonymes. L'analyse ne révèle pas d'identité. L'atteinte à la confidentialité est nulle tant qu'on ne croise pas avec des données KYC.
+
+\textbf{R} : l'immuabilité de la blockchain confère une fiabilité maximale. La corrélation avec des sources tierces (KYC, logs d'exchange) élève la fiabilité de l'identification.
+
+\textbf{O} : l'analyse blockchain est reproductible et vérifiable indépendamment. Elle constitue une preuve d'opposabilité exceptionnelle, sous réserve de l'attribution (identification du détenteur du wallet).
+
+\textbf{Impact CRO} : \texttt{C: → pseudonyme \quad R: ↑↑↑ immuabilité \quad O: ↑↑↑ reproductibilité}
+\end{boxCRO}
+
+\begin{boxexo}
+\textbf{Exercice~:Tracer et cartographier}
+Sur un jeu de données de formation :
+\begin{enumerate}
+\item suivez, sur l'explorateur, le flux depuis l'adresse initiale et relevez chaque transaction (date, montant, adresse) ;
+\item identifiez la plateforme réceptrice et le montant parvenu jusqu'à elle ;
+\item dressez la carte des liens du dossier, en distinguant les liens établis des liens probables ;
+\item rédigez la demande à adresser à la plateforme réceptrice : adresse concernée, période, informations demandées et voie de transmission selon l'État où la plateforme est établie.
+\end{enumerate}
+\end{boxexo}
+
+\begin{boxresume}
+\begin{itemize}
+\item La carte des liens synthétise l'enquête ; chaque lien porte sa source et son degré de certitude.
+\item Les chaînes de blocs publiques se lisent librement ; suivre un flux jusqu'à une plateforme.
+\item Une adresse n'est pas une personne ; l'identité vient de la plateforme, sur réquisition ou entraide.
+\item Le traçage prépare la demande ; il ne la remplace pas.
+\end{itemize}
+\end{boxresume}
+
+\section{Documentation et valeur probante des constatations en ligne}
+
+\subsection{Pourquoi documenter}
+
+Une page en ligne change ou disparaît. Le compte se ferme, la publication s'efface, le site frauduleux est retiré. Une constatation non documentée ne prouve plus rien à l'audience. Documenter, c'est fixer un état daté du contenu, en démontrant qu'il n'a pas été modifié depuis, et dire comment il a été obtenu.
+
+\subsection{Capturer}
+
+\begin{longtable}{p{0.30\linewidth}p{0.66\linewidth}}
+\rowcolor{TableauEntete}\textcolor{white}{\bfseries Élément à capturer} & \textcolor{white}{\bfseries Précision} \\ \hline
+L'adresse exacte & L'adresse complète de la page, visible sur la capture. \\
+Le contenu visible & Capture d'écran de la page entière ; à défaut, plusieurs captures qui se recouvrent. \\
+La date et l'heure & Horloge visible ou mention au procès-verbal, avec le fuseau (UTC+1). \\
+Le contenu tel qu'il est servi & Enregistrement de la page (et, pour un site, de ses éléments) afin de conserver l'adresse des liens et les éléments non affichés. \\
+Le contexte & Le chemin suivi pour arriver à la page, la requête employée, l'outil utilisé et sa version. \\
+\end{longtable}
+
+Enregistrer la page telle qu'elle est servie conserve des éléments invisibles à l'écran (adresses des liens, adresse de destination d'un formulaire) qui, dans le cas d'un site frauduleux, désignent parfois le point de collecte des données. L'enregistrement se fait sur le poste du laboratoire, jamais en se connectant au système visé.
+
+\subsection{Figer par l'empreinte}
+
+Chaque fichier enregistré (capture, page, image) reçoit une empreinte numérique (SHA-256), calculée au moment de l'enregistrement et inscrite au procès-verbal. Recalculée plus tard, elle démontre que le fichier produit à l'audience est celui qui a été constaté.
+
+\subsection{Le procès-verbal de constatation en source ouverte}
+
+\begin{boxcustody}
+\textbf{Constatation en source ouverte}
+Conformément aux articles 52-59 de la Loi 2010/012 et au standard ISO/IEC 27037~\cite{iso27037} (Ch. 8, UE SEC4031), la constatation en source ouverte doit documenter :
+
+\begin{enumerate}
+\item \textbf{Numéro de dossier et numéro d'evidence} (ex. : DOS-2026-XXX / EV-OSINT-001) ;
+\item \textbf{Description de la source} : URL complète, titre de la page, date et heure de consultation ;
+\item \textbf{Identification de l'agent} : nom, grade, matricule ;
+\item \textbf{Outils utilisés} : navigateur, version, outils d'enregistrement, version ;
+\item \textbf{Empreintes cryptographiques} : SHA-256 de chaque fichier enregistré ;
+\item \textbf{Environnement} : poste du laboratoire (jamais un poste de service connecté au réseau de production) ;
+\item \textbf{Signature} de l'agent et date de clôture.
+\end{enumerate}
+\end{boxcustody}
+
+Le procès-verbal rapporte les opérations comme tout procès-verbal : qualité de l'agent, cadre de l'enquête, date, heure et fuseau, poste et outils utilisés avec leurs versions. Il ajoute, pour chaque constatation : l'adresse consultée, le chemin suivi, la description du contenu, les fichiers enregistrés et leurs empreintes, jointes en annexe.
+
+\begin{boxalert}
+La documentation d'un site frauduleux se fait par consultation et enregistrement, jamais en se connectant à l'espace d'administration du site ni en soumettant de vraies données à son formulaire. Se connecter serait un accès non autorisé \textbf{[art. 65 (2) Loi 2010/012]} ; soumettre des données fausserait la preuve. On constate ce que le public voit.
+\end{boxalert}
+
+\subsection{Du relevé au rapport}
+
+Le rapport OSINT reprend la structure d'un rapport technique (Ch. 20) : questions, méthode, constatations sourcées et numérotées, analyse, limites, conclusions graduées. Chaque affirmation renvoie à une constatation, chaque constatation à une capture et à son empreinte. Les conclusions distinguent l'établi du probable et exposent ce que la source ouverte ne peut pas dire.
+
+\begin{boxexo}
+\textbf{Exercice~:Dresser un procès-verbal de constatation}
+À partir de pages fictives préparées pour l'exercice :
+\begin{enumerate}
+\item capturez et enregistrez chaque page, calculez son empreinte ;
+\item rédigez le procès-verbal de constatation ;
+\item indiquez, pour un site imitant une banque, ce que le code de la page révèle et comment vous le constatez sans soumettre de données ;
+\item relevez ce que ces constatations prouvent et ce qu'elles ne prouvent pas.
+\end{enumerate}
+\end{boxexo}
+
+\begin{boxresume}
+\begin{itemize}
+\item Capturer l'adresse, le contenu, la date, la page telle que servie et le contexte.
+\item Empreinte de chaque fichier, inscrite au procès-verbal.
+\item Procès-verbal de constatation : mêmes exigences que tout procès-verbal, plus les fichiers et leurs empreintes.
+\item Constater ce que le public voit ; ne jamais se connecter ni soumettre de données.
+\item Aligner la documentation sur la chaîne de custody (Ch. 8, UE SEC4031).
+\end{itemize}
+\end{boxresume}
+
+\section{Comprendre une attaque pour l'investiguer}
+
+\subsection{Une grille de lecture, pas un mode d'emploi}
+
+L'enquêteur n'attaque pas ; il reconstitue. Pour reconstituer, il lui faut une grille qui ordonne les faits. Les modèles de description d'attaque (par exemple la \emph{Kill Chain} de Lockheed Martin déjà mobilisée au Chapitre 3 de l'UE SEC4031 pour l'affaire MVOM) découpent une intrusion en phases successives. Leur intérêt, ici, n'est pas d'apprendre à conduire ces phases mais de \textbf{savoir, pour chacune, quelle trace chercher et quel texte appliquer}.
+
+\subsection{Phases, traces et qualification}
+
+\begin{longtable}{p{0.20\linewidth}p{0.38\linewidth}p{0.38\linewidth}}
+\rowcolor{TableauEntete}\textcolor{white}{\bfseries Phase} & \textcolor{white}{\bfseries Traces à rechercher} & \textcolor{white}{\bfseries Qualification possible} \\ \hline
+\textbf{Reconnaissance} : collecte d'informations, repérage des services exposés & Journaux du pare-feu et des serveurs ; balayages répétés d'adresses ou de ports & En principe non punissable si limitée à la consultation ; l'accès qui suit ne l'est pas \\
+\textbf{Préparation et livraison} : constitution puis envoi de l'outil (courriel piégé, lien, support) & Courriel dans la boîte de réception et ses en-têtes ; journaux du serveur de messagerie ; support connecté relevé dans le registre & Tentative selon l'acte accompli \textbf{[art. 94 CP]} ; escroquerie si la victime est trompée \textbf{[art. 318 CP]} \\
+\textbf{Accès} : entrée dans le système, avec ou sans franchissement d'une mesure de sécurité & Journaux d'authentification et d'événements ; processus et connexions en mémoire vive & Accès sans droit \textbf{[art. 65 (2)]} ; accès en violation des mesures de sécurité pour obtenir des informations \textbf{[art. 69]} \\
+\textbf{Installation et maintien} : mise en place d'un accès durable & Entrées de démarrage automatique ; nouveau service ; tâche planifiée & Maintien frauduleux \textbf{[art. 68]} ; introduction de données pour perturber \textbf{[art. 71]} \\
+\textbf{Pilotage à distance} : le système contacte l'infrastructure de l'attaquant & Connexions sortantes en mémoire ; requêtes de résolution vers des domaines inhabituels ; journaux réseau & Atteinte à l'intégrité ou au fonctionnement \textbf{[art. 66 à 68]} \\
+\textbf{Actions finales} : vol de données, chiffrement contre rançon, sabotage & Fichiers exfiltrés ou chiffrés ; journaux de suppression ; note de rançon & Atteinte à la vie privée et aux données \textbf{[art. 74]} ; chantage \textbf{[art. 303 CP]} ; extorsion ; escroquerie ; atteinte à l'intégrité des données \textbf{[art. 71 et 72]} \\
+\end{longtable}
+
+L'enquêteur découvre souvent d'abord les effets (données chiffrées, fonds partis) et remonte vers l'origine. La grille se lit alors de bas en haut : partir de l'action finale constatée, chercher la trace de pilotage, puis d'installation, d'accès, de livraison, jusqu'à la reconnaissance. Chaque remontée se corrobore par une trace indépendante (Ch. 14 et 15).
+
+\subsection{Du récit à la preuve}
+
+Un rapport d'attaque, qu'il émane de la victime ou d'un prestataire, raconte une histoire. L'enquête ne retient de ce récit que ce que les traces confirment. Trois précautions :
+
+\begin{enumerate}
+\item \textbf{Ne pas prendre le vocabulaire pour un fait.} « Le pirate a pris le contrôle du serveur » est une conclusion ; le fait est une trace d'accès à telle heure, depuis telle adresse.
+\item \textbf{Distinguer l'auteur du point d'origine.} Une adresse d'origine désigne un point du réseau, non une personne.
+\item \textbf{Rattacher chaque phase à un texte.} La qualification se construit phase par phase, chacune appuyée sur sa preuve, comme au Chapitre 12 de l'UE SEC4031.
+\end{enumerate}
+
+\begin{boxalert}
+La tentation, pour « comprendre », de rejouer l'attaque sur le système de la victime ou sur un système réel est une faute : c'est un accès non autorisé \textbf{[art. 65]} et une contamination de la preuve. La compréhension passe par les traces et, si un essai technique est nécessaire, par le laboratoire isolé sur des cibles autorisées, jamais sur le système en cause.
+\end{boxalert}
+
+\subsection{Le cas du rançongiciel}
+
+Le rançongiciel réunit plusieurs phases : accès, installation, chiffrement des données, demande de rançon, parfois exfiltration préalable et menace de publication. Pour l'enquêteur, il se lit comme un cumul de qualifications : atteinte à l'intégrité et au fonctionnement du système \textbf{[art. 66 à 68]}, atteinte aux données \textbf{[art. 71]}, chantage \textbf{[art. 303 CP]}, atteinte à la vie privée en cas de publication de données personnelles \textbf{[art. 74]}. La conduite à tenir (préservation des journaux, note de rançon remise sous empreinte, déconseiller le paiement et toute riposte) relève du Chapitre 8 de l'UE SEC4031 et du Chapitre 20.
+
+\begin{boxCRO}
+\textbf{Analyse CRO · Reconstitution d'attaque}
+\textbf{C} : la reconstitution d'attaque implique l'accès à des données sensibles de la victime (journaux, fichiers, mémoire). La proportionnalité et la minimisation (art. 9-11 Loi 2024/017) limitent la collecte au périmètre nécessaire.
+
+\textbf{R} : la reconstruction repose sur la convergence de traces multi-sources (journaux, mémoire, réseau). La redondance forensique (Ch. 14) garantit qu'un artefact survivant suffit à établir un fait.
+
+\textbf{O} : la chronologie reconstituée, appuyée sur des traces horodatées et documentées, est opposable. La distinction constatation/analyse (NIST SP 800-86) structure le rapport.
+
+\textbf{Impact CRO} : \texttt{C: ↓ proportionnalité \quad R: ↑↑ convergence \quad O: ↑↑ documentation}
+\end{boxCRO}
+
+\begin{boxexo}
+\textbf{Exercice~:Lire une attaque par ses traces}
+À partir d'un ensemble de pièces (courriel, journaux de connexion, note de rançon) :
+\begin{enumerate}
+\item placez chaque fait connu dans la grille des phases (phase, trace, qualification) ;
+\item distinguez, pour chaque phase, ce qui est établi par une trace de ce qui reste à établir ;
+\item dressez la chronologie de l'atteinte, du courriel initial au virement ;
+\item proposez la qualification des faits, phase par phase, en citant les textes et indiquez les réquisitions et demandes d'entraide nécessaires.
+\end{enumerate}
+\end{boxexo}
+
+\begin{boxresume}
+\begin{itemize}
+\item Les phases d'une attaque sont une grille de lecture : à chaque phase, une trace et un texte.
+\item On remonte souvent des effets vers l'origine ; chaque remontée se corrobore.
+\item Le vocabulaire d'un rapport n'est pas un fait ; l'adresse d'origine n'est pas une personne.
+\item On ne rejoue jamais une attaque sur le système en cause ni sur un système réel.
+\end{itemize}
+\end{boxresume}
+
+\section{Courriels et sites frauduleux}
+
+\subsection{Analyser un courriel frauduleux}
+
+Un courriel porte des en-têtes qui tracent son chemin, de l'expéditeur au destinataire. Ils sont la première source pour en apprécier l'origine réelle.
+
+\begin{longtable}{p{0.26\linewidth}p{0.70\linewidth}}
+\rowcolor{TableauEntete}\textcolor{white}{\bfseries En-tête} & \textcolor{white}{\bfseries Lecture} \\ \hline
+Expéditeur affiché & Facile à falsifier ; comparer au domaine réel de l'organisation prétendue. \\
+Adresse de réponse & Souvent différente de l'expéditeur dans un courriel frauduleux ; c'est vers elle que part la réponse de la victime. \\
+Chemin de transit & Se lit de bas en haut ; la première mention correspond au serveur d'émission. \\
+Identifiant du message & Le domaine qu'il contient révèle parfois le serveur d'émission réel. \\
+Mécanismes d'authentification & Un échec des vérifications de conformité est un fort indice d'usurpation de l'expéditeur. \\
+\end{longtable}
+
+L'analyse des en-têtes donne une adresse ou un domaine d'émission. Elle ne nomme pas l'auteur : l'identification passe par une réquisition au fournisseur de messagerie ou par l'entraide (Ch. 10, UE SEC4031). Le courriel d'origine est conservé sous sa forme brute (avec ses en-têtes) et son empreinte, non recopié dans le corps du procès-verbal seul.
+
+\begin{boxalert}
+On n'ouvre pas le lien d'un courriel frauduleux sur un poste de service, on ne soumet pas de données à son formulaire, on ne répond pas à son adresse de réponse. Ces gestes alertent l'auteur, exposent le poste et faussent la preuve. L'examen se fait sur les en-têtes et, pour le site, par la consultation documentée décrite à la section précédente, sur le poste du laboratoire.
+\end{boxalert}
+
+\subsection{Caractériser un site qui recueille des identifiants}
+
+Pour la qualification, l'élément déterminant est \textbf{la destination des données saisies} : le formulaire envoie ce que la victime tape vers une adresse contrôlée par l'auteur. Cette destination, relevée dans le code de la page servie sans qu'aucune donnée n'ait été soumise, relie le site à une infrastructure et fonde les demandes de conservation et d'entraide.
+
+\subsection{Le laboratoire isolé et le rapport d'expert}
+
+Comprendre concrètement une technique suppose parfois de l'observer. Cela se fait dans le \textbf{laboratoire isolé} : des machines virtuelles sans aucune connexion vers l'extérieur, sur des cibles prévues pour l'exercice. Deux règles encadrent tout essai technique.
+
+\begin{boxalert}
+Un test qui touche un système réel, sans le consentement de la personne autorisée à en disposer, est une infraction \textbf{[art. 65 Loi 2010/012]}, que le mobile soit la curiosité, la formation ou l'enquête. Un essai n'est licite que sur un système explicitement autorisé, à savoir, en formation, les cibles du laboratoire isolé. Les participants qui useraient de ces techniques hors de ce cadre s'exposent aux peines mêmes qu'ils sont formés à poursuivre.
+\end{boxalert}
+
+Dans une affaire réelle, l'analyse technique d'une intrusion est confiée à une personne qualifiée ou à un expert, requis par l'autorité compétente \textbf{[art. 92 (2) CPP ; art. 55 et 56 Loi 2010/012]}. Le rôle de l'enquêteur est de \textbf{lire et de discuter} ce rapport, en appliquant la distinction \emph{Examination / Analysis} du NIST SP 800-86 (Ch. 7 de l'UE SEC4031 et Ch. 20) :
+
+\begin{itemize}
+\item \textbf{Éléments examinés} : le rapport porte-t-il sur les copies scellées, avec leurs empreintes ?
+\item \textbf{Méthode} : outils et versions, environnement d'analyse ; l'analyse est-elle reproductible (principe de reproductibilité, prologue de l'UE SEC4031) ?
+\item \textbf{Constatations et conclusions} : distingue-t-il le fait constaté de l'interprétation ? Les conclusions sont-elles graduées (niveau de confiance explicite) ?
+\item \textbf{Limites} : dit-il ce qu'il n'a pas pu établir ?
+\item \textbf{Traduction procédurale} : chaque conclusion technique se rattache-t-elle à une phase et à un texte ?
+\end{itemize}
+
+\section{Synthèse et exercice intégrateur}
+
+\subsection{Scénario opérationnel · Opération BAOBAB 2}
+
+\begin{boxscenario}{Opération BAOBAB 2 · Dossier de synthèse}
+Une page de placement en cryptoactifs (« Baobab Invest ») a détourné 47 millions de francs CFA. La page a disparu, les fonds ont transité vers une plateforme d'échange. Trois éléments nouveaux sont versés au dossier :
+\begin{itemize}
+\item une adresse de portefeuille Bitcoin, communiquée par la plateforme d'échange ;
+\item un pseudonyme, utilisé par l'administrateur de la page sur une messagerie et un réseau social ;
+\item le signalement, par une banque de la place, d'un site qui imite sa page de connexion et a servi à recueillir des identifiants avant les versements.
+\end{itemize}
+
+L'enquête mobilise l'ensemble des techniques de ce chapitre : recherche sur le pseudonyme, cartographie des liens, analyse des domaines, traçage des cryptoactifs, analyse du courriel frauduleux, lecture de l'attaque par ses traces, documentation des constatations.
+\end{boxscenario}
+
+\subsection{Exercice intégrateur}
+
+\begin{boxexo}
+\textbf{Exercice~:Dossier de synthèse}
+À partir d'un ensemble de pièces (instructions du Procureur, éléments transmis, constatations en source ouverte, traçage du portefeuille, note de la banque) :
+
+\begin{enumerate}
+\item Établissez le dossier OSINT : constatations sourcées et datées sur le pseudonyme, l'administrateur présumé, les domaines et le site imitant la banque ; carte des liens ; traçage des cryptoactifs jusqu'à la plateforme réceptrice.
+\item Analysez le courriel frauduleux et le site de collecte ; caractérisez la destination des données.
+\item Placez les faits dans la grille des phases et proposez la qualification, texte par texte.
+\item Dressez la liste ordonnée des actes à venir : réquisitions au Cameroun, demandes de conservation et d'entraide à l'étranger, en désignant pour chacun le destinataire, l'État et le canal.
+\item Rédigez la note de synthèse au Procureur, en distinguant l'établi du probable et en exposant les limites.
+\end{enumerate}
+
+\textbf{Barème indicatif} : qualité et traçabilité des sources ; recoupement et cartographie ; traçage des cryptoactifs et point d'entraide ; qualification des faits ; valeur probante de la documentation.
+\end{boxexo}
+
+% --- Encadré lab NDAP SUKULU ---
+\begin{boiteRemarque}{Notions mobilisées par le laboratoire INA-LAB-07}
+\begin{itemize}
+    \item \textbf{Faux domaine}~: on le compare au domaine déclaré par la
+          marque~; la date de création (\texttt{Creation Date} du WHOIS)
+          rapportée à la date de signalement mesure la préparation.
+    \item \textbf{DNS passif}~: l'historique des résolutions montre qu'un
+          domaine frauduleux et un autre domaine partagent une même adresse
+          IP~: c'est un lien d'infrastructure.
+    \item \textbf{Certificats}~: un certificat peut couvrir plusieurs noms
+          (champ des \emph{noms alternatifs du sujet}, SAN)~; un même
+          certificat qui couvre deux domaines relie leurs titulaires.
+    \item \textbf{Profils}~: un pseudonyme seul trompe~; la même photo
+          (recherche d'image inversée, empreinte de l'image) relie des
+          comptes. L'identité se confirme ensuite par réquisition.
+    \item \textbf{Cryptoactifs}~: les entrées d'une adresse se somment
+          dans un explorateur public~; les sorties vers une adresse
+          \emph{étiquetée} comme plateforme d'échange marquent le point de
+          bascule vers la réquisition ou l'entraide.
+\end{itemize}
+\end{boiteRemarque}
+
+\section{À retenir}
+
+\begin{boxresume}
+Ce qu'il faut retenir de ce chapitre :
+
+\begin{itemize}
+\item \textbf{Frontière consultation / accès} : on consulte ce qui est public, on n'accède pas à ce qui est protégé \textbf{[art. 65 et 69 Loi 2010/012]}. Toute recherche en sources ouvertes est un acte d'enquête documenté.
+
+\item \textbf{Cycle du renseignement} : planification, collecte, traitement, analyse, diffusion. Chaque étape est documentée ; chaque constatation est sourcée et horodatée.
+
+\item \textbf{Personnes et organisations} : nom, adresse, numéro, pseudonyme et image sont des points de départ à recouper ; l'identité se confirme par réquisition.
+
+\item \textbf{Infrastructures} : la date de création d'un domaine est un indice fort ; le pays d'une adresse oriente l'entraide sans localiser la personne ; un site imitant une marque se capture d'abord.
+
+\item \textbf{Cryptoactifs} : les chaînes de blocs publiques se lisent librement ; suivre un flux jusqu'à une plateforme d'échange ; l'identité vient de la plateforme, sur réquisition ou entraide.
+
+\item \textbf{Documentation et valeur probante} : capture, empreinte SHA-256, procès-verbal de constatation aligné sur la chaîne de custody (Ch. 8, UE SEC4031). Sans documentation, la constatation est irrecevable.
+
+\item \textbf{Compréhension d'une attaque} : à chaque phase (reconnaissance, livraison, accès, installation, pilotage, actions finales), une trace et un texte. Remonter des effets vers l'origine ; corroborer chaque remontée.
+
+\item \textbf{Courriels et sites frauduleux} : analyse par les en-têtes ; caractérisation d'un site par la destination des données saisies ; jamais de clic ni de soumission de données.
+
+\item \textbf{Rapport d'expert} : le lire, le discuter et le traduire en qualifications selon la distinction \textit{Examination / Analysis} (NIST SP 800-86).
+
+\item \textbf{Trilemme CRO} : chaque technique de ce chapitre s'analyse selon Confidentialité (C), Fiabilité (R) et Opposabilité (O). La documentation est le levier principal d'opposabilité ; la proportionnalité est le garde-fou de confidentialité.
+\end{itemize}
+\end{boxresume}

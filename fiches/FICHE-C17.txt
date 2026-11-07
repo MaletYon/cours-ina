@@ -1,0 +1,234 @@
+NDAP SUKULU · INA · fiche FICHE-C17
+Chapitre 17 : Forensique cloud
+
+Version papier, à utiliser en attendant l'ouverture du portail NDAP SUKULU.
+La fiche complète compte 40 questions. Répondez sur la grille en fin de fiche.
+Durée indicative : 60 minutes. Seuil de réussite : 60 %.
+Les corrections figurent dans le livret de correction du cours.
+
+========================================================================
+Questions à choix multiple (une seule bonne réponse)
+========================================================================
+
+ 1. Quel est le problème central de la forensique cloud ?
+      a) La scène de crime est logique, pas physique
+      b) Les disques sont trop petits
+      c) Le cloud n'a pas de logs
+      d) Les mots de passe sont trop courts
+
+ 2. Dans le modèle SaaS, que gère le fournisseur ?
+      a) Tout, soit l'infrastructure, l'OS, l'application et les logs
+      b) Rien du tout
+      c) Seulement le réseau
+      d) Seulement l'application
+
+ 3. Lequel est un exemple de service SaaS ?
+      a) Gmail
+      b) AWS EC2
+      c) Azure VM
+      d) GCP Compute
+
+ 4. Dans le modèle IaaS, à quoi l'investigateur accède-t-il côté fournisseur ?
+      a) Aux logs de la couche cloud seulement, les logs OS exigeant réquisition ou saisie
+      b) À toutes les données sans formalité
+      c) À rien
+      d) Au code source du fournisseur
+
+ 5. Pourquoi dit-on que le SaaS est plus simple à investiguer que l'IaaS ?
+      a) Une demande au fournisseur SaaS est plus directe que la saisie d'une instance IaaS compromise
+      b) Le SaaS n'a pas de sécurité
+      c) L'IaaS n'existe pas
+      d) Le SaaS est gratuit
+
+ 6. Que journalise AWS CloudTrail ?
+      a) Chaque appel d'API, qui a fait quoi, quand et depuis quelle IP
+      b) La température des serveurs
+      c) Le code source des applications
+      d) Les mots de passe en clair
+
+ 7. Sous quel format et où AWS CloudTrail stocke-t-il ses logs ?
+      a) Au format JSON compressé, dans un bucket S3
+      b) Dans un fichier Word sur le bureau
+      c) Dans le BIOS
+      d) Sur une disquette
+
+ 8. Dans les logs CloudTrail, vous repérez une action StopLogging. Que signale-t-elle ?
+
+      a) Une tentative d'anti-forensique, l'arrêt de la journalisation
+      b) Un fonctionnement normal
+      c) Une sauvegarde réussie
+      d) Un chiffrement du disque
+
+ 9. Pourquoi l'arrêt de CloudTrail a-t-il échoué à effacer les traces dans le cas MVOM ?
+      a) Les logs antérieurs avaient déjà été transférés et centralisés ailleurs
+      b) L'attaquant a renoncé
+      c) CloudTrail est indestructible
+      d) Il n'y avait aucun log
+
+10. Quel journal Azure recense les tentatives de connexion ?
+      a) Les Azure AD Sign-In Logs
+      b) CloudTrail
+      c) mmssms.db
+      d) le MBR
+
+11. Comment s'appellent les journaux d'audit de Google Cloud ?
+      a) Les Cloud Audit Logs
+      b) Les Sign-In Logs
+      c) Les Prefetch
+      d) Les crontabs
+
+12. Quelle donnée SaaS est souvent disponible sans mandat de perquisition ?
+      a) Les logs de connexion
+      b) Le contenu intégral des messages
+      c) Les clés de chiffrement du fournisseur
+      d) Le code source
+
+13. Que désigne la multitenancy en forensique cloud ?
+      a) La colocalisation des données de plusieurs clients sur les mêmes serveurs
+      b) Un chiffrement renforcé
+      c) Un format d'image
+      d) Un protocole réseau
+
+14. Pourquoi l'éphémérité complique-t-elle la forensique cloud ?
+      a) Les instances et les logs disparaissent selon des rotations non contrôlées par l'enquêteur
+      b) Les instances durent des siècles
+      c) Les logs sont éternels
+      d) Le cloud est hors ligne
+
+15. Quel texte américain permet l'accès transfrontalier aux données des fournisseurs US ?
+      a) Le CLOUD Act
+      b) Le RGPD
+      c) La loi 2010/012
+      d) La RFC 3227
+
+16. Lequel est un exemple de service IaaS ?
+      a) AWS EC2
+      b) Gmail
+      c) Dropbox
+      d) Office 365
+
+17. Quelle action, dans CloudTrail, correspond à la suppression d'un journal d'audit ?
+      a) DeleteTrail
+      b) StartLogging
+      c) CreateUser
+      d) ListBuckets
+
+18. Que faut-il, en général, pour obtenir le contenu des communications d'un compte SaaS ?
+      a) Un mandat ou une entraide judiciaire
+      b) Une simple demande orale
+      c) Rien
+      d) L'accord du fournisseur seul
+
+19. Avec quel outil télécharge-t-on les logs CloudTrail depuis un bucket S3 ?
+      a) L'AWS CLI
+      b) Wireshark
+      c) RegRipper
+      d) binwalk
+
+20. Que décrit le modèle de responsabilité partagée dans le cloud ?
+      a) La sécurité se répartit entre le fournisseur et le client selon le modèle de service
+      b) Le fournisseur n'a aucune responsabilité
+      c) Le client gère tout, même en SaaS
+      d) Personne n'est responsable
+
+========================================================================
+Vrai ou faux
+========================================================================
+
+21. En forensique cloud, on peut simplement saisir le serveur physique comme pour un PC.
+      Vrai / Faux
+
+22. CloudTrail enregistre l'adresse IP source de chaque appel d'API.
+      Vrai / Faux
+
+23. Investiguer une instance IaaS compromise est généralement plus direct qu'un compte Gmail.
+      Vrai / Faux
+
+24. Centraliser les logs ailleurs protège contre leur suppression locale par un attaquant.
+      Vrai / Faux
+
+25. Les logs de connexion d'un compte SaaS sont souvent accessibles sans mandat.
+      Vrai / Faux
+
+26. En IaaS, le fournisseur donne directement accès aux logs du système d'exploitation du client.
+      Vrai / Faux
+
+27. La multitenancy signifie que plusieurs clients partagent les mêmes serveurs physiques.
+      Vrai / Faux
+
+28. Azure Activity Log et Sign-In Logs aident à reconstituer une activité sur Azure.
+      Vrai / Faux
+
+29. L'action StopLogging dans CloudTrail est un signe de fonctionnement normal.
+      Vrai / Faux
+
+30. Le CLOUD Act concerne l'accès aux données détenues par des fournisseurs américains.
+      Vrai / Faux
+
+========================================================================
+Textes à trous
+========================================================================
+
+31. Le journal d'audit des appels d'API sur AWS s'appelle ______.
+
+32. Le modèle où le fournisseur gère l'infrastructure, l'OS et l'application porte le sigle ______.
+
+33. Le modèle où le client gère l'OS et les applications sur des machines louées porte le sigle ______.
+
+34. L'action CloudTrail qui arrête la journalisation se nomme ______.
+
+35. AWS stocke les logs CloudTrail dans un bucket du service ______.
+
+36. Les journaux d'audit de Google Cloud s'appellent les Cloud Audit ______.
+
+37. Le texte américain de 2018 sur l'accès transfrontalier aux données est le ______ Act.
+
+38. Le partage d'un même serveur par plusieurs clients s'appelle la ______.
+
+39. En forensique cloud, la scène de crime est ______, pas physique.
+
+40. On télécharge les logs d'un bucket avec l'outil en ligne de commande AWS ______.
+
+========================================================================
+Grille de réponses   Nom : ............................  Matricule : ............
+========================================================================
+ 1. ............................................
+ 2. ............................................
+ 3. ............................................
+ 4. ............................................
+ 5. ............................................
+ 6. ............................................
+ 7. ............................................
+ 8. ............................................
+ 9. ............................................
+10. ............................................
+11. ............................................
+12. ............................................
+13. ............................................
+14. ............................................
+15. ............................................
+16. ............................................
+17. ............................................
+18. ............................................
+19. ............................................
+20. ............................................
+21. ............................................
+22. ............................................
+23. ............................................
+24. ............................................
+25. ............................................
+26. ............................................
+27. ............................................
+28. ............................................
+29. ............................................
+30. ............................................
+31. ............................................
+32. ............................................
+33. ............................................
+34. ............................................
+35. ............................................
+36. ............................................
+37. ............................................
+38. ............................................
+39. ............................................
+40. ............................................

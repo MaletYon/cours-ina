@@ -1,0 +1,235 @@
+NDAP SUKULU · INA · fiche FICHE-C16
+Chapitre 16 : Forensique mobile, Android et iOS
+
+Version papier, à utiliser en attendant l'ouverture du portail NDAP SUKULU.
+La fiche complète compte 40 questions. Répondez sur la grille en fin de fiche.
+Durée indicative : 60 minutes. Seuil de réussite : 60 %.
+Les corrections figurent dans le livret de correction du cours.
+
+========================================================================
+Questions à choix multiple (une seule bonne réponse)
+========================================================================
+
+ 1. Quelle partition Android contient les bases de données privées des applications ?
+      a) La partition /data, qui nécessite le root ou une extraction physique
+      b) La partition /sdcard, accessible sans root
+      c) Le BIOS
+      d) La partition de recovery
+
+ 2. À quoi donne accès l'extraction ADB sans root, via adb pull /sdcard/ ?
+      a) Les photos, vidéos et sauvegardes présentes sur la carte SD virtuelle
+      b) Toutes les bases privées des applications
+      c) La Secure Enclave
+      d) Les clés de chiffrement
+
+ 3. Dans quel format les applications Android stockent-elles la plupart de leurs données ?
+      a) Des bases SQLite, avec l'extension .db
+      b) Des fichiers Word
+      c) Des images PNG
+      d) Des archives ZIP
+
+ 4. Quelle base de données stocke les SMS sous Android ?
+      a) mmssms.db
+      b) sms.db
+      c) Manifest.db
+      d) contacts2.db
+
+ 5. Sous quel format WhatsApp stocke-t-il sa base de messages locale chiffrée ?
+      a) msgstore.db.crypt15, chiffrée en AES-256-GCM
+      b) Un fichier texte en clair
+      c) Une image JPEG
+      d) Un fichier PDF
+
+ 6. Que faut-il, en général, pour déchiffrer une base WhatsApp locale crypt15 ?
+      a) La clé stockée dans /data, donc le root ou une sauvegarde adéquate
+      b) Rien, elle est en clair
+      c) Le code PIN de la carte SIM
+      d) L'adresse IP
+
+ 7. Quel outil en ligne de commande ouvre et interroge une base .db ?
+      a) sqlite3
+      b) tshark
+      c) binwalk
+      d) RegRipper
+
+ 8. Quelle source fournit la position d'une photo prise avec le téléphone ?
+      a) Les métadonnées EXIF de la photo
+      b) Le fichier hosts
+      c) Le MBR
+      d) Le BIOS
+
+ 9. Dans une fraude MoMo, où trouve-t-on les SMS de confirmation de transaction sur le téléphone ?
+
+      a) Dans mmssms.db
+      b) Dans la Secure Enclave
+      c) Dans le BIOS
+      d) Dans le fichier hosts
+
+10. Comment obtenir l'historique complet des transactions MoMo au-delà du téléphone ?
+      a) Par réquisition à l'opérateur, au titre de l'article 57 de la loi 2010/012
+      b) En devinant le code PIN
+      c) En lisant le BIOS
+      d) C'est impossible
+
+11. Qu'est-ce qui complique fortement la forensique iOS ?
+      a) Le chiffrement matériel AES-256 et la Secure Enclave
+      b) L'absence de système de fichiers
+      c) La gratuité des outils
+      d) L'absence de stockage
+
+12. Quel rôle joue la Secure Enclave sur iOS ?
+      a) Elle stocke les clés de déchiffrement
+      b) Elle affiche l'écran
+      c) Elle gère le réseau
+      d) Elle compresse les photos
+
+13. Quelle méthode constitue une extraction logique sous iOS ?
+      a) La sauvegarde iTunes ou Finder
+      b) Le retrait de la carte SD
+      c) La lecture du BIOS
+      d) L'effacement à distance
+
+14. Quel fichier d'une sauvegarde iOS inventorie tous les fichiers sauvegardés ?
+      a) Manifest.db
+      b) mmssms.db
+      c) msgstore.db
+      d) WifiConfigStore.xml
+
+15. En lisant sms.db d'un iPhone, un horodatage paraît aberrant. Pourquoi ?
+
+      a) iOS compte les secondes depuis le 1er janvier 2001, pas depuis 1970
+      b) iOS n'horodate rien
+      c) Le fichier est chiffré
+      d) La base est corrompue
+
+16. Quelle base contient les iMessage et SMS sur une sauvegarde iOS ?
+      a) sms.db
+      b) mmssms.db
+      c) contacts2.db
+      d) Amcache.hve
+
+17. Quel type d'outil commercial sert à extraire un iPhone verrouillé ?
+      a) Cellebrite UFED ou GrayKey
+      b) Wireshark
+      c) log2timeline
+      d) dnstwist
+
+18. Quel artefact Android renseigne sur les réseaux Wi-Fi mémorisés ?
+      a) WifiConfigStore.xml
+      b) Manifest.plist
+      c) le MBR
+      d) le fichier hosts
+
+19. Sans root, comment lire les SMS via ADB ?
+      a) Par une content query sur le fournisseur de SMS
+      b) En lisant la Secure Enclave
+      c) En retirant la batterie
+      d) C'est strictement impossible
+
+20. Quelle donnée personnelle le chapitre rappelle-t-il à propos des artefacts mobiles ?
+      a) Ils identifient indirectement une personne physique, d'où un cadre de collecte à respecter
+      b) Ils sont anonymes et libres
+      c) Ils n'ont aucune valeur
+      d) Ils sont publics
+
+========================================================================
+Vrai ou faux
+========================================================================
+
+21. L'extraction ADB sans root donne accès à toutes les bases privées des applications.
+      Vrai / Faux
+
+22. Les médias WhatsApp sur la carte SD ne sont pas chiffrés.
+      Vrai / Faux
+
+23. Sur iOS, toutes les données sont chiffrées par le matériel.
+      Vrai / Faux
+
+24. L'horodatage iOS se calcule à partir du 1er janvier 1970, comme l'epoch Unix.
+      Vrai / Faux
+
+25. La plupart des applications Android stockent leurs données dans des bases SQLite.
+      Vrai / Faux
+
+26. L'historique complet des transactions MoMo s'obtient par réquisition à l'opérateur.
+      Vrai / Faux
+
+27. La Secure Enclave facilite l'accès aux données d'un iPhone verrouillé.
+      Vrai / Faux
+
+28. Les SMS Android se trouvent dans la base mmssms.db.
+      Vrai / Faux
+
+29. Les métadonnées EXIF d'une photo peuvent contenir sa position GPS.
+      Vrai / Faux
+
+30. Une sauvegarde iTunes ou Finder est une forme d'extraction logique de l'iPhone.
+      Vrai / Faux
+
+========================================================================
+Textes à trous
+========================================================================
+
+31. La partition Android accessible sans root, qui contient photos et vidéos, est le ______.
+
+32. La base de données des SMS sous Android se nomme ______.db.
+
+33. L'outil en ligne de commande qui interroge une base de données locale s'appelle ______.
+
+34. Le pont de débogage utilisé pour extraire un appareil Android porte le sigle ______.
+
+35. Le composant iOS qui conserve les clés de déchiffrement s'appelle la Secure ______.
+
+36. Le fichier d'une sauvegarde iOS qui inventorie tous les fichiers s'appelle ______.db.
+
+37. La base des iMessage et SMS sur une sauvegarde iOS se nomme ______.db.
+
+38. La base WhatsApp locale chiffrée porte l'extension .crypt______ (en chiffres).
+
+39. La réquisition à l'opérateur pour les données MoMo s'appuie sur l'article 57 de la loi 2010/______.
+
+40. Avant extraction, un téléphone saisi doit d'abord être placé en mode ______.
+
+========================================================================
+Grille de réponses   Nom : ............................  Matricule : ............
+========================================================================
+ 1. ............................................
+ 2. ............................................
+ 3. ............................................
+ 4. ............................................
+ 5. ............................................
+ 6. ............................................
+ 7. ............................................
+ 8. ............................................
+ 9. ............................................
+10. ............................................
+11. ............................................
+12. ............................................
+13. ............................................
+14. ............................................
+15. ............................................
+16. ............................................
+17. ............................................
+18. ............................................
+19. ............................................
+20. ............................................
+21. ............................................
+22. ............................................
+23. ............................................
+24. ............................................
+25. ............................................
+26. ............................................
+27. ............................................
+28. ............................................
+29. ............................................
+30. ............................................
+31. ............................................
+32. ............................................
+33. ............................................
+34. ............................................
+35. ............................................
+36. ............................................
+37. ............................................
+38. ............................................
+39. ............................................
+40. ............................................

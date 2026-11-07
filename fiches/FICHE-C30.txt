@@ -1,0 +1,233 @@
+NDAP SUKULU · INA · fiche FICHE-C30
+Chapitre 30 : Fondements de la conception et cryptanalyse
+
+Version papier, à utiliser en attendant l'ouverture du portail NDAP SUKULU.
+La fiche complète compte 40 questions. Répondez sur la grille en fin de fiche.
+Durée indicative : 60 minutes. Seuil de réussite : 60 %.
+Les corrections figurent dans le livret de correction du cours.
+
+========================================================================
+Questions à choix multiple (une seule bonne réponse)
+========================================================================
+
+ 1. Que signifie le principe Zero Trust ?
+      a) Ne faire confiance à aucun composant sans vérification explicite
+      b) Faire confiance au réseau interne
+      c) Ne jamais chiffrer
+      d) Supprimer tous les comptes
+
+ 2. Que recherche le minimalisme ?
+      a) Réduire la surface d'attaque au strict nécessaire
+      b) Utiliser la clé la plus courte
+      c) Écrire le moins de rapports
+      d) Supprimer la journalisation
+
+ 3. Qu'est-ce que la défense en profondeur ?
+      a) Empiler des mécanismes indépendants pour qu'une couche compromise ne fasse pas tout tomber
+      b) Cacher le code source
+      c) Utiliser un seul pare-feu très puissant
+      d) Chiffrer deux fois avec la même clé
+
+ 4. Que prescrit le principe fail-safe defaults ?
+      a) Refuser par défaut, autoriser explicitement après vérification
+      b) Autoriser par défaut
+      c) Redémarrer en cas d'erreur
+      d) Ignorer les erreurs
+
+ 5. À quelle architecture du chapitre 27 la défense en profondeur correspond-elle ?
+      a) L'architecture en couches Gold-Iron-Clay
+      b) Le modèle Dolev-Yao
+      c) L'algorithme de Grover
+      d) La grille en cinq questions
+
+ 6. Quel rôle joue le Trilemme CRO dans la conception ?
+      a) Une boussole vers l'équilibre adapté au cas d'usage
+      b) Un obstacle qui interdit de concevoir
+      c) Une norme de chiffrement
+      d) Une liste d'outils
+
+ 7. Combien de familles compte la taxonomie des failles ?
+      a) Six
+      b) Deux
+      c) Quatre
+      d) Dix
+
+ 8. Une faille dans la spécification elle-même est dite…
+      a) Conceptuelle
+      b) D'implémentation
+      c) Passive
+      d) Active
+
+ 9. Une faille dans le code malgré une spécification saine est dite…
+      a) D'implémentation
+      b) Conceptuelle
+      c) Passive
+      d) Contre les primitives
+
+10. Un adversaire qui observe sans modifier mène une attaque…
+      a) Passive
+      b) Active
+      c) Conceptuelle
+      d) D'implémentation
+
+11. Une attaque qui exploite l'interaction entre primitives saines vise…
+      a) Le protocole
+      b) Les primitives
+      c) Le matériel
+      d) Le juge
+
+12. Quelle pratique forensique ressemble à une analyse black-box ?
+      a) L'analyse réseau
+      b) L'analyse de micrologiciel
+      c) La lecture du code source
+      d) L'analyse de la clé privée
+
+13. Quelle pratique forensique ressemble à une analyse white-box ?
+      a) L'analyse de micrologiciel
+      b) La capture de trafic
+      c) L'observation d'un service distant
+      d) L'OSINT
+
+14. Que pose le principe de Kerckhoffs ?
+      a) La sécurité ne doit reposer que sur le secret de la clé
+      b) Le secret de l'algorithme garantit la sécurité
+      c) Toute clé finit par fuiter
+      d) Le code doit rester secret
+
+15. Quels deux horizons la cryptanalyse post-quantique doit-elle anticiper ?
+      a) Les attaques d'aujourd'hui et celles de demain
+      b) Le jour et la nuit
+      c) Le réseau et le disque
+      d) Le juge et l'avocat
+
+16. Quelle stratégie rend la cryptanalyse prospective ?
+      a) Récolter maintenant, déchiffrer plus tard
+      b) Le timestomping
+      c) La rotation des journaux
+      d) Le factory reset
+
+17. Que décrit le cycle vertueux du chapitre ?
+      a) Concevoir, attaquer, réviser, avec une documentation à chaque tour
+      b) Concevoir une fois pour toutes
+      c) Attaquer sans corriger
+      d) Publier sans tester
+
+18. Pourquoi cette taxonomie est-elle utile à l'enquêteur ?
+      a) Elle donne une grille systématique pour analyser un mécanisme contesté
+      b) Elle remplace la custody
+      c) Elle dispense de rapport
+      d) Elle qualifie l'infraction
+
+19. Quel est le statut de ZK-NR rappelé dans ce chapitre ?
+      a) Un travail de recherche en cours, sans article complet vérifiable
+      b) Un standard NIST
+      c) Un résultat publié dans IEEE Access
+      d) Un produit commercial
+
+20. Quelle est la finalité de la cryptanalyse dans ce chapitre ?
+      a) Éprouver un mécanisme pour le rendre meilleur
+      b) Casser des preuves pour les invalider
+      c) Remplacer la conception
+      d) Obtenir des clés sans mandat
+
+========================================================================
+Vrai ou faux
+========================================================================
+
+21. Le principe Zero Trust accorde une confiance implicite aux acteurs internes.
+      Vrai / Faux
+
+22. Toute complexité supplémentaire offre une opportunité de plus à l'attaquant.
+      Vrai / Faux
+
+23. Une conception sécurisée cherche l'optimum impossible des trois mesures.
+      Vrai / Faux
+
+24. Une faille d'implémentation peut exister malgré une spécification saine.
+      Vrai / Faux
+
+25. Une attaque active se limite à écouter.
+      Vrai / Faux
+
+26. Selon Kerckhoffs, un algorithme sûr peut être rendu public.
+      Vrai / Faux
+
+27. Un système dont la sécurité tient au secret de sa conception est sûr.
+      Vrai / Faux
+
+28. La pratique mature sépare strictement concevoir et attaquer.
+      Vrai / Faux
+
+29. La cryptanalyse post-quantique ne concerne que l'avenir lointain.
+      Vrai / Faux
+
+30. Distinguer publié, en préparation et ouvert est une compétence cryptanalytique.
+      Vrai / Faux
+
+========================================================================
+Textes à trous
+========================================================================
+
+31. Le principe de méfiance systématique s'appelle Zero ______.
+
+32. Le principe qui empile des couches indépendantes est la défense en ______.
+
+33. Le principe qui refuse par défaut s'appelle fail-safe ______.
+
+34. Le principe qui réduit la surface d'attaque est le ______.
+
+35. Le principe selon lequel seule la clé doit rester secrète porte le nom de ______.
+
+36. L'analyse sans accès au fonctionnement interne est dite black-______.
+
+37. La taxonomie compte ______ familles de failles.
+
+38. Une faille dans la spécification est dite ______.
+
+39. Le cycle du chapitre enchaîne conception, cryptanalyse et ______.
+
+40. Une attaque où l'adversaire se contente d'observer est dite ______.
+
+========================================================================
+Grille de réponses   Nom : ............................  Matricule : ............
+========================================================================
+ 1. ............................................
+ 2. ............................................
+ 3. ............................................
+ 4. ............................................
+ 5. ............................................
+ 6. ............................................
+ 7. ............................................
+ 8. ............................................
+ 9. ............................................
+10. ............................................
+11. ............................................
+12. ............................................
+13. ............................................
+14. ............................................
+15. ............................................
+16. ............................................
+17. ............................................
+18. ............................................
+19. ............................................
+20. ............................................
+21. ............................................
+22. ............................................
+23. ............................................
+24. ............................................
+25. ............................................
+26. ............................................
+27. ............................................
+28. ............................................
+29. ............................................
+30. ............................................
+31. ............................................
+32. ............................................
+33. ............................................
+34. ............................................
+35. ............................................
+36. ............................................
+37. ............................................
+38. ............................................
+39. ............................................
+40. ............................................

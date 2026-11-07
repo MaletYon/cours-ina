@@ -1,0 +1,59 @@
+%% ============================================================================
+%% Fichier  : annexes/Ann_B_outils.tex
+%% Titre    : Référentiel des outils
+%% Version  : 1.0 -- novembre 2026
+%% ============================================================================
+%% Alignée sur les annexes des autres cours de l'auteur (ACSI, INF3226).
+%% ============================================================================
+
+\chapter{Référentiel des Outils}
+\label{ann:outils}
+
+Cette annexe rassemble les outils mobilisés dans le cours et dans les labs de
+NDAP SUKULU. Les noms de logiciels sont des exemples~: les versions évoluent, et
+tout rapport cite l'outil \emph{et sa version}. Un outil se valide avant
+usage, sur des données de référence (ISO/IEC~27041).
+
+\section*{Systèmes et mémoire}
+
+\begin{tableaucours}{L{3.6cm}L{6.2cm}L{2.6cm}}{%
+    \tableauHeader{Outil} &
+    \tableauHeader{Usage} &
+    \tableauHeader{Chapitre}
+}
+Outils d'analyse du registre et de NTFS (\$MFT, \$UsnJrnl) & Preuves d'exécution, chronologie des fichiers & Ch.~\ref{chap:for-sys} \\
+Plaso (\texttt{log2timeline}) & Timeline unique de toutes les sources & Ch.~\ref{chap:for-sys} \\
+Volatility~3 & Processus, connexions, injections en mémoire & Ch.~\ref{chap:for-sys} \\
+\end{tableaucours}
+
+\section*{Réseau, mobile, nuage, objets}
+
+\begin{tableaucours}{L{3.6cm}L{6.2cm}L{2.6cm}}{%
+    \tableauHeader{Outil} &
+    \tableauHeader{Usage} &
+    \tableauHeader{Chapitre}
+}
+Wireshark, Zeek & Flux, sessions, beaconing, exfiltration & Ch.~\ref{chap:for-res} \\
+Lecteurs SQLite, Autopsy & Messages, appels, Mobile Money, EXIF & Ch.~\ref{chap:for-mob} \\
+Journaux du fournisseur (par exemple CloudTrail) & Appels d'interface, fenêtres aveugles & Ch.~\ref{chap:for-cloud} \\
+\texttt{binwalk} & Extraire et lire un micrologiciel & Ch.~\ref{chap:for-iot} \\
+\texttt{kubectl}, journaux d'audit & Conteneurs et grappes Kubernetes & Ch.~\ref{chap:containers} \\
+Outils OSINT (WHOIS, archives du web, explorateurs de chaînes) & Domaines, profils, cryptoactifs & Ch.~\ref{chap:for-osint} \\
+\end{tableaucours}
+
+\section*{Cryptographie et méthodes formelles}
+
+\begin{tableaucours}{L{3.6cm}L{6.2cm}L{2.6cm}}{%
+    \tableauHeader{Outil} &
+    \tableauHeader{Usage} &
+    \tableauHeader{Chapitre}
+}
+Bibliothèques post-quantiques (Open Quantum Safe) & Expérimenter ML-KEM et ML-DSA & Ch.~\ref{chap:quantique} \\
+Vérificateurs de protocoles (Tamarin, ProVerif) & Analyser formellement un protocole & Ch.~\ref{chap:form-meth} \\
+\end{tableaucours}
+
+\begin{boxalert}
+\textbf{Rappel.} Aucun outil n'est utilisé sur un système réel sans cadre
+légal ni autorisation écrite (loi n°~2010/012, art.~65, 69 et~86~;
+Annexe~\ref{ann:lois}).
+\end{boxalert}

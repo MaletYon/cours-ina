@@ -1,0 +1,478 @@
+% ============================================================================
+% Fichier  : partie6/P06_C29_protocole_ZKNR.tex
+% Titre    : Le Protocole ZK-NR -- Architecture et Statut d'un Travail
+%            de Recherche en Cours
+% Auteur   : MINKA MI NGUIDJOÏ Thierry Emmanuel
+% Version  : 2.0 -- Juin 2026
+% ============================================================================
+
+\chapter{Le Protocole ZK-NR. Architecture et Statut d'un Travail
+de Recherche en Cours}
+\label{chap:ZKNR}
+
+\epigraph{%
+    « Zero-knowledge proofs represent one of the most powerful tools in
+    cryptography, verification without disclosure, truth without
+    exposure. »%
+}{Shafi Goldwasser}
+
+\niveauChapitre{Recherche}{%
+    Preuves à divulgation nulle de connaissance (Ch.~\ref{chap:CRO},
+    \ref{chap:prim-crypt}) recommandées. Chapitre~\ref{chap:cryptanal}
+    (cryptanalyse, prudence sur les travaux en cours) indispensable~:
+    ce chapitre applique scrupuleusement la même discipline.%
+}
+
+\begin{boxobjectifs}
+\begin{itemize}
+    \item Décrire l'objectif annoncé du protocole ZK-NR
+          (\textit{Zero-Knowledge Non-Repudiation}) et son architecture
+          de principe, déductible des primitives nommées.
+    \item Situer chacune des quatre primitives composantes
+          (Merkle, STARK, signatures à seuil, signature post-quantique)
+          dans le cadre théorique déjà établi (Ch.~\ref{chap:CRO}
+          à~\ref{chap:quantique}).
+    \item Comprendre précisément ce que signifie le \textbf{statut
+          de prépublication} en recherche scientifique, et pourquoi
+          il impose une lecture critique distincte de celle d'un
+          article publié et évalué par les pairs.
+    \item Appliquer une grille de lecture critique à une annonce de
+          protocole de recherche, compétence transférable à
+          toute situation où un investigateur rencontre un outil
+          ou un mécanisme cryptographique émergent, non encore
+          validé par la communauté scientifique.
+    \item Distinguer ce qu'une description architecturale permet
+          d'affirmer en toute rigueur de ce qui resterait à établir
+          par une publication complète et évaluée par les pairs.
+\end{itemize}
+\end{boxobjectifs}
+
+\bigskip
+
+% ============================================================================
+\section*{Un chapitre sur un protocole, et sur la lecture critique
+d'un protocole}
+% ============================================================================
+
+Ce chapitre porte sur ZK-NR (\textit{Zero-Knowledge Non-Repudiation}),
+un protocole de recherche de l'auteur de ce cours, décrit dans une
+prépublication déposée sur l'IACR ePrint~\cite{minka2025zknr}, conçu
+pour la non-répudiation préservant la vie privée avec des garanties
+post-quantiques. Mais il porte, tout autant, sur une question plus
+générale et directement utile à votre pratique
+professionnelle~: \textbf{comment lire et évaluer rigoureusement
+l'annonce d'un protocole cryptographique qui n'existe encore qu'en
+prépublication, sans évaluation par les pairs}, une situation que vous
+rencontrerez à de nombreuses reprises, face à des outils
+commerciaux, des préprints académiques, ou des annonces
+technologiques, tout au long de votre carrière d'investigateur.
+
+\separateur
+
+% ============================================================================
+\section{Objectif Annoncé et Architecture de Principe}
+\label{sec:objectif-architecture}
+% ============================================================================
+
+\subsection{L'objectif visé}
+
+ZK-NR vise à répondre à un problème directement issu du Trilemme CRO
+formalisé au Ch.~\ref{chap:CRO}~: produire des attestations
+numériques offrant \textbf{simultanément}~:
+\begin{itemize}
+    \item une \textbf{non-répudiation forte}. l'émetteur d'une
+          attestation ne peut nier l'avoir produite, propriété
+          centrale de l'opposabilité juridique
+          (Ch.~8~(UE~SEC4031), Ch.~\ref{chap:rapport})~;
+    \item une \textbf{préservation de la confidentialité}.
+          ne révéler que le strict nécessaire, sur le modèle des
+          preuves à divulgation nulle (Ch.~\ref{chap:CRO},
+          Section~4.4)~;
+    \item une \textbf{résistance post-quantique}. anticiper,
+          conformément au Ch.~\ref{chap:quantique}, la menace que
+          représente l'algorithme de Shor pour les mécanismes
+          de signature classiques.
+\end{itemize}
+
+\begin{boxCRO}
+\textbf{Analyse CRO. ZK-NR comme tentative architecturale face
+au Trilemme}
+
+Le Théorème~3 (Ch.~\ref{chap:CRO}) établit qu'aucune primitive
+unique ne peut maximiser simultanément $\mathsf{Conf}$,
+$\mathsf{Rel}$ et $\mathsf{Opp}$. L'objectif affiché de ZK-NR
+illustre précisément la \textbf{réponse architecturale} que ce
+théorème appelle~: non pas chercher une primitive miracle, mais
+\textbf{combiner plusieurs primitives complémentaires}, chacune
+apportant sa force dominante, exactement la logique de
+l'architecture Gold-Iron-Clay déjà présentée comme optimale dans
+sa classe de construction (Ch.~\ref{chap:CRO}, Section~6.1).
+
+\cro{$\sim$ objectif visé}{$\sim$ objectif visé}{$\sim$ objectif visé}
+
+\textbf{Note de prudence}~: cette analyse porte sur la
+\textbf{cohérence de l'objectif annoncé} avec le cadre théorique
+établi, pas sur une évaluation de l'atteinte effective de cet
+objectif par l'implémentation, question qui ne peut être
+tranchée qu'à l'examen d'une publication complète.
+\end{boxCRO}
+
+\subsection{Architecture de principe~: quatre primitives, quatre rôles}
+
+L'architecture annoncée combine quatre couches, chacune correspondant
+à une primitive \textbf{individuellement réelle et bien documentée}
+dans la littérature scientifique, ce qui permet d'en discuter
+le rôle de principe sans dépendre d'une publication ZK-NR complète.
+
+\begin{tableaucours}{p{2.8cm}p{3.2cm}p{5.0cm}}{%
+    \tableauHeader{Couche} &
+    \tableauHeader{Primitive sous-jacente} &
+    \tableauHeader{Rôle de principe (déductible des propriétés
+    publiques de la primitive)}
+}
+\textbf{Engagement} & Arbre de Merkle &
+    Structure d'engagement immuable~: garantit qu'un ensemble de
+    données ne peut être modifié sans que la modification soit
+    détectable, principe déjà rencontré au Ch.~\ref{chap:for-sys}
+    pour l'intégrité de structures de données \\
+\textbf{Preuve} & STARK &
+    Preuve à divulgation nulle de connaissance, \textbf{transparente}
+    (sans \textit{trusted setup}), propriété qui la distingue
+    structurellement des zk-SNARKs analysés au
+    Ch.~\ref{chap:prim-crypt}, lesquels nécessitent une configuration
+    de confiance initiale \\
+\textbf{Signature} & Signature à seuil (BLS ou
+    équivalent) & Permet une attestation collective nécessitant
+    l'accord d'un sous-ensemble de signataires, analysée en
+    détail au Ch.~\ref{chap:cas-zknr} (vulnérabilité face à Shor,
+    Tableau~32.1) \\
+\textbf{Authentification} & Signature post-quantique
+    (Dilithium/ML-DSA ou équivalent) & Résistance à long terme face
+    à la menace quantique (Ch.~\ref{chap:quantique}, FIPS~204),
+    compense, en principe, la vulnérabilité de la couche précédente \\
+\end{tableaucours}
+\vspace{-0.8em}
+\begin{center}{\small\itshape Tableau~29.1. Architecture de principe de
+ZK-NR, primitive par primitive}\end{center}
+
+\begin{boiteRemarque}{Ce que ce tableau établit, et ce qu'il
+n'établit pas}
+Chaque ligne du Tableau~29.1 décrit une propriété \textbf{de la
+primitive elle-même}, vérifiable indépendamment dans la littérature
+citée tout au long de ce cours (Merkle~: Ch.~\ref{chap:for-sys}~;
+STARK~: Ch.~\ref{chap:quantique}, Ch.~\ref{chap:prim-crypt}~;
+BLS~: Ch.~\ref{chap:cas-zknr}~; Dilithium~: Ch.~\ref{chap:quantique},
+FIPS~204). Ce tableau \textbf{n'établit pas}, et ne peut pas
+établir, en l'absence d'article complet, que leur
+\textbf{combinaison spécifique} dans ZK-NR atteint effectivement
+les propriétés de sécurité visées, ni quelle est la complexité
+exacte de leur orchestration, ni quelles garanties formelles ont
+été démontrées pour l'ensemble du système plutôt que pour chaque
+composant pris isolément.
+\end{boiteRemarque}
+
+% ============================================================================
+\section{Sur le Statut de Prépublication en Recherche Scientifique}
+\label{sec:statut-prepublication}
+% ============================================================================
+
+\subsection{Une distinction essentielle}
+
+\begin{boxdef}
+\textbf{Prépublication}\index{prépublication}
+(\textit{preprint})~: document de recherche rendu public par ses
+auteurs, typiquement sur une plateforme telle qu'\textit{ePrint}
+(IACR) ou \textit{arXiv}, \textbf{avant} ou \textbf{indépendamment}
+d'une évaluation formelle par les pairs (\textit{peer review}) dans
+le cadre d'une revue ou conférence scientifique.
+
+\textbf{Publication évaluée par les pairs}~: document ayant subi
+un processus d'évaluation indépendant par des experts du domaine,
+mandatés par une revue ou conférence, vérifiant la rigueur des
+démonstrations, la nouveauté de la contribution, et la validité
+des conclusions, avant acceptation et publication officielle.
+\end{boxdef}
+
+\begin{boxalert}
+\textbf{La distinction n'est pas une question de qualité présumée,
+mais de statut de vérification}
+
+Une prépublication n'est \textbf{pas nécessairement de moindre
+qualité} qu'une publication évaluée par les pairs, de nombreux
+résultats majeurs de l'histoire des mathématiques et de
+l'informatique ont d'abord circulé en prépublication. La
+différence est d'une autre nature~: une prépublication
+\textbf{n'a pas encore été soumise au contrôle indépendant} qui
+permet à un tiers de s'appuyer dessus avec la même confiance
+qu'un résultat publié et vérifié. C'est exactement la distinction
+qui sépare, dans ce cours, le statut du Trilemme CRO \textbf{avant}
+sa publication dans IEEE Access (Ch.~\ref{chap:CRO}, où il aurait
+fallu le traiter avec cette même prudence) de son statut
+\textbf{après} cette publication, où les Théorèmes~1 à~3 peuvent
+être cités et utilisés comme des résultats établis.
+\end{boxalert}
+
+\subsection{Application au cas ZK-NR}
+
+\begin{tableaucours}{p{3.5cm}p{4.0cm}p{4.5cm}}{%
+    \tableauHeader{Critère} &
+    \tableauHeader{Trilemme CRO (Ch.~\ref{chap:CRO}-\ref{chap:prim-crypt})} &
+    \tableauHeader{ZK-NR (ce chapitre)}
+}
+Statut de publication & Publié et évalué par les pairs (IEEE Access,
+    2026) & Prépublication sur l'IACR ePrint
+    (2025/1138)~\cite{minka2025zknr}~; non encore évaluée par les
+    pairs ni auditée \\
+Démonstrations & Théorèmes~1, 2, 3 entièrement démontrés
+    et vérifiés (Pinsker, Fano) & Architecture de principe
+    décrite (Tableau~29.1)~; preuves de sécurité formelle non
+    accessibles pour vérification \\
+Validation empirique & Trois études de cas calculées et publiées
+    (Helios, zk-SNARK, ECDSA) & Aucune donnée chiffrée publiée
+    et vérifiable \\
+\textbf{Usage approprié dans ce cours} & Citer les théorèmes,
+    reproduire les calculs, s'appuyer sur les résultats
+    & Décrire l'objectif et l'architecture de principe~;
+    \textbf{ne pas} affirmer de propriétés de sécurité
+    spécifiques non vérifiées \\
+\end{tableaucours}
+\vspace{-0.8em}
+\begin{center}{\small\itshape Tableau~29.2. Comparaison de statut~:
+Trilemme CRO publié vs.\ ZK-NR en développement}\end{center}
+
+% ============================================================================
+\section{Grille de Lecture Critique d'une Annonce de Protocole}
+\label{sec:grille-lecture}
+% ============================================================================
+
+Cette section généralise la démarche appliquée à ZK-NR en une
+grille transférable, directement utile face à \textbf{tout}
+protocole ou outil cryptographique émergent rencontré dans votre
+pratique professionnelle, qu'il s'agisse d'une solution
+commerciale présentée par un fournisseur, d'un préprint académique,
+ou d'une annonce technologique relayée par la presse spécialisée.
+
+\begin{tableaucours}{p{3.2cm}p{8.8cm}}{%
+    \tableauHeader{Question} &
+    \tableauHeader{Ce qu'elle permet de vérifier}
+}
+\textbf{Quel est le statut de
+    publication exact~?} & Prépublication (ePrint, arXiv)~?
+    Publication évaluée par les pairs (revue, conférence)~? Simple
+    communiqué de presse ou documentation commerciale sans
+    publication scientifique sous-jacente~? \\
+\textbf{Les primitives composantes
+    sont-elles individuellement
+    documentées~?} & Chaque brique cryptographique utilisée
+    a-t-elle, elle-même, fait l'objet d'une analyse de sécurité
+    publiée et reconnue (sur le modèle du Tableau~29.1 pour ZK-NR)~? \\
+\textbf{Les propriétés de sécurité
+    globales sont-elles
+    démontrées, ou seulement
+    affirmées~?} & Existe-t-il une preuve formelle complète
+    (Ch.~\ref{chap:form-meth}) de la combinaison, ou seulement une
+    description qualitative des propriétés espérées~? \\
+\textbf{Des scores numériques
+    précis sont-ils avancés~?} & Si oui, une méthode de calcul
+    complète est-elle publiée et reproductible (sur le modèle du
+    Ch.~\ref{chap:prim-crypt})~? Un score sans méthode vérifiable
+    doit être traité avec le plus grand scepticisme. \\
+\textbf{Quelles limitations les
+    auteurs reconnaissent-ils
+    eux-mêmes~?} & Les auteurs sérieux identifient explicitement
+    les limites de leur propre travail (cf.~le Trilemme CRO,
+    Ch.~\ref{chap:CRO}, qui qualifie ses propres bornes de
+    ``open problem'' sur certains aspects)~; l'absence totale de
+    limitation reconnue est elle-même un signal d'alerte. \\
+\end{tableaucours}
+\vspace{-0.8em}
+\begin{center}{\small\itshape Tableau~29.3. Grille de lecture critique
+d'une annonce de protocole cryptographique}\end{center}
+
+\begin{boxjuris}
+\textbf{Application judiciaire de cette grille~: le témoignage
+d'expert face à un protocole émergent}
+
+Un expert judiciaire camerounais (Ch.~12~(UE~SEC4031)) appelé
+à se prononcer sur la fiabilité d'un mécanisme cryptographique
+récent, utilisé, par exemple, par une plateforme Mobile Money
+pour sécuriser ses transactions (Ch.~\ref{chap:for-mob}), doit
+appliquer cette même grille avant de fonder une conclusion sur ce
+mécanisme. Affirmer la fiabilité d'un protocole sur la seule base
+de la documentation commerciale du fournisseur, sans vérifier son
+statut de publication et de validation indépendante
+(Tableau~29.3), exposerait l'expert à une contestation directe en
+contre-interrogatoire (Ch.~\ref{chap:rapport}), exactement le
+type de question illustrée à l'Exercice~32.3 de ce cours
+concernant le protocole fictif ``CamSeal''.
+\end{boxjuris}
+
+% ============================================================================
+\section{Ce que ZK-NR Illustre pour la Pratique Forensique}
+\label{sec:illustration-pratique}
+% ============================================================================
+
+Indépendamment du statut de publication de ZK-NR lui-même, son
+\textbf{architecture de principe} illustre des leçons directement
+applicables à la pratique forensique de ce cours.
+
+\begin{enumerate}
+    \item \textbf{La non-répudiation post-quantique est un problème
+          réel et actuel}~: le Ch.~\ref{chap:quantique} a établi
+          que les signatures de la chaîne de custody numérique
+          d'aujourd'hui (Ch.~8~(UE~SEC4031)) pourraient perdre
+          leur valeur probatoire si l'algorithme sous-jacent
+          devient cassable. Tout effort de recherche visant une
+          non-répudiation résistante au quantique répond à un
+          besoin identifié, indépendamment de l'aboutissement
+          spécifique de tel ou tel protocole.
+    \item \textbf{La préservation de la vie privée et l'opposabilité
+          judiciaire sont en tension structurelle}~: le Théorème~3
+          (Ch.~\ref{chap:CRO}) l'a démontré mathématiquement. Tout
+          protocole visant à combiner les deux doit nécessairement
+          composer plusieurs primitives, aucune primitive unique
+          ne peut s'y soustraire.
+    \item \textbf{La recherche en cryptographie appliquée à la
+          forensique est un domaine actif}~: ce cours lui-même,
+          par ses six chapitres de Partie~VI, illustre que les
+          questions soulevées par la pratique forensique
+          camerounaise (Ch.~12~(UE~SEC4031),
+          Ch.~\ref{chap:bench}) trouvent un écho direct dans la
+          recherche scientifique internationale en cryptographie
+          institutionnelle.
+\end{enumerate}
+
+\separateur
+
+\begin{boxresume}
+\textbf{Ce qu'il faut retenir de ce chapitre~:}
+\begin{itemize}
+    \item \textbf{ZK-NR} vise une non-répudiation préservant la vie
+          privée avec garanties post-quantiques, en combinant quatre
+          primitives~: engagement de Merkle, preuve STARK
+          (transparente), signature à seuil, signature
+          post-quantique, chaque primitive étant individuellement
+          réelle et documentée, indépendamment du statut du protocole
+          combiné.
+
+    \item Cette architecture illustre, par sa conception même, la
+          \textbf{réponse au Trilemme CRO} (Ch.~\ref{chap:CRO})~:
+          combiner plusieurs primitives complémentaires plutôt que
+          chercher une primitive unique impossible.
+
+    \item \textbf{Distinction essentielle}~: \textbf{prépublication}
+          (statut non vérifié par les pairs) vs.\ \textbf{publication
+          évaluée par les pairs} (comme le Trilemme CRO lui-même,
+          Ch.~\ref{chap:CRO}-\ref{chap:prim-crypt}). Cette distinction
+          détermine ce qui peut être affirmé avec assurance et ce
+          qui doit être traité avec prudence.
+
+    \item \textbf{Grille de lecture critique en cinq questions}
+          (Tableau~29.3), transférable à \textbf{tout} protocole
+          ou outil cryptographique émergent rencontré dans la
+          pratique professionnelle~: statut de publication,
+          documentation des primitives composantes, preuves
+          formelles vs.\ affirmations qualitatives, vérifiabilité
+          des scores numériques, limitations reconnues par les
+          auteurs.
+
+    \item \textbf{Application judiciaire directe}~: un expert
+          appelé à témoigner sur la fiabilité d'un mécanisme
+          cryptographique émergent doit appliquer cette grille
+          avant toute conclusion, sous peine d'exposer son
+          témoignage à une contestation fondée en
+          contre-interrogatoire.
+
+    \item Ce chapitre lui-même constitue une \textbf{application de
+          sa propre leçon}~: il décrit ce qui peut être établi sur
+          ZK-NR sans franchir la limite vers des affirmations non
+          vérifiables, exactement la discipline exigée de tout
+          rapport forensique (Ch.~\ref{chap:rapport}).
+\end{itemize}
+\end{boxresume}
+
+\bigskip
+
+\begin{boxexo}[title={\ding{45}\quad Exercice~29.1. Distinguer les statuts \niveaubase}]
+Pour chacune des affirmations suivantes, indiquez si elle relève
+d'un résultat \textbf{établi} (publié et vérifié), d'une
+\textbf{architecture de principe} (déductible des propriétés
+publiques des composants), ou d'une \textbf{affirmation non
+vérifiable} en l'état des sources de ce cours~:
+\begin{enumerate}[(a)]
+    \item ``Les STARKs ne nécessitent pas de \textit{trusted
+          setup}.''
+    \item ``ZK-NR atteint un score CRO de~$0{,}88$ pour
+          l'opposabilité.''
+    \item ``BLS est vulnérable à l'algorithme de Shor.''
+    \item ``Le modèle Tamarin de ZK-NR comporte huit règles
+          symboliques et prouve six lemmes critiques.''
+    \item ``Le Trilemme CRO conditionnel établit
+          $\mathsf{Conf}\cdot\mathsf{Rel}\cdot\mathsf{Opp} \leq
+          \Delta/\lambda + O(\lambda^{-2})$.''
+\end{enumerate}
+\end{boxexo}
+
+\begin{boxexo}[title={\ding{45}\quad Exercice~29.2. Appliquer la grille de lecture \niveaumoyen}]
+Une entreprise présente sur son site web un nouveau service de
+``signature électronique quantique-sûre'' pour les contrats
+commerciaux, sans référence à une publication scientifique, mais
+avec un argumentaire technique détaillé citant ``une architecture
+propriétaire combinant plusieurs couches de sécurité''.
+\begin{enumerate}[(a)]
+    \item Appliquez les cinq questions du Tableau~29.3 à cette
+          situation. Pour chacune, formulez la question précise
+          que vous poseriez à cette entreprise.
+    \item En quoi cette situation diffère-t-elle, sur le plan du
+          statut de vérifiabilité, du cas ZK-NR traité dans ce
+          chapitre~? En quoi est-elle similaire~?
+    \item Si cette entreprise sollicitait une attestation de votre
+          part, en tant qu'expert, sur la fiabilité de son
+          mécanisme pour un usage dans des contrats à enjeu élevé,
+          quelle serait votre position, conformément à la
+          discipline de ce chapitre~?
+\end{enumerate}
+\end{boxexo}
+
+\begin{boxexo}[title={\ding{45}\quad Exercice~29.3. Rédiger une fiche de veille technologique \niveauexpert}]
+Vous êtes chargé, au sein d'une cellule de veille technologique de
+l'ANTIC, de produire une fiche de synthèse sur le protocole ZK-NR
+pour informer les décideurs institutionnels camerounais, sans
+exagérer ni minimiser son potentiel.
+\begin{enumerate}[(a)]
+    \item Rédigez une section ``Objectif et architecture'' (5--8
+          lignes), en vous appuyant exclusivement sur ce qui est
+          établi dans ce chapitre (Tableau~29.1), sans ajouter
+          d'affirmations non sourcées.
+    \item Rédigez une section ``Statut et limitations'' (5--8
+          lignes), appliquant la distinction prépublication~/
+          publication évaluée par les pairs
+          (Section~\ref{sec:statut-prepublication}).
+    \item Rédigez une section ``Pertinence pour le contexte
+          camerounais'' (5--8 lignes), reliant l'objectif de
+          ZK-NR aux besoins identifiés dans ce cours (chaîne de
+          custody post-quantique, Ch.~\ref{chap:quantique}~;
+          formation des magistrats face à des preuves
+          cryptographiques complexes, Ch.~\ref{chap:bench}).
+    \item Concluez par une recommandation~: à quel horizon
+          temporel et sous quelles conditions ce type de protocole
+          pourrait-il, selon vous, être considéré pour une
+          adoption institutionnelle au Cameroun~? Justifiez en
+          vous appuyant sur les régimes de capacité institutionnelle
+          du Ch.~\ref{chap:prim-crypt}.
+\end{enumerate}
+\end{boxexo}
+
+\bigskip
+
+\begin{boxinfo}
+\textbf{Transition.} Ce chapitre a complété la présentation du
+cadre théorique de la Partie~VI en abordant directement le
+protocole ZK-NR, avec la rigueur méthodologique exigée par son
+statut de travail en cours. Les chapitres suivants
+(Ch.~\ref{chap:cryptanal} à~\ref{chap:cas-zknr}) approfondissent
+les outils de conception, de cryptanalyse et de vérification
+formelle nécessaires pour, le jour où une publication complète
+sur ZK-NR ou tout protocole similaire sera disponible, en conduire
+vous-même l'audit rigoureux.
+\end{boxinfo}

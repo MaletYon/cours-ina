@@ -1,0 +1,708 @@
+% ============================================================================
+% Fichier  : partie4/P04_C15_forensique_reseau.tex
+% Titre    : Forensique Réseau Opérationnelle
+% Auteur   : MINKA MI NGUIDJOÏ Thierry Emmanuel
+% Version  : 1.0 -- Juin 2026
+% ============================================================================
+
+\chapter{Forensique Réseau Opérationnelle}
+\label{chap:for-res}
+
+\epigraph{%
+    « Le réseau ne ment jamais. Il ne se souvient pas de tout,
+    mais ce dont il se souvient est vrai. »%
+}{Principe de la forensique réseau}
+
+\niveauChapitre{Expert}{%
+    Maîtrise du Chapitre~9~(UE~SEC4031) (Wireshark bases)
+    et du Chapitre~\ref{chap:for-sys} (timeline, redondance)
+    indispensable. Protocoles TCP/IP, DNS, HTTP/S requis.%
+}
+
+\begin{boxobjectifs}
+\begin{itemize}
+    \item Positionner une sonde de capture dans différentes topologies
+          réseau et comprendre ce que chaque position capture (et rate).
+    \item Analyser en profondeur une capture \texttt{.pcap}~:
+          flux TCP, indicateurs d'exfiltration, tunnels DNS,
+          beaconing de malware.
+    \item Reconstruire des sessions applicatives depuis une capture~:
+          emails SMTP, transferts HTTP, commandes FTP.
+    \item Analyser des logs de pare-feu, proxy et DNS pour reconstituer
+          l'activité réseau en l'absence de capture complète.
+    \item Identifier les marqueurs de communications C2
+          (\textit{Command and Control}) dans le trafic chiffré.
+    \item Appliquer la corrélation temporelle multi-sources~:
+          capture réseau + logs système + timeline (Ch.~\ref{chap:for-sys}).
+\end{itemize}
+\end{boxobjectifs}
+
+\bigskip
+
+% ============================================================================
+\section*{Positionnement dans le cours}
+% ============================================================================
+
+Le Chapitre~9~(UE~SEC4031) a introduit Wireshark avec ses filtres
+de base et le cas WOURI. Ce chapitre va plus loin~: comment capturer
+intelligemment dans un réseau réel, comment analyser le trafic chiffré,
+comment détecter l'exfiltration de données, et comment reconstituer
+l'activité réseau quand on n'a pas de capture (mais des logs).
+
+\separateur
+
+% ============================================================================
+\section{Positionnement de la Sonde~: ce qu'on Voit et ce qu'on Rate}
+\label{sec:positionnement-sonde}
+% ============================================================================
+
+\subsection{Topologies et points de capture}
+
+La valeur d'une capture réseau dépend \emph{entièrement} de la position
+de la sonde dans le réseau. Capturer au mauvais endroit, c'est ne rien voir.
+
+\begin{tableaucours}{p{3.5cm}p{4.0cm}p{4.5cm}}{%
+    \tableauHeader{Position} &
+    \tableauHeader{Ce qu'on capture} &
+    \tableauHeader{Ce qu'on rate}
+}
+\textbf{Port SPAN / Mirror} sur le switch principal &
+    Tout le trafic qui traverse le switch (nord-sud ET est-ouest) &
+    Trafic interne entre machines sur le même segment si non mirrored \\
+\textbf{TAP réseau} sur le lien WAN &
+    Tout le trafic entrant/sortant de l'entreprise vers Internet &
+    Trafic interne (LAN to LAN)~; communications intra-entreprise \\
+\textbf{Agent hôte} (sur la machine suspecte) &
+    Tout le trafic de \emph{cette} machine, même chiffré avant
+    le réseau &
+    Trafic des autres machines \\
+\textbf{Pare-feu / proxy logs} (sans capture) &
+    Connexions autorisées/refusées (IP, port, octets) &
+    Contenu des connexions~; trafic qui ne passe pas par le
+    proxy (UDP, ICMP) \\
+\end{tableaucours}
+\vspace{-0.8em}
+\begin{center}{\small\itshape Tableau~15.1. Positions de capture et couverture}\end{center}
+
+\subsection{Capture sur un switch managé~: SPAN port}
+
+\begin{boxoutils}{Configuration d'un SPAN port (Cisco IOS)}
+\begin{lstlisting}[language=bash_forensique]
+! Configuration d'une session SPAN sur Cisco IOS
+! Port monitore : GigabitEthernet0/1 (machine suspecte)
+! Port destination : GigabitEthernet0/24 (poste forensique)
+
+Switch(config)# monitor session 1 source interface Gi0/1 both
+Switch(config)# monitor session 1 destination interface Gi0/24
+
+! Verifier la configuration
+Switch# show monitor session 1
+! Resultat :
+! Session 1
+! Type           : Local Session
+! Source Ports   : Both : Gi0/1
+! Destination Ports : Gi0/24
+
+! Sur le poste forensique (connecte sur Gi0/24) :
+tcpdump -i eth0 -w /output/capture_suspect.pcap
+! Ou avec ring buffer (fichiers de 100 Mo max) :
+tcpdump -i eth0 -C 100 -W 50 -w /output/capture_%Y%m%d_%H%M%S.pcap
+\end{lstlisting}
+\end{boxoutils}
+
+\begin{boiteRemarque}{Wireshark live vs tcpdump + analyse offline}
+En contexte forensique, la bonne pratique est de capturer avec
+\texttt{tcpdump} (léger, consomme peu de ressources) en production,
+puis d'analyser avec Wireshark offline sur le \texttt{.pcap} résultant.
+Lancer Wireshark avec son interface graphique directement sur une
+machine en production peut introduire une charge réseau supplémentaire
+et des artefacts dans la capture elle-même.
+\end{boiteRemarque}
+
+% ============================================================================
+\section{Analyse Approfondie des Flux TCP}
+\label{sec:analyse-flux}
+% ============================================================================
+
+\subsection{Suivre un flux complet~: Follow TCP Stream}
+
+La fonction \textit{Follow TCP Stream} de Wireshark reconstitue la
+session complète d'un échange TCP en réassemblant les segments dans
+l'ordre. C'est l'outil le plus puissant pour comprendre rapidement
+ce qu'une connexion a échangé.
+
+\begin{boxoutils}{Wireshark -- Follow TCP Stream et export}
+\begin{lstlisting}[language=bash_forensique]
+# En ligne de commande avec tshark (equivalent Wireshark CLI)
+# Extraire tous les flux TCP et les afficher
+tshark -r capture.pcap -q -z "follow,tcp,ascii,0"
+
+# Lister les conversations TCP avec volumes
+tshark -r capture.pcap -q -z "conv,tcp"
+# Resultat :
+#                    |      <-      |      ->      |    Total
+# 10.0.0.15:49212 <-> 185.220.XX.XX:4444
+#                         1476       14832          16308 bytes
+
+# Extraire les objets HTTP (fichiers telecharges)
+tshark -r capture.pcap --export-objects "http,/output/http_objects/"
+
+# Extraire les objets SMB (fichiers partages reseau)
+tshark -r capture.pcap --export-objects "smb,/output/smb_objects/"
+# Utile pour detecter exfiltration via partages reseau
+
+# Calculer le hash SHA-256 de chaque objet extrait
+find /output/http_objects/ -type f -exec sha256sum {} \; \
+    > /output/http_objects_hashes.txt
+# Puis soumettre sur VirusTotal (API ou interface web)
+\end{lstlisting}
+\end{boxoutils}
+
+\subsection{Métriques d'anomalie réseau}
+
+\begin{tableaucours}{p{3.5cm}p{4.0cm}p{4.5cm}}{%
+    \tableauHeader{Métrique} &
+    \tableauHeader{Valeur normale} &
+    \tableauHeader{Anomalie (indicateur suspect)}
+}
+Durée d'une session HTTP & 0.1--2~secondes & $>$~60~secondes~:
+    session persistante anormale \\
+Volume de réponse HTTP & Variable & Requête~\texttt{GET /index.html}
+    de 200~octets reçoit 50~Mo~: exfiltration \\
+Ratio upload/download & $\ll$~1 (navigation) & Ratio proche de~1~:
+    exfiltration~; ratio $\gg$~1~: upload de données \\
+Intervalles de connexion & Irréguliers & Intervalles fixes (30~s,
+    60~s, 300~s)~: beaconing de malware \\
+Entropie du contenu & Faible (texte/HTML) & Haute (binaire, chiffré)~:
+    contenu encodé ou chiffré \\
+\end{tableaucours}
+\vspace{-0.8em}
+\begin{center}{\small\itshape Tableau~15.2. Métriques d'anomalie réseau}\end{center}
+
+% ============================================================================
+\section{Détection d'Exfiltration de Données}
+\label{sec:exfiltration}
+% ============================================================================
+
+\subsection{Exfiltration HTTP/HTTPS~: le vecteur le plus courant}
+
+\begin{boxoutils}{Détecter une exfiltration HTTP depuis une capture}
+\begin{lstlisting}[language=bash_forensique]
+# Requetes POST avec corps volumineux (upload de donnees)
+tshark -r capture.pcap -Y "http.request.method == POST" \
+    -T fields -e frame.time -e ip.src -e ip.dst \
+    -e http.host -e http.content_length
+
+# Resultat suspect :
+# 2026-03-13 02:19:05  10.0.0.15  185.220.XX.XX
+#   update.windowscdn.net  content_length: 45231400
+# -> 45 Mo envoyes vers un domaine qui semble legitime
+#    mais est enregistre il y a 2 jours (CDN de facade)
+
+# Calculer le volume par destination (top exfiltration targets)
+tshark -r capture.pcap -q -z "ip_hosts,tree"
+# Alternatif : Statistics --> IP Addresses dans Wireshark GUI
+
+# Detecter contenu base64 dans les parametres URL
+tshark -r capture.pcap -Y "http" \
+    -T fields -e http.request.uri | \
+    grep -oE "[A-Za-z0-9+/]{30,}={0,2}"
+# Base64 de 30+ caracteres dans les URLs = encodage de donnees voles
+\end{lstlisting}
+\end{boxoutils}
+
+\subsection{Tunneling DNS~: exfiltration via le port~53}
+
+Le \termecle{tunneling DNS}\index{tunneling DNS} exploite le protocole
+DNS pour exfiltrer des données ou établir un canal C2 (Command \& Control).
+Son avantage~: le port~53 UDP est ouvert sur presque tous les pare-feu.
+
+\begin{boxoutils}{Détecter le tunneling DNS}
+\begin{lstlisting}[language=bash_forensique]
+# Statistiques des requetes DNS par domaine (top queried)
+tshark -r capture.pcap -Y "dns.qry.type == A" \
+    -T fields -e dns.qry.name | sort | uniq -c | sort -rn | head -20
+
+# Indicateurs de tunneling DNS :
+# 1. Sous-domaines tres longs (encodage base32/64 dans le label)
+tshark -r capture.pcap -Y "dns" -T fields -e dns.qry.name | \
+    awk 'length($0) > 50'
+# Resultat suspect :
+# aGVsbG8gd29ybGQgdGhpcyBpcyBhIHRlc3Q.malware.domain.com
+# -> sous-domaine de 60 caracteres = payload encode
+
+# 2. Volume de requetes DNS anormalement eleve pour un meme domaine
+tshark -r capture.pcap -Y "dns.qry.name contains malware.domain.com" \
+    -T fields -e frame.time -e dns.qry.name | wc -l
+# 847 requetes en 10 minutes vers le meme domaine = tunnel
+
+# 3. Reponses DNS TXT avec contenu inhabituel (canal C2 entrant)
+tshark -r capture.pcap -Y "dns.resp.type == 16" \
+    -T fields -e dns.txt
+# Si les TXT ressemblent a du binaire encode : C2 via DNS TXT
+
+# Outil specialise : dnscat2-detector ou dnstap-analysis
+# Pour la forensique offline : analyser les logs du resolver DNS
+\end{lstlisting}
+\end{boxoutils}
+
+\begin{boxCRO}
+\textbf{Analyse CRO. Tunneling DNS et détection}
+
+$\mathcal{C}$ (Confidentialité pour l'attaquant)~: le tunnel DNS chiffre
+généralement son contenu~; même si le tunnel est détecté, le contenu
+exfiltré peut être inaccessible sans la clé de déchiffrement.
+
+$\mathcal{R}$ (Fiabilité de la détection)~: les indicateurs
+statistiques (longueur de requête, volume, TXT records) sont des
+\emph{indicateurs} de tunneling, pas des preuves directes. Un domaine
+CDN légitime peut générer des sous-domaines longs. Documenter la
+convergence de plusieurs indicateurs.
+
+$\mathcal{O}$ (Opposabilité)~: la capture pcap avec les requêtes DNS
+anormales constitue une preuve directe de l'activité réseau, admissible
+selon les mêmes principes que tout autre artefact réseau.
+
+\cro{$\downarrow$ contenu inaccessible}{$\uparrow$ convergence indicateurs}{$\uparrow\uparrow$ capture pcap directe}
+\end{boxCRO}
+
+\subsection{Beaconing~: détecter un implant actif}
+
+Le \termecle{beaconing}\index{beaconing} est le comportement caractéristique
+d'un malware qui contacte périodiquement son serveur C2 pour recevoir
+des instructions. La signature~: des connexions à intervalles
+réguliers vers la même destination.
+
+\begin{lstlisting}[language=bash_forensique,
+    caption={Détection de beaconing dans une capture}]
+# Extraire les timestamps de connexions vers une IP suspecte
+tshark -r capture.pcap \
+    -Y "ip.dst == 185.220.XX.XX && tcp.flags.syn == 1" \
+    -T fields -e frame.time_epoch | sort -n > /tmp/beacon_times.txt
+
+# Calculer les intervalles entre connexions (en secondes)
+awk 'NR>1{printf "%.0f\n", $1-prev} {prev=$1}' \
+    /tmp/beacon_times.txt | sort | uniq -c | sort -rn
+
+# Resultat type (beaconing sur 300 secondes) :
+#   47 300    <- 47 intervalles de exactement 300 secondes
+#    2 299
+#    1 301
+# -> malware avec beacon toutes les 5 minutes, jitter +/- 1s
+# Comparaison : trafic normal -> distribution aleatoire des intervalles
+\end{lstlisting}
+
+% ============================================================================
+\section{Reconstruction de Sessions Applicatives}
+\label{sec:reconstruction-sessions}
+% ============================================================================
+
+\subsection{Reconstituer un email SMTP}
+
+\begin{boxoutils}{Extraction et reconstruction d'email SMTP}
+\begin{lstlisting}[language=bash_forensique]
+# Extraire le contenu SMTP brut
+tshark -r capture.pcap -Y "smtp" \
+    -T fields -e smtp.req.command -e smtp.req.parameter
+
+# Follow TCP Stream sur une session SMTP (non chiffree)
+tshark -r capture.pcap -q -z "follow,tcp,ascii,5"
+# Resultat type :
+# EHLO attacker.ru
+# MAIL FROM:<contact@medequip-portugal.com>
+# RCPT TO:<finance@sotradi.cm>
+# DATA
+# From: Service Comptabilite <contact@medequip-portugal.com>
+# Subject: Facture mensuelle equipements
+# [corps du message avec piece jointe frauduleuse]
+
+# Extraire les pieces jointes SMTP (format MIME)
+# Wireshark GUI : File --> Export Objects --> IMF (Internet Mail)
+# CLI :
+tshark -r capture.pcap --export-objects "imf,/output/smtp_objects/"
+# Puis analyser la piece jointe :
+file /output/smtp_objects/attachment.pdf
+sha256sum /output/smtp_objects/attachment.pdf
+# Verifier sur VirusTotal
+\end{lstlisting}
+\end{boxoutils}
+
+\begin{boxscenario}{Cas WOURI. Reconstruction complète de l'email BEC}
+La capture réseau de SOTRADI~SA (\texttt{sotradi\_capture.pcap})
+contient la session SMTP du phishing. Analyse~:
+
+\textbf{Étape~1. Identifier la session SMTP suspecte~:}
+\begin{lstlisting}[language=bash_forensique]
+# Filtrer les sessions SMTP entrantes (serveur mail SOTRADI sur TCP 25)
+tshark -r sotradi_capture.pcap -Y "smtp && tcp.dstport == 25"
+# Session identifiee : frame 14872-14950, IP source 91.XXX.XX.XX
+\end{lstlisting}
+
+\textbf{Étape~2. Analyser les en-têtes SMTP~:}
+\begin{lstlisting}[language=bash_forensique]
+tshark -r sotradi_capture.pcap -q -z "follow,tcp,ascii,14872"
+# En-tetes reveles :
+# MAIL FROM: contact@medequip-portugal.com
+# X-Originating-IP: 91.XXX.XX.XX    <- IP reelle (serveur russe)
+# Received: from mail.yandex.ru      <- origine reelle
+# Date: 2026-01-15 14:28:03
+\end{lstlisting}
+
+\textbf{Constatation forensique~:}
+L'email de la session TCP~5 (frame~14872) affiche l'adresse expéditrice
+\texttt{contact@medequip-portugal.com} dans le champ \texttt{MAIL FROM}
+mais révèle dans le champ \texttt{X-Originating-IP} l'IP
+\texttt{91.XXX.XX.XX}, enregistrée en Russie selon les bases WHOIS
+consultées le 20~janvier~2026. L'en-tête \texttt{Received} confirme
+le transit par les serveurs Yandex.ru.
+\end{boxscenario}
+
+\subsection{Analyse de trafic FTP~: transferts de fichiers en clair}
+
+\begin{lstlisting}[language=bash_forensique,
+    caption={Reconstruction de transferts FTP depuis une capture}]
+# FTP en clair (port 21 controle, 20 donnees) : tout visible
+tshark -r capture.pcap -Y "ftp" \
+    -T fields -e frame.time -e ftp.request.command \
+    -e ftp.request.arg
+
+# Resultat type :
+# 02:20:15  USER   admin
+# 02:20:16  PASS   admin123  <- mot de passe en clair !
+# 02:20:17  CWD    /confidential/RH/
+# 02:20:18  RETR   salaires_2026.xlsx  <- telechargement fichier confidentiel
+
+# Extraire les fichiers transferes via FTP-DATA (port 20)
+tshark -r capture.pcap --export-objects "ftp-data,/output/ftp_objects/"
+
+# Note : FTPS (FTP over TLS) chiffre le contenu mais les commandes
+# (USER, PASS, fichiers) restent potentiellement visibles si TLS
+# est mal configure (certificat auto-signe, version obsolete)
+\end{lstlisting}
+
+% ============================================================================
+\section{Analyse des Logs sans Capture Complète}
+\label{sec:analyse-logs}
+% ============================================================================
+
+En l'absence de capture pcap (la situation la plus courante en
+investigation~: le réseau n'était pas monitoré au moment de l'incident),
+les logs de périphériques réseau deviennent la seule source d'information
+réseau. Ils sont moins riches, mais souvent disponibles.
+
+\subsection{Logs de pare-feu}
+
+\begin{boxoutils}{Analyse de logs de pare-feu (format syslog/Palo Alto)}
+\begin{lstlisting}[language=bash_forensique]
+# Logs de pare-feu au format syslog standard
+# Structure typique : timestamp src_ip dst_ip src_port dst_port action
+
+# Extraire toutes les connexions vers une IP suspecte
+grep "185.220.XX.XX" /var/log/firewall.log | \
+    grep "ACCEPT\|ALLOW" | \
+    awk '{print $1,$2,$3,$4,$5,$6}' | sort -k3 -n
+
+# Calculer le volume par connexion (bytes transferes)
+grep "185.220.XX.XX" /var/log/firewall.log | \
+    awk '{bytes+=$NF} END {print "Total bytes:", bytes}'
+
+# Connexions refusees (tentatives d'intrusion ou scan)
+grep "DENY\|BLOCK\|DROP" /var/log/firewall.log | \
+    awk '{print $5}' | sort | uniq -c | sort -rn | head -20
+# Top IP sources bloquees : peut identifier un scanner
+
+# Detecter le beaconing dans les logs pare-feu
+grep "185.220.XX.XX" /var/log/firewall.log | \
+    awk '{print $1}' | \
+    awk 'BEGIN{FS=":"}{printf "%s%s%s\n",$1,$2,$3}' | \
+    sort | uniq -c | sort -rn
+# Connexions recurrentes a la meme minute -> beaconing probable
+\end{lstlisting}
+\end{boxoutils}
+
+\subsection{Logs de proxy web}
+
+\begin{boxoutils}{Analyse de logs de proxy Squid/Bluecoat}
+\begin{lstlisting}[language=bash_forensique]
+# Format Squid access.log :
+# timestamp elapsed client action/code bytes method url
+
+# Sites les plus consultés (volume)
+awk '{print $7}' /var/log/squid/access.log | \
+    awk -F/ '{print $3}' | sort | uniq -c | sort -rn | head -20
+
+# Telechargements volumineux (potentielle exfiltration)
+awk '$5 > 10000000 {print $3,$7,$5}' /var/log/squid/access.log
+# -> connections > 10 Mo vers des URLs externes
+
+# User-Agents inhabituels (malware, outils d'attaque)
+awk '{print $NF}' /var/log/squid/access.log | sort | uniq -c | \
+    sort -rn | grep -iv "Mozilla\|Chrome\|Firefox\|Safari"
+# Resultat suspect : "python-requests/2.28.0" -> script automatise
+#                    "curl/7.74.0" -> ligne de commande
+#                    "Go-http-client/1.1" -> outil Go
+
+# Connexions hors horaires de bureau
+awk '$1 >= 1678668000 && $1 <= 1678675200' /var/log/squid/access.log
+# (timestamps UNIX pour 00h00-02h00 le 13 mars 2026)
+\end{lstlisting}
+\end{boxoutils}
+
+\subsection{Logs DNS~: reconstituer l'activité réseau par les noms}
+
+\begin{lstlisting}[language=bash_forensique,
+    caption={Analyse de logs DNS (BIND / Windows DNS)}]
+# Logs de requetes DNS (BIND format)
+grep "QUERY" /var/log/named/query.log | \
+    awk '{print $5}' | sort | uniq -c | sort -rn | head -30
+
+# Domaines enregistres recemment (DGA / domaines d'attaque)
+# Les DGA (Domain Generation Algorithms) produisent des noms aleatoires
+grep "QUERY" /var/log/named/query.log | \
+    awk '{print $5}' | \
+    awk -F. '{
+        n = split($0, a, ".");
+        label = a[n-1] "." a[n];  # domaine principal
+        sub_label = a[1];          # premier sous-domaine
+        if (length(sub_label) > 15) print $0  # sous-domaine long
+    }'
+
+# Volume de requetes par client (qui fait beaucoup de DNS ?)
+grep "QUERY" /var/log/named/query.log | \
+    awk '{print $4}' | sort | uniq -c | sort -rn | head -10
+# Si une machine fait 10x plus de requetes que les autres : suspect
+
+# Synchroniser DNS logs avec timeline systeme (Ch. 14)
+# Timestamp DNS 02:14:07 -> resolution medequip-portugal.com
+# Timestamp MFT 02:17:44 -> execution enc_all.ps1
+# Correlation : la resolution DNS precede l'execution de 3 min 37 sec
+\end{lstlisting}
+
+% ============================================================================
+\section{Corrélation Temporelle Multi-Sources}
+\label{sec:correlation-temporelle}
+% ============================================================================
+
+La puissance de la forensique réseau réside dans la \textbf{corrélation}
+entre les sources réseau et les sources système. Chaque source seule
+est un fragment~; la corrélation révèle l'image complète.
+
+\begin{tableaucours}{p{2.5cm}p{4.0cm}p{5.0cm}}{%
+    \tableauHeader{Source} &
+    \tableauHeader{Information réseau} &
+    \tableauHeader{Corrélation avec Ch.~\ref{chap:for-sys}}
+}
+\textbf{Capture pcap} & IP, ports, contenu des sessions &
+    Corrélation temporelle~: connexion TCP à 02h14:09 $\leftrightarrow$
+    entrée journald SSH Accepted à 02h14:09 \\
+\textbf{Logs pare-feu} & Flux autorisés/refusés, volumes &
+    Corrélation volumétrique~: 45~Mo sortants à 02h19
+    $\leftrightarrow$ \texttt{\$UsnJrnl} accès 847~fichiers à 02h18 \\
+\textbf{Logs DNS} & Noms résolus, clients, timestamps &
+    Corrélation causale~: résolution \texttt{malware.domain.com}
+    à 02h13~$\to$ connexion vers cette IP à 02h14 \\
+\textbf{Logs proxy} & URLs, User-Agents, volumes &
+    Corrélation comportementale~: User-Agent \texttt{python-requests}
+    depuis machine du comptable = inhabituel \\
+\end{tableaucours}
+\vspace{-0.8em}
+\begin{center}{\small\itshape Tableau~15.3. Corrélation temporelle multi-sources}\end{center}
+
+\begin{boxscenario}{Timeline réseau + système~: Opération MVOM complète}
+En fusionnant la timeline système (Ch.~\ref{chap:for-sys}) avec les
+sources réseau de ce chapitre, la séquence complète de l'attaque émerge~:
+
+\begin{lstlisting}[language=bash_forensique]
+# Timeline fusionnee (source en brackets)
+02:13:45  [DNS log]     Resolution: update.windowscdn.net -> 185.220.XX.XX
+02:14:02  [journald]    SSH Failed password from 185.220.XX.XX (x7)
+02:14:09  [journald]    SSH Accepted password root from 185.220.XX.XX
+02:14:09  [pcap]        TCP SYN dst=185.220.XX.XX:4444 (C2 channel)
+02:16:50  [$UsnJrnl]    FileCreate: enc_all.ps1
+02:17:40  [UserAssist]  powershell.exe executed
+02:17:44  [Prefetch]    enc_all.ps1 executed
+02:18:31  [$UsnJrnl]    847 fichiers .docx DataOverwrite (chiffrement)
+02:19:05  [firewall]    ALLOW 10.0.0.15 -> 185.220.XX.XX:443 45.2MB
+02:19:05  [proxy log]   POST https://update.windowscdn.net 45231400 bytes
+02:19:48  [pcap]        TCP FIN 185.220.XX.XX:4444 (deconnexion C2)
+\end{lstlisting}
+
+\textbf{Reconstruction narrative}~: L'attaquant a d'abord effectué
+une résolution DNS pour préparer sa connexion (02h13). Il a obtenu
+un accès root par brute-force SSH (02h14). Il a immédiatement
+ouvert un canal C2 (port~4444, 02h14) par lequel il a téléchargé
+et exécuté le ransomware (02h16--02h18). Il a exfiltré 45~Mo de
+données (vraisemblablement les fichiers avant chiffrement, 02h19)
+avant de fermer la connexion C2 (02h19:48).
+\end{boxscenario}
+
+\begin{boxjuris}
+\textbf{Admissibilité des logs réseau en droit camerounais}
+
+Les logs de pare-feu, proxy et serveurs DNS constituent des ``données
+informatiques'' au sens de l'art.~4 de la \loicam{2010/012}~\cite{cameroun2010a}.
+Leur admissibilité en tant que preuves est soumise aux mêmes
+conditions que tout artefact numérique~:
+\begin{enumerate}
+    \item Origine légale~: les logs doivent avoir été conservés dans
+          le cadre normal de l'exploitation du réseau (art.~27
+          \loicam{2024/017}~\cite{cameroun2024donnees}~: obligation de sécurité et traçabilité)~;
+    \item Intégrité~: hash SHA-256 calculé au moment de la saisie~;
+    \item Chaîne de custody documentée depuis le serveur jusqu'au
+          tribunal~;
+    \item Expert judiciaire agréé pour attester de l'authenticité
+          et de l'interprétation technique.
+\end{enumerate}
+\end{boxjuris}
+
+\separateur
+
+% --- Encadré lab NDAP SUKULU ---
+\begin{boiteRemarque}{Notions mobilisées par les laboratoires INA-LAB-02 et INA-LAB-03}
+\textbf{INA-LAB-02 (capture réseau).} Le beaconing se repère dans la table
+des conversations TCP (une destination répétée) et se mesure sur les écarts
+entre les paquets \texttt{SYN} successifs vers cette destination~; la
+requête DNS qui précède le premier contact donne le domaine de façade. Le
+suivi de flux (\emph{Follow TCP Stream}) d'une session SMTP redonne
+l'enveloppe (\texttt{MAIL FROM}) et les en-têtes (\texttt{Received},
+\texttt{X-Originating-IP}).
+
+\medskip
+\textbf{INA-LAB-03 (journaux sans capture).}
+\begin{itemize}
+    \item Un tunnel DNS se voit à des requêtes nombreuses, souvent de type
+          \texttt{TXT}, dont les sous-domaines sont longs et aléatoires sous
+          un même domaine~; on compte les requêtes sur ce domaine.
+    \item Le volume exfiltré par un proxy se calcule en sommant le champ des
+          octets envoyés des requêtes \texttt{POST} vers le site~; on
+          l'exprime en Mio (1~Mio $=$ 1\,048\,576~octets).
+    \item \textbf{Décalage d'horloge}~: avant de fusionner des journaux, on
+          mesure l'écart de chaque horloge sur un événement commun (la même
+          connexion vue par le proxy et par le pare-feu)~; on corrige ensuite
+          toutes les heures de cette source de cet écart.
+\end{itemize}
+\end{boiteRemarque}
+
+\begin{boxresume}
+\textbf{Ce qu'il faut retenir de ce chapitre~:}
+\begin{itemize}
+    \item \textbf{Position de la sonde d'abord}~: port SPAN (tout
+          le switch)~; TAP WAN (tout le trafic Internet)~;
+          agent hôte (tout le trafic de la machine, chiffré compris).
+          Capturer au mauvais endroit~= ne rien voir.
+
+    \item \textbf{Follow TCP Stream}~: reconstruit la session complète.
+          \texttt{--export-objects http} extrait les fichiers transférés
+          avec leurs hash. Calculer le SHA-256 de chaque objet et
+          soumettre sur VirusTotal.
+
+    \item \textbf{Exfiltration~:} détecter par le volume (POST
+          volumineux)~; l'entropie du contenu (contenu chiffré)~;
+          le ratio upload/download anormal.
+
+    \item \textbf{Tunneling DNS}~: sous-domaines de~$>$~50~caractères~;
+          volume anormal de requêtes vers un même domaine~;
+          réponses TXT avec contenu binaire.
+
+    \item \textbf{Beaconing}~: intervalles réguliers de connexion vers
+          la même destination. Calculer les intervalles et leur
+          distribution~: un malware produit une distribution
+          quasi-normale centrée sur son intervalle~; le trafic
+          légitime est aléatoire.
+
+    \item \textbf{Logs sans capture}~: logs pare-feu (flux, volumes)~;
+          proxy (URLs, User-Agents)~; DNS (domaines résolus) constituent
+          des sources complémentaires indispensables quand pas de pcap.
+
+    \item \textbf{Corrélation temporelle}~: la valeur de la forensique
+          réseau vient de la croisé avec la timeline système
+          (Ch.~\ref{chap:for-sys}). La convergence temporelle entre
+          log DNS~$\to$ log pare-feu~$\to$ journald~$\to$
+          \texttt{\$UsnJrnl} est une preuve bien plus robuste que
+          chaque source isolée.
+
+    \item \textbf{Admissibilité}~: logs réseau~= données informatiques
+          (art.~4 Loi~2010/012)~; mêmes exigences~: intégrité (hash),
+          custody, expert agréé.
+\end{itemize}
+\end{boxresume}
+
+\bigskip
+
+\begin{boxexo}[title={\ding{45}\quad Exercice~15.1. Position de sonde \niveaubase}]
+Une entreprise de Yaoundé suspecte une exfiltration de données depuis
+un poste de travail du département comptabilité. Le réseau comprend~:
+un routeur Internet, un switch principal, 40~postes de travail Windows,
+un serveur de fichiers, et un serveur de messagerie.
+\begin{enumerate}[(a)]
+    \item Où positionneriez-vous la sonde de capture pour voir tout
+          le trafic Internet du poste suspect~?
+    \item Pourrait-on capturer le trafic interne entre le poste suspect
+          et le serveur de fichiers avec cette même sonde~? Si non, comment~?
+    \item Si vous n'avez pas accès au switch pour un SPAN port, quelles
+          alternatives avez-vous pour capturer le trafic~?
+    \item À quel moment de l'incident est-il trop tard pour une capture
+          réseau (et quelles sources de substitution utiliser)~?
+\end{enumerate}
+\end{boxexo}
+
+\begin{boxexo}[title={\ding{45}\quad Exercice~15.2. Analyse de capture \niveaumoyen}]
+La capture \texttt{incident\_baobab.pcap} de l'Opération BAOBAB
+(Chapitre~10~(UE~SEC4031)) est disponible. \texttt{tshark -r
+incident\_baobab.pcap -q -z "conv,tcp"} révèle~:
+\begin{lstlisting}[language=bash_forensique]
+# Extrait conversations TCP :
+10.0.0.42:52341 <-> 196.200.XX.XX:443   847 pkts  2.3 MB  <->  4.1 KB
+10.0.0.42:52411 <-> 196.200.XX.XX:443   848 pkts  2.3 MB  <->  4.2 KB
+10.0.0.42:52478 <-> 196.200.XX.XX:443   847 pkts  2.3 MB  <->  4.1 KB
+[...] (total : 47 conversations similaires)
+\end{lstlisting}
+\begin{enumerate}[(a)]
+    \item Quelle anomalie identifiez-vous dans ces conversations~?
+          À quoi ressemble ce pattern~?
+    \item Calculez l'intervalle approximatif entre les connexions.
+    \item Quelles commandes tshark utiliseriez-vous pour~: (i)~extraire
+          les intervalles entre connexions~; (ii)~vérifier si le
+          contenu est chiffré~; (iii)~identifier le User-Agent si
+          ces connexions sont HTTP/S~?
+    \item Rédigez la constatation forensique correspondante (sans
+          interprétation) et l'analyse avec niveau de confiance.
+\end{enumerate}
+\end{boxexo}
+
+\begin{boxexo}[title={\ding{45}\quad Exercice~15.3. Corrélation multi-sources \niveauexpert}]
+Vous disposez des sources suivantes pour l'Opération WOURI~:
+\begin{itemize}
+    \item Capture \texttt{sotradi.pcap} (trafic réseau 14--15~janvier 2026)~;
+    \item Logs pare-feu Palo Alto (30~jours)~;
+    \item Logs proxy Bluecoat (30~jours)~;
+    \item Logs DNS interne (30~jours)~;
+    \item Image forensique E01 du poste du comptable~;
+    \item Dump RAM du serveur de messagerie.
+\end{itemize}
+\begin{enumerate}[(a)]
+    \item Construisez un plan d'investigation réseau~: dans quel ordre
+          analyser ces sources~? Quelle question spécifique posez-vous
+          à chaque source~?
+    \item Comment corréleriez-vous temporellement les logs DNS avec
+          le contenu SMTP de la capture pcap pour établir une
+          chronologie de l'attaque BEC~?
+    \item Appliquez la grille CRO à la décision d'extraire et d'analyser
+          le contenu des pièces jointes SMTP identifiées dans la
+          capture~: qui peut y accéder~? Quelle base légale cite-t-on~?
+    \item Rédigez la section Constatations réseau de votre rapport,
+          couvrant la période 14h00--15h00 du 15~janvier~2026.
+\end{enumerate}
+\end{boxexo}
+
+\bigskip
+
+\begin{boxinfo}
+\textbf{Transition.} Le Chapitre~\ref{chap:for-mob} (Forensique
+Mobile) quitte le serveur et le réseau pour l'objet le plus présent
+dans les enquêtes camerounaises~: le téléphone, avec ses applications
+de messagerie et le Mobile Money. Plus loin, le Chapitre~\ref{chap:anti-for}
+(Anti-Forensique et Contre-Mesures) traitera l'autre côté du miroir~:
+les techniques qu'un attaquant utilise pour effacer les traces dans
+les systèmes et le réseau, et comment les détecter malgré tout.
+\end{boxinfo}

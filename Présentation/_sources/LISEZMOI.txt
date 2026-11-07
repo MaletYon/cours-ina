@@ -1,0 +1,12 @@
+Générateur des diapositives du cours INA (SEC4052)
+
+- slides.py  : moteur de mise en page (charte UY1 / ENSPY, logos du dossier figures\logos du cours)
+- notes.py   : notes du présentateur rédigées pour chaque diapositive (visibles en mode présentation)
+- courses.py : métadonnées du cours et répartition des 30 séances de 2 heures
+- run.py     : construction ; exemples :  python run.py INA 3   |   python run.py INA all
+- specs/INA/J00.py (vision globale), J01.py ... J30.py
+- check.ps1  : contrôle des débordements via PowerPoint
+
+Pied de page : « INA · SEC4052 - maletyon@proton.me · jour i/30 · · ·   page i/N ».
+Prérequis : Python 3 avec python-pptx (pip install python-pptx).
+Les fichiers .pptx sont écrits dans le dossier Présentation du cours.

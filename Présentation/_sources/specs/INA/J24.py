@@ -1,0 +1,67 @@
+SPEC = [
+    {"k": "title", "tag": "Jour 24 / 30 · Séance de 2 heures", "title": "Le Trilemme CRO (1) : outils et cadre CLO",
+     "sub": "Une preuve mathématiquement parfaite peut rester inexploitable devant un juge.",
+     "right": "Partie VI · Chapitre C27 §27.1-27.2"},
+    {"k": "synthese", "title": "Rappel de la séance précédente", "kicker": "Jour 23 · Quantique", "items": [
+        "**Shor** casse l'asymétrique ; **Grover** affaiblit",
+        "**FIPS 203, 204, 205** ; migration hybride",
+        "Re-horodater les preuves durables",
+    ]},
+    {"k": "agenda", "items": [
+        ("10 min", "**Un résultat établi**, pas une conjecture"),
+        ("45 min", "**Théorie de l'information** : entropie, information mutuelle, TV, Pinsker, Fano"),
+        ("15 min", "**Le protocole CLO** et l'algorithme Interpret"),
+        ("30 min", "**Trois mesures** : Conf, Rel, Opp"),
+        ("20 min", "**Exercice** : calculs d'entropie"),
+    ]},
+    {"k": "chapitre", "num": "C27", "short": "Chapitre 27", "part": "PARTIE VI · FONDEMENTS THÉORIQUES",
+     "title": "Le Trilemme CRO formalisé",
+     "question": "Peut-on avoir à la fois confidentialité, fiabilité et opposabilité maximales ?"},
+    {"k": "points", "title": "Un résultat publié", "kicker": "Statut scientifique", "items": [
+        "Le cadre CLO et ses théorèmes sont **publiés et évalués par les pairs** (IEEE Access, 2026)",
+        "Le cours l'a utilisé de façon **intuitive** depuis SEC4031 : éteindre ou non un PC, coopérer ou non",
+        "Ce chapitre en donne la forme **prouvée**",
+        "Les outils sont classiques ; le problème est nouveau",
+    ]},
+    {"k": "table", "title": "Cinq outils de théorie de l'information", "kicker": "Section 27.1", "head": ["Outil", "Ce qu'il mesure"], "widths": [3.6, 8.8], "rows": [
+        ["Entropie H(X)", "L'incertitude moyenne sur X, en bits : -Σ p log2 p"],
+        ["Information mutuelle I(X;Y)", "Ce que Y apprend sur X : H(X) - H(X|Y)"],
+        ["Distance en variation totale", "À quel point deux lois sont distinguables, entre 0 et 1"],
+        ["Inégalité de Pinsker", "Borne la distance TV par la divergence de Kullback-Leibler"],
+        ["Inégalité de Fano", "Relie l'erreur de décision à l'incertitude restante"],
+    ]},
+    {"k": "definition", "title": "Le protocole CLO", "kicker": "Cryptographic Legal Opposability", "items": [
+        ("Définition", "Des espaces (messages, preuves, contextes, verdicts) et des algorithmes Setup, Prove, Verify, et surtout **Interpret(σ, c) → v** : l'interprétation institutionnelle."),
+        ("Apport", "Verify garantit la correction mathématique ; Interpret formalise la capacité du **juge** ou de l'**OPJ** à extraire un verdict exploitable."),
+    ]},
+    {"k": "table", "title": "Les trois mesures", "kicker": "Section 27.2.2", "head": ["Mesure", "Définition", "Lecture"], "widths": [2.4, 5.4, 4.6], "rows": [
+        ["Conf", "1 - max TV entre les lois des preuves de deux messages", "1 : les preuves ne révèlent rien"],
+        ["Rel", "min de la probabilité qu'une preuve honnête soit vérifiée", "1 : complétude parfaite"],
+        ["**Opp**", "**I(V ; Σ | C) / H(V | C)**", "La part de l'incertitude sur le verdict que la preuve lève"],
+    ]},
+    {"k": "points", "title": "Pourquoi Opp est l'innovation", "kicker": "Le paradoxe de l'authenticité invisible", "items": [
+        "Conf et Rel sont formalisées depuis longtemps ; **Opp** est une mesure **originale**",
+        "Une preuve peut être irréprochable (**Rel élevé**) et **inexploitable** (Opp faible)",
+        "C'est l'affaire MBONGO, en équations : la technique ne suffit pas",
+        "Opp = 0 : la preuve n'apporte rien de plus que le contexte",
+    ]},
+    {"k": "exercice", "title": "Maîtriser les outils", "duree": "20 minutes, individuel",
+     "text": "Un verdict V binaire (coupable, non coupable), équiprobable.",
+     "questions": [
+        "Calculez H(V).",
+        "Une preuve fait passer P(coupable) à 0,9 : que vaut H(V | Σ) ?",
+        "Déduisez I(V ; Σ) et l'opposabilité.",
+     ],
+     "notes": "H(V) = 1 bit. H(0,9) = -(0,9 log2 0,9 + 0,1 log2 0,1) ≈ 0,469 bit. I = 1 - 0,469 ≈ 0,531 bit ; Opp ≈ 0,53 (sans contexte). Voir l'exercice 27.1 et son corrigé pour la version complète."},
+    {"k": "synthese", "items": [
+        "Entropie, information mutuelle, TV, **Pinsker**, **Fano**",
+        "CLO ajoute **Interpret** : la lecture institutionnelle",
+        "**Opp = I(V ; Σ | C) / H(V | C)**",
+        "Une preuve juste peut être **inopposable**",
+    ]},
+    {"k": "maison", "lecture": ["Chapitre 27, sections 27.1 et 27.2", "Préparer : sections 27.3 à 27.7"]},
+    {"k": "fin", "next": "Jour 25 · Le Trilemme CRO (2)", "items": [
+        "Le goulot d'étranglement contextuel",
+        "Le théorème d'impossibilité",
+        "Le paramètre Δ et trois études de cas"]},
+]

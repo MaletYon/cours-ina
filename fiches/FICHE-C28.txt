@@ -1,0 +1,233 @@
+NDAP SUKULU · INA · fiche FICHE-C28
+Chapitre 28 : Analyse des primitives cryptographiques selon le cadre CLO
+
+Version papier, à utiliser en attendant l'ouverture du portail NDAP SUKULU.
+La fiche complète compte 40 questions. Répondez sur la grille en fin de fiche.
+Durée indicative : 60 minutes. Seuil de réussite : 60 %.
+Les corrections figurent dans le livret de correction du cours.
+
+========================================================================
+Questions à choix multiple (une seule bonne réponse)
+========================================================================
+
+ 1. Combien d'étapes compte la méthodologie de calcul CLO ?
+      a) Quatre
+      b) Deux
+      c) Six
+      d) Dix
+
+ 2. Quelle est la première étape de la méthode ?
+      a) Formaliser le protocole
+      b) Calculer Opp
+      c) Interpréter le résultat
+      d) Choisir un tribunal
+
+ 3. Combien de méthodes convergentes servent à estimer H(C) ?
+      a) Trois
+      b) Une
+      c) Deux
+      d) Cinq
+
+ 4. Que fait la méthode des bornes structurelles ?
+      a) Compter les contextes distinguables à partir des textes légaux
+      b) Interroger des juges
+      c) Mesurer des temps de calcul
+      d) Analyser des clés
+
+ 5. 16 types de preuves et 16 contextes procéduraux donnent H(C) ≥ … ?
+      a) 8 bits
+      b) 16 bits
+      c) 32 bits
+      d) 256 bits
+
+ 6. Sur quoi s'appuie la deuxième méthode ?
+      a) La littérature sur la mémoire des experts
+      b) Les registres de commerce
+      c) Les statistiques policières
+      d) Les journaux réseau
+
+ 7. Quel est le produit Conf · Rel · Opp publié pour Helios ?
+      a) 0,437
+      b) 0,572
+      c) 0,273
+      d) 0,900
+
+ 8. Quel est le produit publié pour les zk-SNARKs ?
+      a) 0,572
+      b) 0,437
+      c) 0,273
+      d) 0,670
+
+ 9. Quel est le produit publié pour ECDSA ?
+      a) 0,273
+      b) 0,437
+      c) 0,572
+      d) 0,980
+
+10. Quelle mesure est la plus faible pour ECDSA ?
+      a) La confidentialité (0,31)
+      b) La fiabilité
+      c) L'opposabilité
+      d) Aucune
+
+11. Quel enseignement tirer du cas ECDSA ?
+      a) La transparence maximale n'est pas le meilleur compromis global
+      b) ECDSA est le meilleur protocole en tout
+      c) L'opposabilité ne compte pas
+      d) La confidentialité est toujours prioritaire
+
+12. Quel protocole offre le meilleur produit global ?
+      a) zk-SNARK
+      b) ECDSA
+      c) Helios
+      d) Ils sont égaux
+
+13. Pour λ = 128, quelle plage définit le régime de capacité faible ?
+      a) Moins de 13 bits
+      b) Entre 13 et 64 bits
+      c) Plus de 64 bits
+      d) Exactement 128 bits
+
+14. Que privilégier en régime de capacité faible ?
+      a) La transparence
+      b) La confidentialité
+      c) Le secret de conception
+      d) Aucune preuve
+
+15. Que permet un régime de capacité élevée ?
+      a) De privilégier la confidentialité
+      b) De se passer de vérification
+      c) D'ignorer le contexte
+      d) De supprimer les signatures
+
+16. Quelle plage de Δ implicite ressort des produits publiés ?
+      a) 35 à 73 bits
+      b) 1 à 5 bits
+      c) 100 à 200 bits
+      d) 0 bit
+
+17. Pourquoi cette plage est-elle remarquable ?
+      a) Elle converge avec l'estimation cognitive indépendante de Miller
+      b) Elle contredit le Théorème 3
+      c) Elle est choisie arbitrairement
+      d) Elle ne concerne que le vote
+
+18. Comment le chapitre traite-t-il AES, Kyber, Dilithium et les zk-STARKs ?
+      a) Qualitativement, sans inventer de scores
+      b) Avec des scores estimés
+      c) Il les classe premiers
+      d) Il les exclut du cours
+
+19. Quel levier fait passer le système judiciaire camerounais d'un régime faible à un régime moyen ?
+      a) La formation des magistrats
+      b) Des clés plus longues
+      c) Un protocole unique
+      d) Le chiffrement des audiences
+
+20. Par quoi commence la sélection d'un protocole ?
+      a) Évaluer la capacité institutionnelle cible
+      b) Choisir la primitive la plus récente
+      c) Maximiser la confidentialité
+      d) Consulter un fournisseur
+
+========================================================================
+Vrai ou faux
+========================================================================
+
+21. ECDSA atteint la plus haute opposabilité des trois cas étudiés.
+      Vrai / Faux
+
+22. ECDSA a aussi le produit global le plus élevé.
+      Vrai / Faux
+
+23. Le chapitre attribue un score CLO chiffré à Kyber.
+      Vrai / Faux
+
+24. Les trois méthodes d'estimation de H(C) donnent des plages convergentes.
+      Vrai / Faux
+
+25. En régime moyen, on recherche l'équilibre entre les trois mesures.
+      Vrai / Faux
+
+26. L'opposabilité d'Helios vaut environ 0,50.
+      Vrai / Faux
+
+27. La fiabilité des zk-SNARKs est inférieure à 0,5.
+      Vrai / Faux
+
+28. L'interprétation institutionnelle est la dernière étape de la méthode.
+      Vrai / Faux
+
+29. Les Δ implicites contredisent l'estimation de Miller.
+      Vrai / Faux
+
+30. Seules les primitives calculées dans la littérature publiée reçoivent une valeur numérique.
+      Vrai / Faux
+
+========================================================================
+Textes à trous
+========================================================================
+
+31. Le protocole de vote électronique étudié s'appelle ______.
+
+32. La signature étudiée dans le troisième cas est ______.
+
+33. La confidentialité d'ECDSA vaut 0,______.
+
+34. L'opposabilité d'ECDSA vaut 0,______.
+
+35. Le produit CLO des zk-SNARKs vaut 0,______.
+
+36. Le régime faible correspond à Δ inférieur à ______ bits.
+
+37. Le régime élevé correspond à Δ supérieur à ______ bits.
+
+38. La méthode compte ______ étapes.
+
+39. La méthode qui combine trois estimations convergentes s'appelle la ______.
+
+40. Le chercheur en sciences cognitives qui fonde Δ se nomme ______.
+
+========================================================================
+Grille de réponses   Nom : ............................  Matricule : ............
+========================================================================
+ 1. ............................................
+ 2. ............................................
+ 3. ............................................
+ 4. ............................................
+ 5. ............................................
+ 6. ............................................
+ 7. ............................................
+ 8. ............................................
+ 9. ............................................
+10. ............................................
+11. ............................................
+12. ............................................
+13. ............................................
+14. ............................................
+15. ............................................
+16. ............................................
+17. ............................................
+18. ............................................
+19. ............................................
+20. ............................................
+21. ............................................
+22. ............................................
+23. ............................................
+24. ............................................
+25. ............................................
+26. ............................................
+27. ............................................
+28. ............................................
+29. ............................................
+30. ............................................
+31. ............................................
+32. ............................................
+33. ............................................
+34. ............................................
+35. ............................................
+36. ............................................
+37. ............................................
+38. ............................................
+39. ............................................
+40. ............................................

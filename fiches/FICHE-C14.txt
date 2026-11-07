@@ -1,0 +1,234 @@
+NDAP SUKULU · INA · fiche FICHE-C14
+Chapitre 14 : Forensique système
+
+Version papier, à utiliser en attendant l'ouverture du portail NDAP SUKULU.
+La fiche complète compte 40 questions. Répondez sur la grille en fin de fiche.
+Durée indicative : 60 minutes. Seuil de réussite : 60 %.
+Les corrections figurent dans le livret de correction du cours.
+
+========================================================================
+Questions à choix multiple (une seule bonne réponse)
+========================================================================
+
+ 1. Que dit le principe de Locard appliqué au système ?
+      a) Une même action produit plusieurs artefacts redondants
+      b) Aucune action ne laisse de trace
+      c) Un seul artefact suffit toujours
+      d) Les artefacts s'effacent entre eux
+
+ 2. Que prouve un fichier Prefetch sous Windows ?
+      a) L'exécution d'un programme, avec son nom et sa dernière exécution
+      b) La création d'un compte
+      c) Une connexion réseau
+      d) Un transfert bancaire
+
+ 3. Où se trouvent les fichiers Prefetch ?
+      a) Dans C:\Windows\Prefetch
+      b) Dans la mémoire RAM uniquement
+      c) Dans le cloud
+      d) Dans le BIOS
+
+ 4. Quel est l'intérêt du ShimCache (AppCompatCache) en forensique ?
+      a) C'est une clé de registre qui persiste même après suppression du binaire
+      b) Il chiffre le disque
+      c) Il supprime les traces
+      d) Il compresse les fichiers
+
+ 5. Quelle information distinctive la ruche Amcache.hve contient-elle ?
+      a) Le hash SHA-1 du binaire exécuté, son chemin et un premier horodatage
+      b) Le mot de passe de l'utilisateur
+      c) La clé de chiffrement du disque
+      d) Le numéro de série du CPU
+
+ 6. Dans quelle ruche de registre se trouve l'historique des exécutions UserAssist ?
+      a) NTUSER.DAT
+      b) Amcache.hve
+      c) Le fichier hosts
+      d) Le MBR
+
+ 7. Que désignent les quatre horodatages MACE d'un fichier NTFS ?
+      a) Modified, Accessed, Changed, Entry created
+      b) Memory, Archive, Cache, Export
+      c) Master, Admin, Copy, Erase
+      d) Move, Add, Clone, Encrypt
+
+ 8. Qu'est-ce que le timestomping ?
+      a) La manipulation artificielle des horodatages d'un fichier
+      b) La capture de la RAM
+      c) Le calcul d'un hash
+      d) Le chiffrement d'un disque
+
+ 9. Le $MFT indique une création en 2020, mais le $UsnJrnl montre une création le 13/03/2026. Que révèle cette divergence ?
+
+      a) Un timestomping, soit une falsification des horodatages
+      b) Un fonctionnement normal
+      c) Une erreur de disque
+      d) Un chiffrement
+
+10. Quelle différence entre la $MFT et le $UsnJrnl ?
+      a) La $MFT montre l'état actuel, le $UsnJrnl montre l'historique des changements
+      b) Les deux sont identiques
+      c) Le $UsnJrnl chiffre les fichiers
+      d) La $MFT est dans la RAM
+
+11. Comment détecter un timestomping de manière fiable ?
+      a) Croiser la $MFT avec le $UsnJrnl et le $LogFile
+      b) Se fier au seul horodatage Modified
+      c) Regarder le nom du fichier
+      d) Ignorer les horodatages
+
+12. Quel Event ID Windows enregistre la création d'un processus ?
+      a) L'Event ID 4688
+      b) L'Event ID 404
+      c) L'Event ID 200
+      d) L'Event ID 1
+
+13. Quel outil extrait et analyse les ruches de registre Windows ?
+      a) RegRipper
+      b) Wireshark
+      c) dd
+      d) binwalk
+
+14. Quel outil, de la suite Eric Zimmerman, analyse le répertoire Prefetch ?
+      a) PECmd
+      b) Volatility
+      c) Autopsy
+      d) tshark
+
+15. Quel fichier Linux conserve l'historique des commandes d'un utilisateur ?
+      a) .bash_history
+      b) /etc/passwd
+      c) /boot/grub
+      d) /dev/null
+
+16. Quel mécanisme Linux est un vecteur fréquent de persistance à examiner ?
+      a) Les crontabs
+      b) Le fichier hosts
+      c) Le BIOS
+      d) Le presse-papier
+
+17. Quel outil construit une super-timeline forensique multi-sources ?
+      a) log2timeline (plaso)
+      b) FTK Imager
+      c) dnstwist
+      d) ssdeep
+
+18. Pourquoi la convergence de six artefacts est-elle préférable à un seul ?
+      a) Un artefact isolé peut être contesté, la convergence est bien plus robuste
+      b) Elle va plus vite
+      c) Elle coûte moins cher
+      d) Elle n'apporte rien de plus
+
+19. Pourquoi l'horodatage Accessed de NTFS est-il peu fiable ?
+      a) Windows désactive souvent sa mise à jour pour des raisons de performance
+      b) Il est chiffré
+      c) Il n'existe pas
+      d) Il est toujours faux
+
+20. Quelle commande Volatility récupère l'historique bash depuis la mémoire d'un système Linux ?
+      a) linux.bash
+      b) windows.pslist
+      c) linux.encrypt
+      d) windows.netscan
+
+========================================================================
+Vrai ou faux
+========================================================================
+
+21. Si un artefact d'exécution est supprimé, les autres artefacts subsistent souvent.
+      Vrai / Faux
+
+22. Le ShimCache disparaît toujours dès qu'on supprime le binaire concerné.
+      Vrai / Faux
+
+23. Le $UsnJrnl enregistre chronologiquement l'historique des opérations sur le système de fichiers.
+      Vrai / Faux
+
+24. Pour des fichiers suspects, il faut toujours croiser la $MFT et le $UsnJrnl.
+      Vrai / Faux
+
+25. On peut se fier aveuglément à l'horodatage Accessed sous Windows.
+      Vrai / Faux
+
+26. Le Prefetch prouve l'exécution d'un programme même en l'absence de logs.
+      Vrai / Faux
+
+27. Amcache.hve peut contenir le hash du binaire exécuté.
+      Vrai / Faux
+
+28. Les crontabs et authorized_keys sont des endroits à examiner pour la persistance sous Linux.
+      Vrai / Faux
+
+29. Une timeline forensique unifiée mélange des sources de formats différents.
+      Vrai / Faux
+
+30. Un juge rejette plus facilement six artefacts convergents qu'un seul artefact isolé.
+      Vrai / Faux
+
+========================================================================
+Textes à trous
+========================================================================
+
+31. Les fichiers de preuve d'exécution Windows portent l'extension .______.
+
+32. La table centrale de NTFS qui décrit chaque fichier est la Master File Table, abrégée en ______.
+
+33. Le journal NTFS des changements du système de fichiers se note $______.
+
+34. La falsification des horodatages d'un fichier s'appelle le ______.
+
+35. L'outil d'extraction des ruches de registre cité dans le chapitre s'appelle ______.
+
+36. L'outil qui génère une super-timeline multi-sources s'appelle ______.
+
+37. Les journaux de systemd se consultent avec la commande ______.
+
+38. La création d'un processus correspond à l'Event ID ______.
+
+39. La ruche de registre propre à chaque utilisateur s'appelle ______.DAT.
+
+40. La ruche qui stocke le hash et le chemin des binaires exécutés s'appelle ______.hve.
+
+========================================================================
+Grille de réponses   Nom : ............................  Matricule : ............
+========================================================================
+ 1. ............................................
+ 2. ............................................
+ 3. ............................................
+ 4. ............................................
+ 5. ............................................
+ 6. ............................................
+ 7. ............................................
+ 8. ............................................
+ 9. ............................................
+10. ............................................
+11. ............................................
+12. ............................................
+13. ............................................
+14. ............................................
+15. ............................................
+16. ............................................
+17. ............................................
+18. ............................................
+19. ............................................
+20. ............................................
+21. ............................................
+22. ............................................
+23. ............................................
+24. ............................................
+25. ............................................
+26. ............................................
+27. ............................................
+28. ............................................
+29. ............................................
+30. ............................................
+31. ............................................
+32. ............................................
+33. ............................................
+34. ............................................
+35. ............................................
+36. ............................................
+37. ............................................
+38. ............................................
+39. ............................................
+40. ............................................

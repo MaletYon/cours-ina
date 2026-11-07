@@ -1,0 +1,594 @@
+% ============================================================================
+% Fichier  : partie5/P05_C25_benchmarking.tex
+% Titre    : Benchmarking Mondial des Pratiques Forensiques
+% Auteur   : MINKA MI NGUIDJOÏ Thierry Emmanuel
+% Version  : 1.0 -- Juin 2026
+% ============================================================================
+
+\chapter{Benchmarking Mondial des Pratiques Forensiques}
+\label{chap:bench}
+
+\epigraph{%
+    « L'excellence s'atteint non pas en imitant, mais en comprenant,
+    adaptant et dépassant les meilleures pratiques mondiales. »%
+}{Malcolm Gladwell}
+
+\niveauChapitre{Expert}{%
+    Vision globale du cours requise. Ce chapitre suppose la
+    maîtrise du Chapitre~7~(UE~SEC4031) (standards ISO/NIST/ACPO~\cite{acpo2012})
+    et du Chapitre~10~(UE~SEC4031) (cadre normatif global)~:
+    il les replace dans une perspective institutionnelle comparative.%
+}
+
+\begin{boxobjectifs}
+\begin{itemize}
+    \item Comparer l'organisation institutionnelle de la forensique
+          numérique dans plusieurs juridictions de référence.
+    \item Identifier les facteurs structurels qui expliquent les
+          écarts de maturité forensique entre pays.
+    \item Distinguer ce qui est transposable au contexte camerounais
+          de ce qui ne l'est pas, et pourquoi.
+    \item Analyser le rôle des laboratoires forensiques nationaux
+          et des modèles de certification d'experts.
+    \item Formuler des recommandations réalistes pour le développement
+          de la capacité forensique camerounaise, ancrées dans
+          les contraintes réelles du pays.
+    \item Adopter une posture critique face aux discours de
+          ``rattrapage technologique'' non étayés.
+\end{itemize}
+\end{boxobjectifs}
+
+\bigskip
+
+% ============================================================================
+\section*{Avertissement méthodologique}
+% ============================================================================
+
+Le benchmarking institutionnel international est un exercice délicat~:
+les données chiffrées précises sur les capacités forensiques nationales
+(budgets, effectifs, taux de résolution) sont rarement publiées par les
+agences elles-mêmes, pour des raisons de sécurité opérationnelle.
+Ce chapitre s'appuie donc sur des \textbf{informations publiquement
+documentées et vérifiables}~: organisation institutionnelle, cadres
+juridiques publiés, accréditations professionnelles, standards
+adoptés. Il \textbf{évite délibérément} les classements numériques
+précis (``score~9.13/10'') qui donneraient une fausse impression
+de précision scientifique à des comparaisons par nature qualitatives.
+
+\separateur
+
+% ============================================================================
+\section{Cadre d'Analyse Comparative}
+\label{sec:cadre-analyse}
+% ============================================================================
+
+\subsection{Pourquoi comparer les systèmes nationaux}
+
+L'objectif de ce chapitre n'est pas le classement mais la
+\textbf{compréhension structurelle}~: pourquoi certains pays ont-ils
+développé des capacités forensiques matures plus tôt~? Quels facteurs
+institutionnels expliquent ces différences~? Lesquels sont transposables
+au Cameroun, et à quel horizon temporel réaliste~?
+
+\subsection{Dimensions d'analyse}
+
+\begin{tableaucours}{p{3.0cm}p{8.5cm}}{%
+    \tableauHeader{Dimension} &
+    \tableauHeader{Question posée}
+}
+\textbf{Cadre légal} & Existe-t-il une loi spécifique à la
+    cybercriminalité~? Depuis quand~? A-t-elle été révisée pour
+    suivre l'évolution technologique~? \\
+\textbf{Organisation institutionnelle} & Y a-t-il un laboratoire
+    forensique national centralisé, ou une capacité distribuée~?
+    Quel rattachement administratif (police, justice, agence
+    indépendante)~? \\
+\textbf{Certification professionnelle} & Existe-t-il un cursus de
+    certification reconnu pour les experts forensiques~? Qui
+    l'administre~? Est-il obligatoire pour témoigner~? \\
+\textbf{Coopération internationale} & Le pays est-il partie à des
+    conventions internationales (Budapest, Malabo)~? Dispose-t-il
+    d'un point de contact 24/7 opérationnel~? \\
+\textbf{Recherche et formation} & Existe-t-il des programmes
+    universitaires dédiés~? Une production scientifique nationale
+    en forensique numérique~? \\
+\end{tableaucours}
+\vspace{-0.8em}
+\begin{center}{\small\itshape Tableau~25.1. Dimensions d'analyse comparative}\end{center}
+
+% ============================================================================
+\section{États-Unis~: le Modèle de la Spécialisation Fédérale}
+\label{sec:benchmark-usa}
+% ============================================================================
+
+\subsection{Organisation institutionnelle}
+
+Les États-Unis se distinguent par une architecture fédérale
+fragmentée mais hautement spécialisée. Le FBI dispose de
+\textbf{Regional Computer Forensics Laboratories} (RCFL),
+un réseau de laboratoires régionaux créé en~1999, qui fournit un
+support forensique mutualisé aux agences locales, étatiques
+et fédérales. Cette mutualisation permet des investissements
+en équipement de pointe inaccessibles à une agence locale isolée.
+
+\begin{tableaucours}{p{3.2cm}p{8.0cm}}{%
+    \tableauHeader{Élément} &
+    \tableauHeader{Caractéristique}
+}
+Cadre légal & \textit{Computer Fraud and Abuse Act} (1986, révisé
+    plusieurs fois)~; \textit{Stored Communications Act} (1986)~;
+    cf. Ch.~11~(UE~SEC4031) \\
+Certification & \textit{IACIS} (\textit{International Association
+    of Computer Investigative Specialists})~: certification CFCE
+    reconnue, examen pratique rigoureux \\
+Recherche & NIST publie et maintient activement les standards
+    (SP~800-86, NIST~CFTT pour la validation d'outils)~; recherche
+    académique abondante \\
+Limite structurelle & Fragmentation entre 50~États~+ niveau
+    fédéral~: hétérogénéité des pratiques locales malgré
+    l'excellence des standards fédéraux \\
+\end{tableaucours}
+\vspace{-0.8em}
+\begin{center}{\small\itshape Tableau~25.2. États-Unis~: organisation forensique}\end{center}
+
+\subsection{Ce qui explique la maturité américaine}
+
+Trois facteurs structurels, documentés et vérifiables~: (1)~un
+investissement public soutenu dans la recherche (NIST) depuis les
+années~1990~; (2)~une industrie privée de cybersécurité considérable
+qui alimente en outils, en formation et en personnel qualifié les
+agences publiques~; (3)~un volume d'affaires si important qu'il a
+justifié très tôt la spécialisation et la standardisation.
+
+\begin{boiteRemarque}{Une limite souvent ignorée}
+La maturité technique américaine ne se traduit pas uniformément
+en qualité de justice~: le nombre de condamnations annulées pour
+vices de procédure forensique (\textit{Daubert challenges} sur
+la fiabilité méthodologique) reste significatif. La sophistication
+technique n'élimine pas le risque d'erreur procédurale, elle
+le déplace simplement vers des domaines plus subtils.
+\end{boiteRemarque}
+
+% ============================================================================
+\section{Royaume-Uni~: le Modèle de la Rigueur Procédurale}
+\label{sec:benchmark-uk}
+% ============================================================================
+
+\subsection{ACPO et l'héritage procédural}
+
+Le Royaume-Uni a développé, via l'\textit{Association of Chief
+Police Officers} (ACPO), le cadre procédural le plus influent au
+monde en matière de forensique numérique~: les quatre principes
+ACPO (Ch.~7~(UE~SEC4031)) sont aujourd'hui cités et adoptés
+bien au-delà du Royaume-Uni, y compris dans des pays sans lien
+historique avec le système juridique britannique.
+
+\begin{tableaucours}{p{3.2cm}p{8.0cm}}{%
+    \tableauHeader{Élément} &
+    \tableauHeader{Caractéristique}
+}
+Cadre légal & \textit{Computer Misuse Act}~1990 (l'une des
+    premières lois cyber au monde)~; \textit{Investigatory
+    Powers Act}~2016 \\
+Organisation & \textit{National Crime Agency} (NCA), unité
+    nationale dédiée à la cybercriminalité, créée en~2013,
+    centralise les capacités sur les affaires complexes \\
+Certification & Pas de certification professionnelle unique
+    obligatoire~; accréditation des laboratoires via
+    \textit{UKAS} (ISO/IEC~17025~\cite{iso17025_2017}) \\
+Spécificité & Forte culture de la \textbf{transparence procédurale}~:
+    le \textit{disclosure} (communication des preuves à la défense)
+    est une obligation stricte qui structure toute la pratique \\
+\end{tableaucours}
+\vspace{-0.8em}
+\begin{center}{\small\itshape Tableau~25.3. Royaume-Uni~: organisation forensique}\end{center}
+
+\begin{boxCRO}
+\textbf{Analyse CRO. Pourquoi le modèle britannique privilégie
+$\mathcal{O}$}
+
+Le système accusatoire britannique (\textit{adversarial system}),
+avec son obligation stricte de \textit{disclosure}, crée une
+pression institutionnelle constante vers la maximisation de
+l'opposabilité ($\mathcal{O}$)~: toute faiblesse procédurale sera
+exploitée par la défense. Cette pression a directement façonné
+les quatre principes ACPO, conçus moins pour optimiser la vitesse
+($\mathcal{R}$ à court terme) que pour garantir la solidité
+incontestable du dossier.
+
+\cro{$\sim$}{$\uparrow$ via rigueur procédurale}{$\uparrow\uparrow\uparrow$ priorité structurelle}
+\end{boxCRO}
+
+% ============================================================================
+\section{Allemagne~: le Modèle de l'Intégration Juridique}
+\label{sec:benchmark-allemagne}
+% ============================================================================
+
+\begin{tableaucours}{p{3.2cm}p{8.0cm}}{%
+    \tableauHeader{Élément} &
+    \tableauHeader{Caractéristique}
+}
+Cadre légal & Code pénal (\textit{StGB}) intègre les infractions
+    cyber depuis 1986 (\S~202a, accès illicite, parmi les plus
+    anciennes lois cyber d'Europe)~; conformité RGPD~\cite{rgpd2016} stricte
+    (Ch.~11~(UE~SEC4031)) \\
+Organisation & \textit{Bundeskriminalamt} (BKA), office fédéral
+    de police criminelle, avec une division cybercriminalité
+    intégrée à la structure fédérale \\
+Spécificité & Tradition juridique \textit{civil law} (contrairement
+    au \textit{common law} britannique/américain)~: les standards
+    procéduraux sont fixés par le législateur plutôt que par la
+    jurisprudence accumulée \\
+Protection des données & Application particulièrement stricte des
+    principes de minimisation et de proportionnalité, héritage
+    direct de l'histoire allemande du~XX\textsuperscript{e}~siècle
+    et de la méfiance envers la surveillance étatique \\
+\end{tableaucours}
+\vspace{-0.8em}
+\begin{center}{\small\itshape Tableau~25.4. Allemagne~: organisation forensique}\end{center}
+
+\begin{boiteRemarque}{Une leçon transposable~: la codification précoce}
+L'Allemagne illustre qu'un système \textit{civil law} (comme le
+système camerounais, héritier du droit français) peut atteindre
+une maturité forensique élevée \textbf{sans dépendre d'une
+jurisprudence accumulée sur des décennies}, à condition que
+le cadre légal soit précis, régulièrement mis à jour, et appliqué
+avec constance. C'est directement pertinent pour le Cameroun~:
+la \loicam{2010/012}~\cite{cameroun2010a} et la \loicam{2024/017}~\cite{cameroun2024donnees} (Ch.~12~(UE~SEC4031))
+suivent cette même logique de codification précise plutôt que
+d'attente d'une jurisprudence abondante.
+\end{boiteRemarque}
+
+% ============================================================================
+\section{Singapour~: le Modèle de l'Investissement Ciblé}
+\label{sec:benchmark-singapour}
+% ============================================================================
+
+\subsection{Un cas d'étude pertinent pour le Cameroun}
+
+Singapour mérite une attention particulière~: comme le Cameroun,
+c'est un pays de taille moyenne, sans l'héritage institutionnel
+des grandes puissances occidentales, qui a dû construire sa capacité
+forensique à partir d'un point de départ comparable.
+
+\begin{tableaucours}{p{3.2cm}p{8.0cm}}{%
+    \tableauHeader{Élément} &
+    \tableauHeader{Caractéristique}
+}
+Cadre légal & \textit{Computer Misuse Act}~1993 (révisé
+    régulièrement, dernière révision majeure~2017)~; \textit{Personal
+    Data Protection Act}~2012 \\
+Organisation & \textit{Singapore Police Force Cybercrime Command}~;
+    coordination étroite avec l'autorité de régulation
+    \textit{Cyber Security Agency} (CSA), créée en~2015 \\
+Stratégie & Investissement ciblé sur un nombre limité de capacités
+    critiques plutôt que tentative de couverture exhaustive
+    immédiate~; partenariats publics-privés structurés
+    (Interpol Global Complex for Innovation, basé à Singapour) \\
+Facteur clé & Décision politique explicite de faire de la
+    cybersécurité un axe stratégique national, avec financement
+    soutenu sur le long terme \\
+\end{tableaucours}
+\vspace{-0.8em}
+\begin{center}{\small\itshape Tableau~25.5. Singapour~: organisation forensique}\end{center}
+
+\begin{boiteRemarque}{Pourquoi ce modèle est pertinent, et pourquoi il
+ne se transpose pas automatiquement}
+Singapour a construit sa capacité en \textbf{20--25~ans} avec un
+PIB par habitant et un niveau de financement public sans commune
+mesure avec celui du Cameroun. La leçon transposable n'est pas le
+montant des investissements, mais la \textbf{méthode}~: cibler un
+nombre restreint de capacités prioritaires (ici~: la lutte contre
+la fraude financière, secteur économiquement stratégique pour
+Singapour) plutôt que de disperser des ressources limitées sur
+l'ensemble du spectre forensique.
+\end{boiteRemarque}
+
+% ============================================================================
+\section{Afrique~: Panorama Régional}
+\label{sec:benchmark-afrique}
+% ============================================================================
+
+\subsection{Maturité variable, dynamiques communes}
+
+Le Chapitre~11~(UE~SEC4031) a déjà présenté les cadres régionaux
+africains (CEDEAO, SADC, EAC). Ce chapitre se concentre sur
+l'organisation institutionnelle effective de quelques pays de
+référence.
+
+\begin{tableaucours}{p{2.5cm}p{4.0cm}p{4.5cm}}{%
+    \tableauHeader{Pays} &
+    \tableauHeader{Organisation forensique} &
+    \tableauHeader{Élément distinctif}
+}
+\textbf{Afrique du Sud} & \textit{Cybercrimes Act}~2020~;
+    laboratoire forensique \textit{SAPS} (police sud-africaine)
+    établi de longue date &
+    Le système le plus abouti d'Afrique subsaharienne~; coopération
+    INTERPOL active de longue date \\
+\textbf{Kenya} & \textit{Computer Misuse and Cybercrimes Act}~2018~;
+    \textit{National KE-CIRT/CC} (équipe nationale de réponse
+    aux incidents) &
+    Écosystème fintech (M-Pesa) ayant accéléré le développement
+    de capacités anti-fraude spécialisées \\
+\textbf{Rwanda} & \textit{Law on Prevention and Punishment of
+    Cyber Crimes}~2018~; \textit{National Cyber Security Authority}
+    (NCSA) &
+    Stratégie nationale de transformation numérique articulée
+    explicitement avec le développement des capacités cyber \\
+\textbf{Nigéria} & \textit{Cybercrimes Act}~2015~; \textit{EFCC}
+    (\textit{Economic and Financial Crimes Commission}) dispose
+    d'une unité cyber dédiée &
+    Volume d'affaires considérable (fraude en ligne) ayant
+    forcé une professionnalisation rapide malgré des ressources
+    limitées \\
+\end{tableaucours}
+\vspace{-0.8em}
+\begin{center}{\small\itshape Tableau~25.6. Panorama de quatre pays africains de référence}\end{center}
+
+\subsection{Facteurs communs de progression observés}
+
+\begin{enumerate}
+    \item \textbf{Un cadre légal codifié précisément}, même récent,
+          vaut mieux qu'un cadre ancien mais vague, l'Allemagne
+          (Section~\ref{sec:benchmark-allemagne}) et le Rwanda
+          partagent cette logique malgré des contextes très différents.
+    \item \textbf{Un secteur économique moteur} (fintech au Kenya,
+          finance en Afrique du Sud) accélère souvent le développement
+          de capacités spécialisées plus efficacement qu'une approche
+          générale.
+    \item \textbf{La coopération régionale} (AFRIPOL, INTERPOL
+          régional, Ch.~10~(UE~SEC4031)) compense partiellement
+          les limites de capacité nationale individuelle.
+    \item \textbf{La continuité institutionnelle} compte davantage
+          que l'ampleur initiale des moyens~: les pays qui ont
+          maintenu un effort constant sur~10--15~ans (Rwanda, Kenya)
+          montrent une progression plus nette que ceux ayant connu
+          des ruptures de financement ou de priorité politique.
+\end{enumerate}
+
+% ============================================================================
+\section{Synthèse Comparative~: ce qui Varie et Pourquoi}
+\label{sec:synthese-comparative}
+% ============================================================================
+
+\begin{tableaucours}{p{3.0cm}p{4.0cm}p{4.5cm}}{%
+    \tableauHeader{Juridiction} &
+    \tableauHeader{Force distinctive} &
+    \tableauHeader{Facteur explicatif principal}
+}
+USA & Recherche, normalisation, volume &
+    Investissement public soutenu (NIST) + industrie privée +
+    volume d'affaires \\
+UK & Rigueur procédurale (ACPO) &
+    Pression structurelle du système accusatoire (\textit{disclosure}) \\
+Allemagne & Intégration juridique précoce &
+    Codification précise en \textit{civil law}, sans dépendance
+    à la jurisprudence \\
+Singapour & Efficacité par ciblage &
+    Décision politique de long terme~+ ciblage sectoriel
+    (finance) \\
+Afrique du Sud & Maturité régionale &
+    Continuité institutionnelle longue~+ coopération internationale \\
+Kenya/Rwanda & Progression rapide récente &
+    Secteur moteur (fintech)~/ stratégie numérique nationale
+    articulée \\
+\end{tableaucours}
+\vspace{-0.8em}
+\begin{center}{\small\itshape Tableau~25.7. Synthèse~: force distinctive et facteur explicatif}\end{center}
+
+\begin{boxCRO}
+\textbf{Analyse CRO. Pourquoi il n'existe pas de modèle universellement
+optimal}
+
+Chaque système national reflète un arbitrage CRO façonné par son
+contexte juridique et institutionnel propre, pas une hiérarchie
+objective de qualité.
+
+Le Royaume-Uni privilégie structurellement $\mathcal{O}$ (système
+accusatoire). Les États-Unis investissent massivement dans
+$\mathcal{R}$ (recherche, normalisation technique). Singapour
+optimise l'efficacité globale par ciblage plutôt que par
+maximisation d'une dimension unique.
+
+\cro{variable selon contexte}{variable selon priorité nationale}{variable selon système juridique}
+
+\textbf{Conséquence pour le Cameroun~:} la question pertinente
+n'est pas ``quel pays imiter'' mais ``quel arbitrage CRO correspond
+aux priorités et contraintes camerounaises actuelles~?''
+(Section~\ref{sec:recommandations-cameroun}).
+\end{boxCRO}
+
+% ============================================================================
+\section{Recommandations pour le Cameroun}
+\label{sec:recommandations-cameroun}
+% ============================================================================
+
+\subsection{Où le Cameroun se situe aujourd'hui}
+
+Le Chapitre~12~(UE~SEC4031) a établi que le Cameroun dispose
+d'un cadre légal récent et structuré (\loicam{2010/012},
+\loicam{2024/017}) suivant la même logique de codification précise
+que l'Allemagne. C'est un atout réel, souvent sous-estimé~: la
+qualité du texte légal n'est pas le facteur limitant principal
+identifié dans ce cours.
+
+\begin{tableaucours}{p{4.0cm}p{7.5cm}}{%
+    \tableauHeader{Atout actuel} &
+    \tableauHeader{Élément}
+}
+Cadre légal codifié & \loicam{2010/012} et \loicam{2024/017}~:
+    structure comparable aux textes allemands dans leur logique
+    (codification précise plutôt que jurisprudentielle) \\
+Coopération régionale & Accès à la Convention de Malabo~\cite{malabo2014}, à AFRIPOL et à
+    INTERPOL (Ch.~10~(UE~SEC4031)), atout partagé avec
+    les pays africains les plus avancés \\
+Formation universitaire & Ce cours lui-même illustre l'émergence
+    d'une formation structurée de niveau master, condition
+    identifiée comme nécessaire dans tous les modèles étudiés \\
+\end{tableaucours}
+\vspace{-0.8em}
+\begin{center}{\small\itshape Tableau~25.8. Atouts actuels du Cameroun}\end{center}
+
+\subsection{Recommandations réalistes, ancrées dans les contraintes}
+
+\begin{enumerate}
+    \item \textbf{Cibler plutôt que disperser} (leçon de Singapour)~:
+          identifier un ou deux domaines économiquement stratégiques
+          (fraude Mobile Money, étant donné le poids économique de
+          ce secteur au Cameroun) et y concentrer les premiers
+          investissements de capacité spécialisée, plutôt que
+          chercher une couverture exhaustive immédiate.
+    \item \textbf{Maintenir la continuité institutionnelle}
+          (leçon du Rwanda/Kenya)~: la progression observée dans
+          les pays africains de référence résulte d'un effort
+          soutenu sur~10--15~ans, pas de pics d'investissement
+          ponctuels.
+    \item \textbf{Investir dans la certification professionnelle}~:
+          aucun des modèles étudiés n'a atteint une maturité
+          forensique sans un système de qualification reconnu
+          des experts (IACIS aux USA, UKAS au UK). Le
+          Décret~69/DF/544 camerounais (Ch.~12~(UE~SEC4031))
+          est une base~; son application effective et son
+          renforcement méritent une attention prioritaire.
+    \item \textbf{Exploiter la coopération régionale comme levier},
+          pas comme substitut~: la coopération AFRIPOL/INTERPOL et la Convention de Malabo
+          (Ch.~10~(UE~SEC4031)) compense des limites de
+          capacité nationale, mais ne dispense pas de construire
+          une expertise locale minimale et durable.
+    \item \textbf{Rester lucide sur les comparaisons}~: le Cameroun
+          ne dispose pas du budget de Singapour ni du volume
+          d'affaires des États-Unis. Une stratégie réaliste se
+          construit à partir des contraintes réelles, pas d'un
+          objectif de ``rattrapage'' générique et non quantifié.
+\end{enumerate}
+
+\begin{boxalert}
+\textbf{Une mise en garde contre les discours non étayés}
+
+Les discours promettant un ``rattrapage rapide'' ou un
+``leapfrogging technologique'' généralisé méritent une lecture
+critique systématique~: ils s'appuient rarement sur une analyse
+des contraintes réelles (budgétaires, humaines, institutionnelles)
+et tendent à minimiser le temps nécessaire à la construction de
+capacités durables. Les exemples étudiés dans ce chapitre
+(Singapour~: 20--25~ans~; Rwanda/Kenya~: progression continue sur
+10--15~ans) montrent que la maturité forensique se construit sur
+le temps long, par des choix structurels cohérents et maintenus, pas par des annonces de rupture technologique.
+\end{boxalert}
+
+\separateur
+
+\begin{boxresume}
+\textbf{Ce qu'il faut retenir de ce chapitre~:}
+\begin{itemize}
+    \item \textbf{Aucun modèle national n'est universellement
+          optimal}~: chaque système reflète un arbitrage CRO
+          façonné par son contexte juridique propre (système
+          accusatoire britannique~$\to$ priorité~$\mathcal{O}$~;
+          investissement fédéral américain~$\to$ priorité
+          $\mathcal{R}$ via la recherche).
+
+    \item \textbf{Le Royaume-Uni} a développé les principes ACPO
+          (Ch.~7~(UE~SEC4031)) sous la pression structurelle
+          de l'obligation de \textit{disclosure}.
+
+    \item \textbf{L'Allemagne} démontre qu'un système \textit{civil
+          law} (comme le Cameroun) peut atteindre une maturité
+          élevée par la codification précise, sans dépendre
+          d'une jurisprudence accumulée, leçon directement
+          transposable.
+
+    \item \textbf{Singapour} illustre l'efficacité du ciblage
+          sectoriel plutôt que la dispersion sur l'ensemble
+          du spectre forensique, construit sur~20--25~ans.
+
+    \item \textbf{Le Kenya et le Rwanda} montrent qu'un secteur
+          économique moteur (fintech) ou une stratégie numérique
+          nationale articulée peuvent accélérer significativement
+          le développement de capacités spécialisées, sur une
+          continuité de~10--15~ans.
+
+    \item \textbf{Pour le Cameroun}~: le cadre légal
+          (\loicam{2010/012}, \loicam{2024/017}) est un atout réel.
+          Les recommandations réalistes privilégient le ciblage
+          sectoriel (Mobile Money), la continuité institutionnelle,
+          le renforcement de la certification professionnelle et
+          l'exploitation de la coopération régionale comme levier.
+
+    \item \textbf{Posture critique obligatoire}~: se méfier des
+          discours de rattrapage technologique rapide non étayés
+          par une analyse réaliste des contraintes et du temps
+          nécessaire.
+\end{itemize}
+\end{boxresume}
+
+\bigskip
+
+\begin{boxexo}[title={\ding{45}\quad Exercice~25.1. Identifier les facteurs explicatifs \niveaubase}]
+Pour chacun des pays suivants, identifiez (à partir du Tableau~25.7)
+le facteur explicatif principal de sa force distinctive, et formulez
+une question que vous poseriez pour vérifier si ce facteur est
+transposable au Cameroun~:
+\begin{enumerate}[(a)]
+    \item Royaume-Uni
+    \item Allemagne
+    \item Singapour
+    \item Kenya
+\end{enumerate}
+\end{boxexo}
+
+\begin{boxexo}[title={\ding{45}\quad Exercice~25.2. Analyse critique d'un discours \niveaumoyen}]
+Un consultant présente la proposition suivante~: ``Le Cameroun
+doit investir massivement dans l'intelligence artificielle
+forensique pour combler en~3~ans l'écart avec les pays occidentaux,
+en s'appuyant sur l'absence de systèmes legacy qui freinent
+l'innovation dans les pays développés.''
+\begin{enumerate}[(a)]
+    \item Identifiez dans cette proposition les éléments non
+          étayés par les analyses de ce chapitre.
+    \item Sur la base des exemples étudiés (Singapour, Rwanda,
+          Kenya), quel délai réaliste suggéreriez-vous pour des
+          progrès significatifs, et pourquoi~?
+    \item Reformulez cette proposition de façon plus rigoureuse,
+          en vous appuyant sur les recommandations de la
+          Section~\ref{sec:recommandations-cameroun}.
+\end{enumerate}
+\end{boxexo}
+
+\begin{boxexo}[title={\ding{45}\quad Exercice~25.3. Stratégie nationale argumentée \niveauexpert}]
+Vous êtes consulté par l'ANTIC pour contribuer à l'élaboration
+d'une feuille de route nationale de développement de la capacité
+forensique numérique sur 10~ans.
+\begin{enumerate}[(a)]
+    \item Proposez un secteur prioritaire de ciblage initial
+          (sur le modèle de Singapour) en justifiant votre choix
+          par des éléments du contexte économique et criminel
+          camerounais évoqués dans ce cours (Ch.~3~(UE~SEC4031),
+          Ch.~\ref{chap:cas-int}).
+    \item Identifiez trois éléments institutionnels (parmi ceux
+          étudiés dans ce chapitre~: laboratoire centralisé,
+          certification professionnelle, coopération régionale,
+          formation universitaire) à prioriser dans les
+          3~premières années, en justifiant l'ordre choisi.
+    \item Appliquez la grille CRO à votre proposition~: quel
+          arbitrage $\mathcal{C}$/$\mathcal{R}$/$\mathcal{O}$
+          votre stratégie privilégie-t-elle, et est-ce cohérent
+          avec les priorités identifiées en (a)~?
+    \item Rédigez un paragraphe de mise en garde contre les
+          écueils identifiés dans ce chapitre (dispersion des
+          ressources, discours non étayés, rupture de continuité)
+          à inclure dans votre feuille de route.
+\end{enumerate}
+\end{boxexo}
+
+\bigskip
+
+\begin{boxinfo}
+\textbf{Transition.} Après cette mise en perspective comparative,
+la Partie~VI revient aux fondements~: la preuve numérique repose sur
+des primitives cryptographiques (empreintes, signatures, horodatages)
+dont l'informatique quantique menace à terme la solidité. Le
+chapitre suivant mesure cet impact sur les preuves signées
+aujourd'hui.
+\end{boxinfo}

@@ -1,0 +1,234 @@
+NDAP SUKULU · INA · fiche FICHE-C21
+Chapitre 21 : Applications et cas intégrateurs
+
+Version papier, à utiliser en attendant l'ouverture du portail NDAP SUKULU.
+La fiche complète compte 40 questions. Répondez sur la grille en fin de fiche.
+Durée indicative : 60 minutes. Seuil de réussite : 60 %.
+Les corrections figurent dans le livret de correction du cours.
+
+========================================================================
+Questions à choix multiple (une seule bonne réponse)
+========================================================================
+
+ 1. Que proposent les cas intégrateurs de ce chapitre ?
+      a) Appliquer le PIU de bout en bout sur des cas complets
+      b) Apprendre un seul outil
+      c) Remplacer la loi
+      d) Éviter la méthode
+
+ 2. Par quoi commence chaque cas intégrateur ?
+      a) Un brief initial, les faits tels qu'ils vous sont donnés
+      b) La conclusion
+      c) Le rapport final
+      d) Les annexes
+
+ 3. De quel type d'affaire relève l'opération FAKO ?
+      a) Une fraude comptable interne sur un logiciel comptable
+      b) Un ransomware d'hôpital
+      c) Un trafic d'influence
+      d) Une attaque IoT
+
+ 4. Quel Event ID Windows marque une connexion réussie, clé dans l'analyse FAKO ?
+      a) L'Event ID 4624
+      b) L'Event ID 1000
+      c) L'Event ID 200
+      d) L'Event ID 80
+
+ 5. Le compte de MBAH Inès se connecte à 02h17 depuis une IP au Nigeria, alors qu'elle est en arrêt maladie. Que faut-il formuler ?
+
+      a) Cinq hypothèses selon la méthode ACH, avant de conclure
+      b) Une conclusion immédiate de culpabilité
+      c) Rien
+      d) Un acquittement
+
+ 6. À quoi sert la demande au portail LEA de Microsoft dans FAKO ?
+      a) Corroborer ou réfuter les hypothèses avec les données Office 365
+      b) Payer une rançon
+      c) Chiffrer le serveur
+      d) Supprimer les logs
+
+ 7. Que vise la méthode ACH mobilisée à l'étape E8 du PIU ?
+      a) Générer et confronter plusieurs hypothèses concurrentes
+      b) Confirmer une seule thèse
+      c) Chiffrer les preuves
+      d) Calculer un hash
+
+ 8. De quoi traite l'opération MUNGO ?
+      a) Un trafic d'influence en ligne par de faux comptes et des deepfakes
+      b) Une fraude comptable
+      c) Un vol de téléphone
+      d) Un cambriolage
+
+ 9. Quelle analyse technique convient aux clips audio deepfake de MUNGO ?
+      a) L'analyse spectrale et des détecteurs de deepfake par IA
+      b) Le calcul du hash du téléphone
+      c) La lecture du BIOS
+      d) L'analyse du disque dur
+
+10. Comment préserver d'urgence les faux comptes avant leur suppression ?
+      a) Par une conservation urgente, art. 29 Budapest, via le portail LEA
+      b) En les laissant disparaître
+      c) En les republiant
+      d) En payant les auteurs
+
+11. De quoi traite l'opération SANAGA ?
+      a) Un ransomware frappant un hôpital
+      b) Une fraude bancaire
+      c) Un trafic d'influence
+      d) Une intrusion IoT
+
+12. Qu'est-ce qui caractérise l'opération SANAGA pour l'investigateur ?
+      a) Des décisions critiques à prendre sous pression
+      b) L'absence de toute urgence
+      c) Une analyse purement théorique
+      d) Aucune décision
+
+13. Que propose la section sur l'investigation TANGUE revisitée ?
+      a) Identifier les erreurs d'un procès-verbal non corrigé
+      b) Reproduire ces erreurs
+      c) Ignorer la custody
+      d) Supprimer le rapport
+
+14. Dans quelles conditions l'opération DIBAMBA est-elle conçue ?
+      a) En conditions d'examen, trois heures, sans document ni outil
+      b) En libre accès à tout
+      c) Sans limite de temps
+      d) En groupe uniquement
+
+15. Quelle technique de fraude mobile l'opération DIBAMBA met-elle en jeu ?
+      a) Le SIM swap, pour détourner les codes OTP
+      b) Le timestomping
+      c) Le file carving
+      d) Le beaconing
+
+16. À quelles étapes du PIU correspond la phase d'acquisition et d'analyse d'un cas ?
+      a) Les étapes E4 à E9
+      b) La seule étape E1
+      c) Aucune étape
+      d) La seule présentation
+
+17. Que mobilise la phase de qualification et rapport d'un cas ?
+      a) La grille CRO et la distinction constatation/analyse
+      b) Le seul paiement d'une rançon
+      c) L'effacement des traces
+      d) L'absence de rapport
+
+18. Combien de faux comptes avaient été identifiés dans l'opération MUNGO ?
+      a) 347
+      b) 3
+      c) 10 000
+      d) Aucun
+
+19. Quel indice rend les connexions de MBAH Inès suspectes ?
+      a) Des heures nocturnes et une IP étrangère pendant son arrêt maladie
+      b) Une connexion unique en journée
+      c) L'absence de logs
+      d) Un mot de passe fort
+
+20. Sur quels textes s'appuie la conservation urgente dans ces cas transfrontaliers ?
+      a) L'article 29 de Budapest et l'article 57 de la loi 2010/012
+      b) Le RGPD seul
+      c) Aucun texte
+      d) La RFC 3227
+
+========================================================================
+Vrai ou faux
+========================================================================
+
+21. Dans FAKO, il faut formuler plusieurs hypothèses avant de conclure à la culpabilité.
+      Vrai / Faux
+
+22. Les faux comptes doivent être préservés d'urgence avant leur suppression par la plateforme.
+      Vrai / Faux
+
+23. Une attaque ransomware sur un hôpital n'impose aucune décision urgente.
+      Vrai / Faux
+
+24. L'exercice TANGUE revisité sert à reconnaître les erreurs d'investigation à ne pas reproduire.
+      Vrai / Faux
+
+25. Une connexion nocturne depuis l'étranger pendant un arrêt maladie est un indice à examiner.
+      Vrai / Faux
+
+26. Ces cas se résolvent sans jamais appliquer le PIU.
+      Vrai / Faux
+
+27. L'analyse d'un deepfake audio peut s'appuyer sur un spectrogramme.
+      Vrai / Faux
+
+28. L'opération DIBAMBA se traite en accès libre à tous les documents.
+      Vrai / Faux
+
+29. La grille CRO intervient dans la phase de qualification d'un cas.
+      Vrai / Faux
+
+30. Le SIM swap permet de détourner les codes OTP envoyés par SMS.
+      Vrai / Faux
+
+========================================================================
+Textes à trous
+========================================================================
+
+31. L'opération FAKO porte sur une fraude ______ interne.
+
+32. La méthode des hypothèses concurrentes, à l'étape E8, porte le sigle ______.
+
+33. Les faux clips audio générés par IA dans MUNGO sont des ______.
+
+34. L'opération SANAGA met en scène un ______ frappant un hôpital.
+
+35. La fraude de l'examen DIBAMBA repose sur un SIM ______.
+
+36. L'Event ID Windows d'une connexion réussie, central dans FAKO, est le ______.
+
+37. La conservation urgente transfrontalière s'appuie sur l'article ______ de Budapest.
+
+38. La phase de qualification mobilise la grille ______, pour arbitrer les décisions.
+
+39. Ces cas appliquent le Processus Investigatif Universel, abrégé en ______.
+
+40. Le SIM swap vise à détourner les codes à usage unique, appelés ______ (sigle anglais).
+
+========================================================================
+Grille de réponses   Nom : ............................  Matricule : ............
+========================================================================
+ 1. ............................................
+ 2. ............................................
+ 3. ............................................
+ 4. ............................................
+ 5. ............................................
+ 6. ............................................
+ 7. ............................................
+ 8. ............................................
+ 9. ............................................
+10. ............................................
+11. ............................................
+12. ............................................
+13. ............................................
+14. ............................................
+15. ............................................
+16. ............................................
+17. ............................................
+18. ............................................
+19. ............................................
+20. ............................................
+21. ............................................
+22. ............................................
+23. ............................................
+24. ............................................
+25. ............................................
+26. ............................................
+27. ............................................
+28. ............................................
+29. ............................................
+30. ............................................
+31. ............................................
+32. ............................................
+33. ............................................
+34. ............................................
+35. ............................................
+36. ............................................
+37. ............................................
+38. ............................................
+39. ............................................
+40. ............................................

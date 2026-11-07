@@ -1,0 +1,67 @@
+SPEC = [
+    {"k": "title", "tag": "Jour 18 / 30 · Séance de 2 heures", "title": "Anti-forensique (2) : réseau, mobile, rapport",
+     "sub": "On ne peut pas effacer ce qui a déjà été transmis ailleurs.",
+     "right": "Partie V · Chapitre C22 §22.3-22.5"},
+    {"k": "synthese", "title": "Rappel de la séance précédente", "kicker": "Jour 17 · Anti-forensique (1)", "items": [
+        "**Locard inversé** : l'effacement laisse une trace",
+        "Timestomping : **$SI, $FN, $UsnJrnl**",
+        "Journal effacé : l'événement **1102**",
+    ]},
+    {"k": "agenda", "items": [
+        ("25 min", "**Journalisation désactivée** : CloudTrail, Windows, journald"),
+        ("15 min", "**Canaux chiffrés** et tunnels"),
+        ("25 min", "**Mobile** : factory reset, applications vault, messageries"),
+        ("20 min", "**Documenter** une tentative d'effacement"),
+        ("35 min", "**Exercice** · fiche C22 · LAB-09"),
+    ]},
+    {"k": "table", "title": "Désactiver la journalisation, et la parade", "kicker": "Section 22.3.1", "head": ["Plateforme", "Action de l'attaquant", "Contre-mesure"], "widths": [2.8, 3.8, 5.8], "rows": [
+        ["AWS CloudTrail", "StopLogging, DeleteTrail", "Object Lock (WORM) sur le bucket ; alerte sur ces actions"],
+        ["Azure Activity Log", "Désactivation (droits élevés)", "Export vers Log Analytics, rétention indépendante"],
+        ["Windows", "wevtutil cl", "Transfert en temps réel vers un SIEM"],
+        ["journald", "journalctl --vacuum-time", "rsyslog vers un serveur distant ; Storage=persistent"],
+    ]},
+    {"k": "points", "title": "Canaux chiffrés non identifiés", "kicker": "Section 22.3.2", "items": [
+        "On ne lit pas le contenu ; on lit le **rythme** : des connexions toutes les **300 secondes** exactement",
+        "Balise de pilotage à distance : régularité, petite taille, même destination",
+        "Tunnels DNS : noms longs, entropie élevée, volume anormal de requêtes",
+        "Le chiffrement cache le contenu, **jamais** les métadonnées",
+    ]},
+    {"k": "table", "title": "Ce qui survit au factory reset", "kicker": "Section 22.4.1", "head": ["Données", "Effacées ?", "Où les retrouver"], "widths": [3.6, 2.4, 6.4], "rows": [
+        ["Stockage interne", "Oui, en général", "Carving avant réécriture (extraction physique)"],
+        ["Carte SD externe", "Non", "Extraction directe de la carte"],
+        ["Journaux opérateur", "Jamais sur l'appareil", "Réquisition (art. 57)"],
+        ["Données synchronisées", "Non", "Réquisition au fournisseur (Google, iCloud)"],
+        ["Cellules GSM", "Non", "Réquisition et analyse Cell ID"],
+    ]},
+    {"k": "points", "title": "Applications vault et messageries", "kicker": "Sections 22.4.2 et 22.4.3", "items": [
+        "Une « Calculatrice » de **340 Mo** : le **nom de paquet réel** (pm list packages -f) la trahit",
+        "Indices : taille incohérente, **permissions excessives**, icône déguisée",
+        "Suppression sélective WhatsApp : les bases, les sauvegardes et **le destinataire** gardent le message",
+        "Messages éphémères : les **métadonnées** chez l'opérateur restent",
+    ]},
+    {"k": "steps", "title": "Documenter une tentative d'effacement", "kicker": "Section 22.5", "items": [
+        ("Constatations", "Chaque acte, horodaté et sourcé : suppression à 02:18:30, 1102 à 02:19:48."),
+        ("Analyse", "Séquence cohérente avec une dissimulation, **confiance élevée**."),
+        ("Alternative", "Maintenance légitime ? Écartée : aucune fenêtre planifiée (annexe E), 78 secondes d'écart."),
+        ("Portée", "Un indice d'intention ; la qualification reste au magistrat (cf. art. 88 sur l'obstruction)."),
+    ]},
+    {"k": "exercice", "title": "Effacement en trois temps", "duree": "30 minutes, individuel",
+     "text": "Serveur de la direction financière : cleanup.bat exécuté à 03:39:50 (Prefetch, cmdline via Volatility) : del *.xlsx, wevtutil cl Security et System, sdelete -p 3. $UsnJrnl : 14 suppressions de .xlsx entre 03:40:00 et 03:41:30 ; 1102 à 03:42:15.",
+     "questions": [
+        "Reconstituez la chronologie : ce qui s'est passé, ce qui a été tenté.",
+        "sdelete -p 3 rend-il les fichiers irrécupérables ? Quelles autres sources ?",
+        "Rédigez quatre constatations et l'analyse, sans qualifier.",
+     ],
+     "notes": "Corrigé (exercice 22.3). Le script, la RAM, le Prefetch et le $UsnJrnl survivent ; les fichiers eux-mêmes sont perdus localement mais existent dans les sauvegardes, les pièces jointes de courriel, les partages réseau et le cloud. La séquence suppression, effacement, wiping montre une intention de dissimuler : la formuler comme analyse avec confiance, la qualification restant au juge."},
+    {"k": "synthese", "items": [
+        "La parade à la journalisation coupée : le **transfert en temps réel**",
+        "Le chiffrement cache le contenu, pas le **rythme**",
+        "Le factory reset n'efface ni la **SD**, ni l'**opérateur**, ni le **cloud**",
+        "Une tentative se documente comme toute constatation",
+    ]},
+    {"k": "maison", "lecture": ["Chapitre 22 et son encadré « Notions mobilisées par le laboratoire INA-LAB-09 »", "NDAP SUKULU : **fiche C22** et **INA-LAB-09**"]},
+    {"k": "fin", "next": "Jour 19 · IA et forensique", "items": [
+        "L'IA comme outil : le triage",
+        "L'IA comme objet : les deepfakes",
+        "Explicabilité et biais"]},
+]

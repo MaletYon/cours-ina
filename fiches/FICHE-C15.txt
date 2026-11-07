@@ -1,0 +1,237 @@
+NDAP SUKULU · INA · fiche FICHE-C15
+Chapitre 15 : Forensique réseau opérationnelle
+
+Version papier, à utiliser en attendant l'ouverture du portail NDAP SUKULU.
+La fiche complète compte 40 questions. Répondez sur la grille en fin de fiche.
+Durée indicative : 60 minutes. Seuil de réussite : 60 %.
+Les corrections figurent dans le livret de correction du cours.
+
+========================================================================
+Questions à choix multiple (une seule bonne réponse)
+========================================================================
+
+ 1. Pour capturer tout le trafic entrant et sortant de l'entreprise vers Internet, où placer la sonde ?
+      a) Port SPAN sur le switch d'un segment interne
+      b) TAP réseau sur le lien WAN
+      c) Agent hôte sur une seule station
+      d) Lecture des seuls logs DNS
+
+ 2. Quelle position permet de voir le trafic d'une machine avant qu'il ne parte chiffré sur le réseau ?
+      a) TAP sur le lien WAN
+      b) Port SPAN du switch principal
+      c) Agent de capture sur l'hôte lui-même
+      d) Logs du pare-feu
+
+ 3. Quel indicateur signale un tunneling DNS ?
+      a) Des sous-domaines très longs, au-delà de 50 caractères
+      b) Un seul enregistrement A par domaine
+      c) Du trafic HTTPS sur le port 443
+      d) Des réponses DNS vides
+
+ 4. Scénario WOURI. Un courriel affiche l'expéditeur contact@medequip-portugal.com, mais son en-tête X-Originating-IP indique 203.0.113.200 et Received mentionne un relais sans rapport. Que concluez-vous, au stade de la constatation ?
+
+      a) L'expéditeur est authentifié, aucun problème
+      b) Il y a une divergence entre expéditeur annoncé et origine réelle, à documenter
+      c) Le courriel est forcément un faux certain et prouvé
+      d) L'adresse IP prouve à elle seule l'identité de l'auteur
+
+ 5. Scénario. 47 connexions partent d'un poste vers une même IP sur le port 443, à intervalles proches de 300 s, avec des volumes quasi identiques. Quelle hypothèse est la plus cohérente ?
+
+      a) Navigation web normale de l'utilisateur
+      b) Mise à jour logicielle légitime
+      c) Beaconing d'un implant vers un serveur de commande
+      d) Sauvegarde planifiée vers un NAS interne
+
+ 6. Quelle fonction de Wireshark reconstitue la session complète d'un échange TCP ?
+      a) Follow TCP Stream
+      b) Expert Information
+      c) IO Graph
+      d) Capture Filter
+
+ 7. Quel signe, dans une capture, oriente vers une exfiltration par HTTP ?
+      a) Une requête GET courte vers une page HTML
+      b) Une requête POST au corps volumineux vers un domaine récent
+      c) Un échange DNS unique
+      d) Un handshake TLS classique
+
+ 8. Dans un transfert FTP en clair, quels éléments sont visibles dans la capture ?
+      a) Rien, tout est chiffré
+      b) Seulement les adresses IP
+      c) Les identifiants, les commandes et les fichiers transférés
+      d) Uniquement la taille des fichiers
+
+ 9. En l'absence de capture complète, quelle source donne les URL et les User-Agent ?
+      a) Les logs du proxy web
+      b) Les logs DNS seuls
+      c) Le dump RAM
+      d) Le journal des événements Windows
+
+10. Selon le cours, les logs réseau sont des données informatiques au sens de quel texte ?
+      a) Article 4 de la loi 2010/012
+      b) Article 65 de la loi 2010/012
+      c) Convention de Budapest uniquement
+      d) Aucun texte applicable
+
+11. Comment repérer, dans une capture, des requêtes DNS porteuses de données encodées ?
+      a) En filtrant les sous-domaines de plus de 50 caractères
+      b) En comptant les paquets ICMP
+      c) En lisant les en-têtes HTTP
+      d) En vérifiant la taille des trames Ethernet
+
+12. Quelle démarche met en évidence un beaconing à partir des connexions ?
+      a) Calculer les intervalles entre SYN et étudier leur distribution
+      b) Compter le nombre total d'octets du fichier pcap
+      c) Lister les adresses MAC
+      d) Vérifier la version de TLS
+
+13. Scénario. Un POST de 45 Mo part vers update.windowscdn.net, domaine enregistré il y a deux jours. Quelle lecture est la plus probable ?
+
+      a) Une mise à jour Windows légitime
+      b) Une exfiltration vers un domaine de façade
+      c) Une requête DNS classique
+      d) Un simple ping
+
+14. Après extraction d'un objet HTTP d'une capture, quel geste s'impose ?
+      a) Calculer son empreinte SHA-256 puis la soumettre à l'analyse
+      b) L'ouvrir directement sur le poste de production
+      c) Le renommer au hasard
+      d) Le supprimer pour gagner de la place
+
+15. Une entropie élevée du contenu d'un flux indique le plus souvent quoi ?
+      a) Du texte HTML en clair
+      b) Un contenu chiffré ou encodé
+      c) Une page vide
+      d) Une erreur de capture
+
+16. À propos de FTPS comparé au FTP en clair, quelle affirmation est juste ?
+      a) FTPS chiffre le contenu, mais une configuration TLS faible peut laisser des éléments visibles
+      b) FTPS ne change rien au FTP
+      c) FTPS envoie toujours les mots de passe en clair
+      d) FTPS fonctionne uniquement sur le port 53
+
+17. Quel ratio upload sur download oriente vers une exfiltration de données ?
+      a) Un ratio très inférieur à 1
+      b) Un ratio proche de 1 ou supérieur à 1
+      c) Un ratio nul
+      d) Le ratio n'a aucune importance
+
+18. Pourquoi croiser les sources réseau et système plutôt que de s'en tenir à une seule ?
+      a) Parce que la convergence de plusieurs sources est plus robuste qu'une source isolée
+      b) Parce qu'une seule source est toujours fausse
+      c) Pour augmenter la taille des fichiers
+      d) Cela n'a pas d'intérêt réel
+
+19. Scénario WOURI. L'en-tête Received d'un courriel indique un transit par les serveurs d'un fournisseur de messagerie étranger, l'expéditeur annoncé étant un autre domaine. Que fournit cet élément ?
+
+      a) Une trace du relais réel emprunté par le message
+      b) La preuve que le message est authentique
+      c) Le numéro de téléphone de l'auteur
+      d) Aucune information exploitable
+
+20. Dans un access.log, que révèle un User-Agent python-requests depuis le poste d'un comptable ?
+      a) Une navigation web ordinaire
+      b) Un script automatisé, inhabituel pour cet usage
+      c) Une mise à jour du navigateur
+      d) Un cache local
+
+========================================================================
+Vrai ou faux
+========================================================================
+
+21. En contexte forensique, on capture avec tcpdump puis on analyse hors ligne avec Wireshark.
+      Vrai / Faux
+
+22. Les logs de pare-feu contiennent le contenu des connexions.
+      Vrai / Faux
+
+23. Le champ X-Originating-IP constitue à lui seul une preuve certaine de l'identité de l'auteur.
+      Vrai / Faux
+
+24. Un port SPAN sur le switch principal capture toujours le trafic interne entre deux machines d'un même segment non mirroré.
+      Vrai / Faux
+
+25. Le beaconing se reconnaît à la régularité des intervalles entre connexions vers une même destination.
+      Vrai / Faux
+
+26. Le tunneling DNS tire parti du port 53 UDP, ouvert sur presque tous les pare-feu.
+      Vrai / Faux
+
+27. Une entropie élevée du contenu signale toujours du texte en clair.
+      Vrai / Faux
+
+28. Lancer l'interface graphique de Wireshark sur une machine en production peut introduire des artefacts dans la capture.
+      Vrai / Faux
+
+29. Les logs DNS permettent de reconstituer une partie de l'activité réseau par les noms résolus.
+      Vrai / Faux
+
+30. Un ratio upload sur download très inférieur à 1 est caractéristique d'une exfiltration massive.
+      Vrai / Faux
+
+========================================================================
+Textes à trous
+========================================================================
+
+31. Le comportement d'un implant qui contacte périodiquement son serveur de commande s'appelle le ______.
+
+32. Pour extraire les objets HTTP d'une capture, on utilise l'option tshark --______ "http,...".
+
+33. Un intervalle de 300 secondes correspond à un beacon toutes les ______ minutes (en chiffres).
+
+34. L'exfiltration de données qui détourne le port 53 s'appelle le ______ DNS.
+
+35. Croiser les sources réseau et les sources système par leurs horodatages s'appelle la ______ temporelle.
+
+36. En FTP, les données transitent sur le port ______ (en chiffres).
+
+37. Le canal par lequel un implant reçoit ses instructions se note C2, pour command and ______.
+
+38. Les réponses DNS de type ______ peuvent servir de canal de commande entrant.
+
+39. Le document du NIST qui distingue Examination et Analysis est le SP 800-______ (en chiffres).
+
+40. Pour repérer des données encodées dans une URL, on cherche des chaînes en ______ de plus de 30 caractères.
+
+========================================================================
+Grille de réponses   Nom : ............................  Matricule : ............
+========================================================================
+ 1. ............................................
+ 2. ............................................
+ 3. ............................................
+ 4. ............................................
+ 5. ............................................
+ 6. ............................................
+ 7. ............................................
+ 8. ............................................
+ 9. ............................................
+10. ............................................
+11. ............................................
+12. ............................................
+13. ............................................
+14. ............................................
+15. ............................................
+16. ............................................
+17. ............................................
+18. ............................................
+19. ............................................
+20. ............................................
+21. ............................................
+22. ............................................
+23. ............................................
+24. ............................................
+25. ............................................
+26. ............................................
+27. ............................................
+28. ............................................
+29. ............................................
+30. ............................................
+31. ............................................
+32. ............................................
+33. ............................................
+34. ............................................
+35. ............................................
+36. ............................................
+37. ............................................
+38. ............................................
+39. ............................................
+40. ............................................

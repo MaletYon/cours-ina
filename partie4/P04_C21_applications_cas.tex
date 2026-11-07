@@ -1,0 +1,559 @@
+% ============================================================================
+% Fichier  : partie4/P04_C21_applications_cas.tex
+% Titre    : Applications et Cas Intégrateurs
+% Auteur   : MINKA MI NGUIDJOÏ Thierry Emmanuel
+% Version  : 1.0 -- Juin 2026
+% ============================================================================
+
+\chapter{Applications et Cas Intégrateurs}
+\label{chap:cas-int}
+
+\epigraph{%
+    « La théorie c'est quand on sait tout et que rien ne fonctionne.
+    La pratique c'est quand tout fonctionne et que personne ne sait
+    pourquoi. Ici, nous visons les deux. »%
+}{Adapté d'Albert Einstein}
+
+\niveauChapitre{Expert}{%
+    Ce chapitre exige la maîtrise de l'ensemble des Parties~I à~IV.
+    Il ne présente aucune notion nouvelle~; il consolide et
+    intègre par la pratique.%
+}
+
+\begin{boxobjectifs}
+\begin{itemize}
+    \item Appliquer le PIU de bout en bout sur un cas complexe
+          multi-sources et multi-juridictions.
+    \item Mobiliser simultanément~: qualification juridique,
+          techniques d'acquisition, analyse artefacts, corrélation
+          temporelle et rédaction de rapport.
+    \item Gérer les tensions CRO dans des situations de décision
+          réelle sous contrainte de temps.
+    \item Identifier les erreurs classiques d'investigation et
+          les corriger.
+    \item Se préparer à l'évaluation finale par une simulation
+          complète de cas intégrateur.
+\end{itemize}
+\end{boxobjectifs}
+
+\bigskip
+
+% ============================================================================
+\section*{Mode d'emploi de ce chapitre}
+% ============================================================================
+
+Ce chapitre fonctionne différemment des précédents~: il ne présente
+pas de nouvelles techniques. Il vous place dans la position de
+l'investigateur face à un cas complet, en mobilisant simultanément
+tout ce que vous avez appris.
+
+\textbf{Structure de chaque cas~:}
+\begin{enumerate}
+    \item \textbf{Brief initial}~: les faits tels qu'ils vous sont
+          présentés (incomplets, parfois trompeurs, comme dans
+          la réalité).
+    \item \textbf{Phase d'investigation guidée}~: questions structurées
+          mobilisant les différentes dimensions du cours.
+    \item \textbf{Révélations progressives}~: des indices supplémentaires
+          apparaissent à mesure que l'investigation avance.
+    \item \textbf{Synthèse et rapport}~: production d'un livrable
+          juridiquement structuré.
+\end{enumerate}
+
+\separateur
+
+% ============================================================================
+\section{Cas~1. Opération FAKO~: Fraude Comptable Interne}
+\label{sec:cas-fako}
+% ============================================================================
+
+\subsection{Brief initial}
+
+\begin{boxscenario}{Brief. Opération FAKO}
+\textbf{Date~:} Lundi 10~mars~2026, 09h15.
+
+La DRH de CAMEROON AGRO~SA (exportateur de produits agricoles,
+150~salariés, Buea) vous contacte en urgence. La direction a
+découvert, lors de l'audit mensuel, que des virements bancaires
+non autorisés totalisant \textbf{47~millions~FCFA} ont été effectués
+vers des comptes inconnus entre le 1er et le 28~février~2026.
+
+Informations disponibles~:
+\begin{itemize}
+    \item Les virements ont été initiés depuis le logiciel comptable
+          interne (\texttt{Sage~100 Comptabilité}, serveur Windows~Server~2019)~;
+    \item Trois comptes employés avaient accès au module de virements~:
+          EBOA Claire (DAF), BAFUT Jonas (comptable senior),
+          MBAH Inès (comptable junior)~;
+    \item Aucune des trois n'a signalé d'anomalie~;
+    \item MBAH Inès est en arrêt maladie depuis le 1er~mars~2026.
+\end{itemize}
+
+\textbf{Mission~:} vous êtes mandaté par le parquet suite à la plainte
+de CAMEROON AGRO~SA. Identifier l'auteur des virements non autorisés.
+\end{boxscenario}
+
+\subsection{Phase~1~: Initialisation (PIU E1--E3)}
+
+\begin{boxexo}[title={\ding{45}\quad FAKO. Étape~1~: Cadrage}]
+\begin{enumerate}[(a)]
+    \item Remplissez la matrice de criticité (Tableau~6 du Ch.~PIU)
+          pour cette affaire. Quel niveau de rigueur s'applique~?
+    \item Quelles autorisations judiciaires devez-vous obtenir
+          avant toute action technique~? Citez les articles exacts
+          (\loicam{2010/012}~\cite{cameroun2010a}).
+    \item Listez les sources de données à collecter, dans l'ordre
+          de la RFC~3227~\cite{rfc3227}. Quelle est la première source à traiter~?
+    \item Y a-t-il un risque de destruction de preuves actif~?
+          Comment le gérer~?
+\end{enumerate}
+\end{boxexo}
+
+\subsection{Révélation~1. Accès aux logs}
+
+\begin{boiteRemarque}{Révélation~1 (disponible après l'Étape~1)}
+L'administrateur système vous communique~: le serveur Sage~100 est
+allumé~; les logs d'authentification Windows sont activés et conservés
+sur 30~jours (Event~ID~4624/4634). La messagerie professionnelle
+(Exchange) est hébergée sur Office~365 (Microsoft~365). MBAH Inès
+avait accès au VPN depuis chez elle.
+\end{boiteRemarque}
+
+\subsection{Phase~2~: Acquisition et Analyse (PIU E4--E9)}
+
+\begin{boxexo}[title={\ding{45}\quad FAKO. Étape~2~: Investigation système}]
+\begin{enumerate}[(a)]
+    \item L'analyse des Event~ID~4624 (connexion réussie) sur le serveur
+          Sage~100 révèle~:
+\begin{lstlisting}[language=bash_forensique]
+# Extrait Event Viewer -- Logon Events
+[2026-02-14 02:17:43] EventID:4624 Account:MBAH_INES
+                       LogonType:3 (Network)
+                       SourceIP:41.202.XXX.XXX
+[2026-02-14 02:17:45] EventID:4624 Account:MBAH_INES
+                       LogonType:3 Source:41.202.XXX.XXX
+[2026-02-21 03:05:12] EventID:4624 Account:MBAH_INES
+                       LogonType:3 Source:41.202.XXX.XXX
+\end{lstlisting}
+          Que révèle l'heure des connexions (02h17 et 03h05)~?
+          Quelle hypothèse formulez-vous~?
+    \item L'IP \texttt{41.202.XXX.XXX} est localisée au Nigéria
+          (Lagos). MBAH Inès est en arrêt maladie depuis le 1er~mars
+          mais les connexions datent de février. Est-ce problématique~?
+    \item Formulez 5~hypothèses (méthode ACH, E8 PIU). Quelle hypothèse
+          est la plus cohérente avec les données actuelles~?
+    \item Quelles données demandez-vous à Microsoft via le portail
+          LEA pour corroborer ou réfuter~?
+\end{enumerate}
+\end{boxexo}
+
+\subsection{Révélation~2. Résultat LEA Microsoft}
+
+\begin{boiteRemarque}{Révélation~2}
+La réponse de Microsoft (portail LEA, délai~: 5~jours) indique~:
+\begin{itemize}
+    \item Le compte \texttt{mbah.ines@cameroon-agro.cm} s'est connecté
+          depuis l'IP \texttt{41.202.XXX.XXX} (Lagos, Nigéria) à
+          02h17 le 14~février~; 1~email a été lu~: l'email de réinitialisation
+          VPN envoyé par l'IT à MBAH Inès le 13~février.
+    \item Le même compte s'est connecté depuis l'IP
+          \texttt{196.168.XXX.XXX} (Douala, Cameroun) à 08h30
+          le 14~février, 6~heures plus tard.
+\end{itemize}
+\end{boiteRemarque}
+
+\subsection{Phase~3~: Qualification et rapport}
+
+\begin{boxexo}[title={\ding{45}\quad FAKO. Étape~3~: Qualification et rapport}]
+\begin{enumerate}[(a)]
+    \item La connexion depuis Lagos à 02h17 (accès email de réinitialisation
+          VPN) suivie d'une connexion depuis Douala à 08h30 le même
+          jour est-elle physiquement possible pour une personne
+          se déplaçant entre les deux villes~? Quelle est l'implication
+          forensique~?
+    \item Qualifiez les infractions potentielles (articles Loi~2010/012
+          et Loi~2024/017~\cite{cameroun2024donnees}). Qui est susceptible d'être mis en cause~?
+    \item Appliquez la grille CRO à la décision de notifier MBAH Inès
+          qu'elle est suspectée avant l'obtention de son téléphone.
+    \item Rédigez les 5~premières constatations de votre rapport
+          (Section~3, Constatations), en citant chaque source.
+\end{enumerate}
+\end{boxexo}
+
+% ============================================================================
+\section{Cas~2. Opération MUNGO~: Trafic d'Influence en Ligne}
+\label{sec:cas-mungo}
+% ============================================================================
+
+\subsection{Brief initial}
+
+\begin{boxscenario}{Brief. Opération MUNGO}
+\textbf{Date~:} Mercredi 15~avril~2026, 14h00.
+
+Le Service Central de Lutte contre la Cybercriminalité (SCFC) reçoit
+un signalement~: une campagne coordonnée de désinformation cible un
+candidat à des élections locales dans la région du Littoral. Des
+centaines de faux comptes Facebook diffusent des \textit{deepfakes}
+audio attribuant de fausses déclarations au candidat.
+
+Informations disponibles~:
+\begin{itemize}
+    \item 347~faux comptes identifiés par les équipes de modération
+          de Meta, actifs depuis le 1er~avril~2026~;
+    \item Tous créés depuis des IPs dans un même sous-réseau
+          (\texttt{196.200.XX.0/24}, hébergeur camerounais)~;
+    \item Contenus~: 12~clips audio deepfake, 47~posts texte,
+          3~faux articles de presse~;
+    \item Plainte déposée par le candidat victime le 14~avril.
+\end{itemize}
+\end{boxscenario}
+
+\subsection{Investigation guidée}
+
+\begin{boxexo}[title={\ding{45}\quad MUNGO. Investigation complète}]
+\begin{enumerate}[(a)]
+    \item \textbf{Cadrage juridique}~: qualifiez les infractions
+          potentielles. Les deepfakes audio sont-ils couverts par
+          la \loicam{2010/012}~? Par quelle disposition~?
+          Quelle innovation de la \loicam{2024/017} est-elle pertinente
+          (données biométriques dans les deepfakes)~?
+    \item \textbf{Stratégie de conservation d'urgence}~: les faux
+          comptes Facebook peuvent être supprimés par Meta en quelques
+          heures (violation des conditions d'utilisation). Quelle est
+          votre première action~? Rédigez la demande de conservation
+          urgente (art.~29 Budapest, portail LEA Meta Emergency).
+    \item \textbf{Analyse technique des deepfakes}~: les clips audio
+          deepfake sont des fichiers~MP3. Quelle analyse forensique
+          pouvez-vous conduire sur ces fichiers~? Quels outils~?
+          Quels artefacts~? (Indice~: métadonnées EXIF audio,
+          spectrogramme, détecteurs de deepfake IA).
+    \item \textbf{Attribution des comptes}~: tous les comptes viennent
+          du même sous-réseau \texttt{196.200.XX.0/24}. Comment
+          identifier l'abonné de cet hébergeur camerounais~?
+          Quelle réquisition~? Quels délais~?
+    \item \textbf{Contexte électoral et urgence déontologique}~:
+          l'élection a lieu dans 15~jours. Le responsable politique
+          concurrent tente de vous contacter ``en privé'' pour
+          ``accélérer le dossier''. Identifiez la tension déontologique
+          et décrivez votre réponse (Ch.~13~(UE~SEC4031)).
+    \item \textbf{CRO}~: appliquez la grille CRO à la décision de
+          publier l'analyse technique des deepfakes avant la fin
+          de l'investigation~: qui en bénéficierait, qui en
+          souffrirait~?
+\end{enumerate}
+\end{boxexo}
+
+% ============================================================================
+\section{Cas~3. Opération SANAGA~: Ransomware Hôpital}
+\label{sec:cas-sanaga}
+% ============================================================================
+
+\subsection{Brief initial}
+
+\begin{boxscenario}{Brief. Opération SANAGA}
+\textbf{Date~:} Samedi 22~mars~2026, 06h30.
+
+L'Hôpital Général de Yaoundé subit une attaque ransomware.
+Les systèmes informatiques du bloc chirurgical, de la pharmacie
+et des dossiers patients sont paralysés. Des interventions
+chirurgicales ont dû être reportées. Un message de rançon
+exige 15~bitcoins ($\approx$~750~000~USD) dans les 48~heures.
+
+Particularités critiques~:
+\begin{itemize}
+    \item Des données de santé de 12~000~patients camerounais
+          ont potentiellement été exfiltrées~;
+    \item Le serveur principal est sous Windows~Server~2019,
+          allumé, avec le message de rançon visible à l'écran~;
+    \item Deux vies sont en jeu~: un patient en soins intensifs
+          dépend d'un équipement connecté au réseau compromis~;
+    \item Le chef du service informatique affirme avoir ``fait
+          une sauvegarde hier'', mais ne retrouve pas le support.
+\end{itemize}
+\end{boxscenario}
+
+\subsection{Décisions critiques sous pression}
+
+\begin{boxexo}[title={\ding{45}\quad SANAGA. Décisions immédiate et médiate}]
+\textbf{Vous arrivez sur les lieux à 07h00. Vous avez 10~minutes
+pour prendre vos premières décisions.}
+
+\begin{enumerate}[(a)]
+    \item \textbf{Triage}~: le patient en soins intensifs est-il
+          votre responsabilité en tant qu'investigateur~?
+          Que faites-vous en priorité absolue~? Citez le cadre
+          éthique (Ch.~13~(UE~SEC4031)~: tension efficacité
+          vs droits, ici tension investigation vs vie humaine).
+    \item \textbf{Ordre de volatilité}~: le serveur est allumé
+          avec le message de rançon visible. Quelle est votre
+          séquence d'actions dans les 30~premières minutes~?
+          (RFC~3227, Ch.~7~(UE~SEC4031)). Argumentez pourquoi
+          la capture RAM précède la capture réseau dans ce contexte.
+    \item \textbf{Données de santé}~: 12~000~dossiers patients
+          ont potentiellement été exfiltrés. Quelles obligations
+          s'appliquent à l'hôpital en vertu de la
+          \loicam{2024/017}~? Quels articles~? Dans quels délais~?
+          Qui doit en être informé~?
+    \item \textbf{La rançon}~: le Directeur de l'hôpital vous
+          demande si vous ``conseillez'' de payer la rançon.
+          Que répondez-vous~? Justifiez en distinguant le rôle
+          de l'investigateur, le rôle du décideur et les
+          implications légales du paiement.
+    \item \textbf{Investigation post-incident}~:
+\begin{lstlisting}[language=bash_forensique]
+# Volatility 3 -- windows.pstree (extrait)
+4892  4888  WannaCryptor.exe   2026-03-22 04:17:22
+  4888 4884  cmd.exe            2026-03-22 04:17:20
+    4884 4880  mshta.exe        2026-03-22 04:17:15
+      4880 4876  winword.exe    2026-03-22 04:16:58
+\end{lstlisting}
+          Analysez cette arborescence~: quelle chaîne d'infection
+          suggère-t-elle~? Quelle vulnérabilité est probablement
+          exploitée~? Rédigez la constatation correspondante.
+    \item \textbf{Notification et coopération}~: le message de
+          rançon contient une adresse Bitcoin. Tracez la démarche
+          complète~: analyse blockchain, identification de l'exchange
+          de sortie, demande de gel, juridictions impliquées.
+\end{enumerate}
+\end{boxexo}
+
+% ============================================================================
+\section{Grille d'Erreurs Classiques~: Diagnostiquer une Investigation}
+\label{sec:erreurs-classiques}
+% ============================================================================
+
+\subsection{L'investigation TANGUE revisitée~: trouver les erreurs}
+
+\begin{boxscenario}{Investigation viciée à corriger}
+Voici le procès-verbal d'investigation de l'Opération TANGUE
+(version non corrigée). Identifiez toutes les erreurs.
+
+\textit{``Le 14~mars~2026 à 14h30, l'OPJ BITA s'est rendu au
+domicile de BELLO Armand et a saisi son PC portable HP. L'OPJ
+a allumé le PC pour constater les faits~; l'écran de veille
+montrait un dossier nommé ``fraudes''. L'OPJ a photographié
+l'écran et a éteint le PC. Le lendemain, l'OPJ a confié le PC
+à l'analyste SONG pour analyse~; aucun document de transfer
+n'a été rédigé. L'analyste a ouvert l'image forensique avec
+Windows Explorer pour naviguer rapidement avant d'ouvrir Autopsy.
+Le rapport indique~: ``l'accusé a dissimulé 127 fichiers de
+preuves dans un dossier caché~; il est coupable de fraude
+informatique selon art.~72.'' Les hash du disque original
+sont conservés uniquement dans le fichier E01.''}
+\end{boxscenario}
+
+\begin{boxexo}[title={\ding{45}\quad Diagnostic d'investigation viciée}]
+\begin{enumerate}[(a)]
+    \item Identifiez et nommez toutes les violations de procédure
+          (au moins~7). Pour chacune, citez la règle violée
+          (Ch.~8~(UE~SEC4031), ACPO~\cite{acpo2012}, ISO~27037~\cite{iso27037}).
+    \item Lesquelles de ces violations rendent les preuves
+          \textbf{irrecevables} devant un tribunal~? Justifiez.
+    \item Lesquelles peuvent être \textbf{régularisées a posteriori}~?
+          Comment~?
+    \item Réécrivez le paragraphe du rapport en corrigeant les
+          erreurs de rédaction (constatation vs analyse,
+          qualification juridique par l'expert).
+\end{enumerate}
+\end{boxexo}
+
+% ============================================================================
+\section{Simulation d'Examen Intégrateur}
+\label{sec:simulation-examen}
+% ============================================================================
+
+\begin{boxalert}
+\textbf{Cette section constitue une évaluation formelle.}
+Elle est conçue pour être utilisée en conditions d'examen (3~heures)
+ou comme devoir maison complet. Toutes les réponses doivent citer
+les articles de loi, les standards, les outils et les chapitres
+du cours. Aucun document ni outil n'est autorisé en condition examen
+sauf indication contraire du formateur.
+\end{boxalert}
+
+\begin{boxscenario}{Cas d'examen. Opération DIBAMBA}
+\textbf{Contexte~:} Le 5~mai~2026 à 23h45, le SCFC reçoit un
+signalement de MTN Cameroun~: des transactions MoMo anormales
+touchent 234~clients en 20~minutes. Montant total~: 68~millions~FCFA.
+
+\textbf{Éléments techniques disponibles~:}
+\begin{enumerate}
+    \item Les transactions proviennent d'un seul numéro MTN
+          (677~XXXXXX)~; le titulaire du numéro est EKINDI Paul,
+          adresse~: Bonabéri, Douala~;
+    \item Ce numéro a subi un SIM~swap à 23h30 (15~minutes avant
+          les premières transactions)~;
+    \item Le téléphone associé au numéro avant le swap était un
+          Samsung Galaxy A32 (IMEI~: 358419XXXXXXXXX)~;
+    \item Une capture réseau du réseau GSM (opération d'écoute
+          légale, ordonnance N°~XXX) révèle des communications
+          DATA depuis l'IMEI 358419XXXXXXXXX vers l'IP
+          \texttt{41.66.XX.XX} (hébergeur OVH Paris) sur le
+          port~8443 à 23h31~;
+    \item L'adresse IP \texttt{41.66.XX.XX} héberge un domaine
+          enregistré le 29~avril~2026~: \texttt{mtn-verification.cm}.
+\end{enumerate}
+
+\textbf{Contraintes~:}
+\begin{itemize}
+    \item Il est 01h00 du matin~; les opérateurs humains sont limités~;
+    \item MTN Cameroun a conservé les logs de la transaction
+          SIM~swap pendant 90~jours~;
+    \item Le parquet de permanence peut délivrer une réquisition
+          d'urgence~;
+    \item Vous disposez de 2~heures avant que les logs de connexion
+          de l'hébergeur OVH ne risquent d'être en rotation.
+\end{itemize}
+\end{boxscenario}
+
+\begin{boxexo}[title={\ding{45}\quad Examen. Opération DIBAMBA (3 heures)}]
+\textbf{Partie~A. Cadrage et urgences (45 minutes)}
+
+\begin{enumerate}[(a)]
+    \item Remplissez la matrice de criticité. Quel niveau de rigueur~?
+    \item Listez 3~actions d'urgence (dans l'ordre) à réaliser
+          dans les 30~premières minutes, avec base légale pour chacune.
+    \item Rédigez la demande de conservation urgente à OVH (portail
+          LEA, art.~29 Budapest / art.~57 \loicam{2010/012}).
+          La France est partie à Budapest depuis 2006.
+\end{enumerate}
+
+\textbf{Partie~B. Analyse technique (60 minutes)}
+
+\begin{enumerate}[(a)]
+    \setcounter{enumi}{3}
+    \item Le SIM~swap s'est produit à 23h30. Comment cela permet-il
+          à l'attaquant d'accéder aux comptes MoMo de 234~victimes~?
+          Expliquez le mécanisme technique (OTP par SMS).
+    \item La capture réseau montre une connexion vers le port~8443
+          sur \texttt{mtn-verification.cm} (domaine enregistré
+          le 29~avril). Que peut contenir cette connexion~?
+          Quels filtres Wireshark utilisez-vous~?
+    \item L'analyse OSINT du domaine \texttt{mtn-verification.cm}
+          révèle~: registrar américain, paiement en Bitcoin,
+          hébergement OVH Paris. Quelle séquence de réquisitions
+          préparez-vous~?
+\end{enumerate}
+
+\textbf{Partie~C. Qualification et rapport (75 minutes)}
+
+\begin{enumerate}[(a)]
+    \setcounter{enumi}{6}
+    \item Qualifiez toutes les infractions potentielles~: pour chaque
+          infraction, citez l'article exact (\loicam{2010/012},
+          \loicam{2024/017}, Code pénal). Y a-t-il des infractions
+          à la charge de MTN Cameroun pour la gestion du SIM~swap~?
+    \item Formulez 5~constatations et 2~analyses (avec niveau de
+          confiance) à partir des éléments disponibles.
+    \item Rédigez la Synthèse Exécutive (Niveau~1) destinée
+          au Procureur de permanence~: 1~page maximum,
+          3~points, une pièce clé.
+    \item \textbf{[Question bonus]} Appliquez la grille CRO à la
+          décision de publier l'IP~\texttt{41.66.XX.XX} dans un
+          communiqué de presse avant l'arrestation~: quelles
+          tensions~? Quelle recommandation~?
+\end{enumerate}
+\end{boxexo}
+
+\separateur
+
+% --- Encadré lab NDAP SUKULU ---
+\begin{boiteRemarque}{Le laboratoire de synthèse INA-LAB-12}
+Le dernier laboratoire de NDAP SUKULU, le plus long (trois heures), reprend
+l'opération DIBAMBA de la simulation d'examen et résume tout le cours en sept
+parties~:
+\begin{itemize}
+    \item \textbf{A. Chronologie} (ch.~14, 16)~: croiser le journal des
+          changements de SIM de l'opérateur et les transactions Mobile Money
+          (délai, montant total, agent).
+    \item \textbf{B. Réseau et OSINT} (ch.~15, 19)~: flux de l'écoute légale,
+          WHOIS (date d'enregistrement du domaine), DNS passif (domaines qui
+          partagent une adresse).
+    \item \textbf{C. Coopération} (UE~SEC4031, ch.~10)~: conservation urgente
+          par le réseau 24/7 avant la rotation des journaux, puis entraide.
+    \item \textbf{D. Erreurs} (ch.~20 et section~21.4)~: le procès-verbal TANGUE
+          à corriger.
+    \item \textbf{E. Benchmarking} (ch.~25)~: le modèle du ciblage et les
+          recommandations pour le Cameroun.
+    \item \textbf{F. Crypto-forensique} (ch.~26 à~28)~: quelles preuves
+          archivées perdent leur garantie face à Shor (signatures et horodatages
+          RSA ou ECDSA)~; mesures CLO~: $\mathsf{Opp}=I(V;\Sigma\mid C)/H(V\mid C)$,
+          produit $\mathsf{Conf}\cdot\mathsf{Rel}\cdot\mathsf{Opp}$, capacité
+          implicite $\Delta \gtrsim$ produit~$\times\,\lambda$, borne
+          $\min\{1, H(C)/H(V\mid C)\}$.
+    \item \textbf{G. Lecture critique} (ch.~29 à~32)~: la grille d'une annonce de
+          protocole, l'étape d'analyse automatisée (Tamarin, ProVerif), la
+          signature BLS face au quantique.
+\end{itemize}
+\end{boiteRemarque}
+
+\begin{boxresume}
+\textbf{Ce que ce chapitre vous a demandé de mobiliser simultanément~:}
+\begin{itemize}
+    \item \textbf{Droit camerounais}~: qualification précise des
+          infractions (\loicam{2010/012}, \loicam{2024/017},
+          Code pénal), règles d'articulation, sursis impossible
+          (art.~89).
+
+    \item \textbf{PIU}~: les phases E1--E17, les Quality Gates,
+          la boucle itérative, la falsification active (E9bis),
+          la distinction constatation/analyse.
+
+    \item \textbf{Standards}~: RFC~3227 (ordre de volatilité),
+          ISO~27037 (custody), ACPO~4~principes, NIST~SP~800-86~\cite{nist80086}
+          (rapport).
+
+    \item \textbf{Techniques}~: Event~ID Windows, logs SSH, Volatility
+          (pstree, netscan), analyse portail LEA, conservation urgente
+          art.~29 Budapest, analyse blockchain, corrélation temporelle.
+
+    \item \textbf{Déontologie}~: tension efficacité vs vie humaine
+          (SANAGA), pression politique (MUNGO), coverage d'un
+          collègue (TANGUE).
+
+    \item \textbf{Rapport}~: trois niveaux, 7~pièges, Annexe~G,
+          formule de limitation de périmètre, qualification
+          technique sans qualification juridique.
+\end{itemize}
+
+\textbf{Les trois leçons transversales de ce chapitre~:}
+\begin{enumerate}
+    \item \textbf{La conservation d'urgence prime toujours~:}
+          dans FAKO, MUNGO, SANAGA et DIBAMBA, la première
+          action est toujours de préserver avant que les données
+          disparaissent. Aucune analyse ne compense des données
+          perdues.
+    \item \textbf{Les décisions techniques ont des conséquences
+          déontologiques~:} le choix d'éteindre ou non un serveur
+          (SANAGA) engage une responsabilité éthique au-delà de
+          la technique.
+    \item \textbf{Un rapport sans hash n'existe pas juridiquement~:}
+          l'Annexe~G est la fondation de toute opposabilité.
+          Sans elle, toutes vos analyses sont des opinions,
+          pas des preuves.
+\end{enumerate}
+\end{boxresume}
+
+\bigskip
+
+\begin{boxinfo}
+\textbf{Fin de la Partie~IV.} Les vingt chapitres couverts dans
+ce cours (Parties~I à~IV) constituent le socle complet de la
+forensique numérique au niveau master~: fondements philosophiques,
+processus, standards, droit camerounais, techniques d'acquisition
+et d'analyse (système, réseau, mobile, cloud, IoT), rédaction
+de rapport et intégration par la pratique.
+
+La \textbf{Partie~V}. si elle est incluse dans votre programme, approfondit les sujets prospectifs~: OSINT avancé,
+anti-forensique et contre-mesures, intelligence artificielle
+appliquée à la forensique, et perspectives post-quantiques.
+Ces chapitres s'inscrivent dans la continuité directe des
+techniques maîtrisées ici.
+
+\textit{Les affaires de ce cours (MBONGO, MVOM, WOURI,
+ONAMBELE, BAOBAB, TANGUE, MOABI, ROUSSEAU, et les nouveaux
+cas FAKO, MUNGO, SANAGA, DIBAMBA) sont fictives mais
+construites sur des schémas d'infractions réels. Chaque
+technique, chaque article de loi, chaque outil présenté est
+authentique et applicable dès demain sur le terrain.}
+\end{boxinfo}

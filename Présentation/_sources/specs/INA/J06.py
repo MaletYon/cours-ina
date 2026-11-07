@@ -1,0 +1,68 @@
+SPEC = [
+    {"k": "title", "tag": "Jour 6 / 30 · Séance de 2 heures", "title": "Forensique mobile (2) : Mobile Money, iOS, Autopsy",
+     "sub": "L'IMEI identifie le téléphone à travers les changements de SIM.",
+     "right": "Partie IV · Chapitre C16 §16.4-16.6"},
+    {"k": "synthese", "title": "Rappel de la séance précédente", "kicker": "Jour 5 · Android et SQLite", "items": [
+        "/data contre /sdcard : la **limite d'ADB sans root**",
+        "**mmssms.db** : dates en millisecondes UTC",
+        "**EXIF** : situer un appareil, corroborer",
+    ]},
+    {"k": "agenda", "items": [
+        ("25 min", "**Mobile Money** : où sont les données"),
+        ("20 min", "**La réquisition** à l'opérateur : cinq demandes"),
+        ("25 min", "**iOS** : contraintes, sauvegarde, epoch 2001"),
+        ("15 min", "**Autopsy** pour le mobile"),
+        ("35 min", "**Exercice** : fraude MoMo · fiche C16 · LAB-04"),
+    ]},
+    {"k": "table", "title": "Où sont les données Mobile Money", "kicker": "Section 16.4", "head": ["Donnée", "Sur le téléphone", "Chez l'opérateur"], "widths": [3.4, 4.4, 4.6], "rows": [
+        ["SMS de confirmation MoMo", "mmssms.db", "MTN Cameroun (art. 57)"],
+        ["Historique des transactions", "Application MoMo (/data)", "Réquisition MTN"],
+        ["SMS Orange Money, OTP", "mmssms.db", "Orange Cameroun (art. 57)"],
+        ["Transactions Orange Money", "Application", "Réquisition Orange"],
+        ["Historique **USSD**", "**Non stocké**", "Seulement chez l'opérateur"],
+    ]},
+    {"k": "steps", "title": "Que demander à l'opérateur", "kicker": "Réquisition, loi n° 2010/012, art. 57", "items": [
+        ("Transactions", "Historique du numéro victime : 30 jours, plus 15 jours avant les faits."),
+        ("Bénéficiaire", "Identité et photo associées au numéro qui a reçu les fonds."),
+        ("Connexions", "Journaux d'accès à l'application et à l'USSD du bénéficiaire."),
+        ("SIM", "ICCID et historique des **SIM swaps**."),
+        ("IMEI", "Le téléphone utilisé avec ce numéro."),
+    ], "notes": "L'IMEI est la clé : un fraudeur qui change de SIM mais garde son téléphone reste identifiable."},
+    {"k": "table", "title": "iOS : des contraintes fortes", "kicker": "Section 16.5", "head": ["Mécanisme", "Effet", "Réponse"], "widths": [3.2, 4.8, 4.4], "rows": [
+        ["Chiffrement matériel AES-256", "Données illisibles sans le code", "Cellebrite, GrayKey, ou le code"],
+        ["Secure Enclave", "Clés inaccessibles même avec root", "Exploit spécifique seulement"],
+        ["Bac à sable des applications", "Pas d'accès entre applications", "Jailbreak"],
+        ["10 erreurs de code", "**Effacement total**", "Ne jamais tenter le code à la main"],
+    ], "note": "Extraction logique : **sauvegarde iTunes/Finder** si le téléphone est déverrouillé et fait confiance à l'ordinateur."},
+    {"k": "definition", "title": "Les dates iOS", "kicker": "Le piège de l'epoch", "items": [
+        ("Epoch de 2001", "Les horodatages iOS comptent depuis le **1er janvier 2001** : ajouter **978 307 200** secondes pour revenir à l'epoch Unix."),
+        ("iMessage", "En plus, diviser par **10⁹** (nanosecondes vers secondes)."),
+        ("Symptôme", "Des dates en 1970 : erreur visible, mais qui fragilise un rapport non relu."),
+    ]},
+    {"k": "points", "title": "Autopsy pour le mobile", "kicker": "Version 4 et suivantes", "items": [
+        "Modules **Android Analyzer** : SMS, appels, contacts, applications, géolocalisation",
+        "Automatise une grande partie des requêtes SQLite",
+        "Toujours **vérifier** un résultat clé par une requête manuelle",
+        "Noter la **version** et les modules utilisés : la reproductibilité",
+    ]},
+    {"k": "exercice", "title": "Fraude MoMo (BAOBAB)", "duree": "30 minutes, en binôme",
+     "text": "FOUDA Clément a perdu 250 000 FCFA. mmssms.db : 14:22:11, de 670000000, « code OTP 847293 » ; 14:22:15, de +237677000123, « Je travaille chez MTN, donnez-moi votre code » ; 14:22:45, de 670000000, « Vous avez envoyé 250000 FCFA à 677000123 ».",
+     "questions": [
+        "Qualifiez les infractions (lois n° 2010/012 et n° 2024/017).",
+        "Les cinq demandes de la réquisition à MTN.",
+        "Comment l'IMEI aide-t-il si le fraudeur change de SIM ?",
+        "Rédigez la constatation.",
+     ],
+     "notes": "Corrigé (exercice 16.2). Art. 72 et CP 318 ; 2024 art. 63. Transactions, identité du bénéficiaire, connexions, SIM swaps, IMEI. L'IMEI retrouve les autres SIM. Constatation : trois SMS datés, sans interprétation ; 34 s entre l'OTP et le débit, en analyse."},
+    {"k": "synthese", "items": [
+        "**Mobile Money** : SMS sur le téléphone, transactions et USSD chez l'opérateur",
+        "Réquisition : transactions, bénéficiaire, connexions, SIM, **IMEI**",
+        "**iOS** : chiffrement, Secure Enclave, effacement après 10 erreurs ; epoch **2001**",
+        "**Autopsy** accélère ; la requête manuelle vérifie",
+    ]},
+    {"k": "maison", "lecture": ["Chapitre 16 et son encadré « Notions mobilisées par le laboratoire INA-LAB-04 »", "NDAP SUKULU : **fiche C16** et **INA-LAB-04**"]},
+    {"k": "fin", "next": "Jour 7 · Forensique cloud (1)", "items": [
+        "Modèles de service et disponibilité des preuves",
+        "Les journaux du nuage",
+        "Obtenir des preuves des fournisseurs SaaS"]},
+]

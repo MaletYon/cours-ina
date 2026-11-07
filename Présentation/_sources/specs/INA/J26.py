@@ -1,0 +1,67 @@
+SPEC = [
+    {"k": "title", "tag": "Jour 26 / 30 · Séance de 2 heures", "title": "Analyse CLO des primitives cryptographiques",
+     "sub": "La transparence maximale n'est pas le meilleur compromis.",
+     "right": "Partie VI · Chapitre C28"},
+    {"k": "synthese", "title": "Rappel de la séance précédente", "kicker": "Jour 25 · CRO (2)", "items": [
+        "Opp plafonnée par **H(C)**",
+        "Conf · Rel · Opp borné par **Δ/λ**",
+        "Investir dans **H(C)**",
+    ]},
+    {"k": "agenda", "items": [
+        ("20 min", "**La méthode** en quatre étapes ; estimer H(C)"),
+        ("40 min", "**Trois calculs** : Helios, zk-SNARK, ECDSA"),
+        ("20 min", "**Trois régimes** de capacité institutionnelle"),
+        ("15 min", "**Primitives non calculées** : rester qualitatif"),
+        ("25 min", "**Exercice** : reproduire un calcul · fiche C28"),
+    ]},
+    {"k": "chapitre", "num": "C28", "short": "Chapitre 28", "part": "PARTIE VI · FONDEMENTS THÉORIQUES",
+     "title": "Analyse des primitives cryptographiques",
+     "question": "Comment appliquer le cadre CLO, chiffres à l'appui, à un protocole réel ?"},
+    {"k": "steps", "title": "La méthode en quatre étapes", "kicker": "Section 28.1", "items": [
+        ("1 · Formaliser", "Messages, preuves, contextes, verdicts du protocole."),
+        ("2 · Estimer H(C)", "Trois méthodes **convergentes** : triangulation."),
+        ("3 · Calculer", "Conf, Rel, Opp, décomposée bit par bit."),
+        ("4 · Interpréter", "Lire le résultat selon l'institution qui juge."),
+    ]},
+    {"k": "table", "title": "Trois calculs publiés", "kicker": "Tableau de synthèse · section 28.5", "head": ["Protocole", "Conf", "Rel", "Opp", "Produit"], "widths": [3.2, 2.2, 2.2, 2.2, 2.6], "rows": [
+        ["Helios", "0,92", "0,95", "0,50", "0,437"],
+        ["zk-SNARK", "0,89", "0,96", "0,67", "**0,572**"],
+        ["ECDSA", "0,31", "0,98", "**0,90**", "0,273"],
+    ]},
+    {"k": "points", "title": "Lire le tableau", "kicker": "Ce que les chiffres disent", "items": [
+        "ECDSA a la **plus haute opposabilité** (0,90) mais le **plus faible produit** (0,273)",
+        "Sa transparence se paie en **confidentialité** (0,31)",
+        "zk-SNARK : le meilleur **équilibre** global",
+        "Le tableau ne contient que des valeurs **publiées** : aucune invention",
+    ]},
+    {"k": "table", "title": "Trois régimes de capacité", "kicker": "Section 28.6 · λ = 128", "head": ["Régime", "Δ", "Choix de protocole"], "widths": [2.6, 3.0, 6.8], "rows": [
+        ["Faible", "< 13 bits", "Privilégier la **transparence**"],
+        ["Moyen", "13 à 64 bits", "Rechercher l'**équilibre**"],
+        ["Élevé", "> 64 bits", "La **confidentialité** devient possible"],
+    ]},
+    {"k": "points", "title": "Validation croisée, et prudence", "kicker": "Sections 28.6.2 et 28.7", "items": [
+        "Les Δ implicites tirés des produits publiés (**35 à 73 bits**) convergent avec l'estimation de Miller",
+        "AES, Kyber, Dilithium, zk-STARKs : discutés **qualitativement**, sans score inventé",
+        "Au Cameroun : former les magistrats fait passer le système du régime **faible** au régime **moyen**",
+        "Quatre étapes pour **choisir** un protocole selon le régime",
+    ]},
+    {"k": "exercice", "title": "Reproduire un calcul publié", "duree": "25 minutes, individuel",
+     "text": "À partir des valeurs du tableau de synthèse :",
+     "questions": [
+        "Recalculez les trois produits et classez les protocoles.",
+        "Avec λ = 128, quelle capacité Δ implicite chaque produit suppose-t-il ?",
+        "Pour un tribunal en régime faible, lequel recommander, et pourquoi ?",
+     ],
+     "notes": "Produits : 0,437 ; 0,572 ; 0,273. Δ implicite ≈ produit × 128 : environ 56, 73 et 35 bits. En régime faible, privilégier la transparence (type ECDSA), en documentant la perte de confidentialité. Voir l'exercice 28.1."},
+    {"k": "synthese", "items": [
+        "Quatre étapes : **formaliser, estimer, calculer, interpréter**",
+        "ECDSA : Opp **0,90**, produit **0,273**",
+        "Trois régimes : **faible, moyen, élevé**",
+        "Seules les valeurs **publiées** reçoivent un chiffre",
+    ]},
+    {"k": "maison", "lecture": ["Chapitre 28", "NDAP SUKULU : **fiche C28**", "Préparer : chapitre 29"]},
+    {"k": "fin", "next": "Jour 27 · Le protocole ZK-NR et la lecture critique", "items": [
+        "Quatre primitives, quatre rôles",
+        "Prépublication ou publication évaluée ?",
+        "Une grille en cinq questions"]},
+]

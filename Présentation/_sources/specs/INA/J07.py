@@ -1,0 +1,73 @@
+SPEC = [
+    {"k": "title", "tag": "Jour 7 / 30 · Séance de 2 heures", "title": "Forensique cloud (1) : modèles, journaux, fournisseurs",
+     "sub": "Le fournisseur ne voit pas tout ; il voit autre chose.",
+     "right": "Partie IV · Chapitre C17 §17.1-17.3"},
+    {"k": "synthese", "title": "Rappel de la séance précédente", "kicker": "Jour 6 · Mobile (2)", "items": [
+        "Mobile Money : SMS sur le téléphone, **USSD** chez l'opérateur",
+        "Réquisition : transactions, bénéficiaire, connexions, SIM, **IMEI**",
+        "iOS : chiffrement, effacement après 10 erreurs, epoch **2001**",
+    ]},
+    {"k": "agenda", "items": [
+        ("15 min", "**Trois défis** du nuage"),
+        ("20 min", "**SaaS, PaaS, IaaS** : qui détient quelle preuve"),
+        ("35 min", "**Les journaux** : CloudTrail, Azure, Google Cloud"),
+        ("25 min", "**La demande au portail LEA** : sept éléments"),
+        ("25 min", "**Exercice** : modèle et preuves ; CloudTrail MVOM"),
+    ]},
+    {"k": "chapitre", "num": "C17", "short": "Chapitre 17", "part": "PARTIE IV · FORENSIQUE OPÉRATIONNELLE",
+     "title": "Forensique cloud",
+     "question": "Comment saisir une preuve qui peut disparaître en quelques secondes, dans un pays où l'on n'a aucun pouvoir ?"},
+    {"k": "cards", "title": "Trois défis propres au nuage", "kicker": "Introduction du chapitre", "cols": 3, "items": [
+        {"head": "Souveraineté diffuse", "badge": "1", "text": "Les données migrent entre centres choisis par le fournisseur : **qui a juridiction** ?"},
+        {"head": "Éphéméralité", "badge": "2", "text": "Une instance détruite en secondes emporte ses données : la fenêtre est de **minutes**."},
+        {"head": "Multi-tenancy", "badge": "3", "text": "Plusieurs clients sur la même machine : l'isolement est **logique**, pas physique."},
+    ]},
+    {"k": "table", "title": "Qui détient quelle preuve ?", "kicker": "Modèles de service", "head": ["Modèle", "Le client contrôle", "Ce que le fournisseur peut livrer"], "widths": [3.4, 3.4, 5.6], "rows": [
+        ["SaaS (Gmail, Office 365, Dropbox)", "Ses données", "Connexions, métadonnées ; contenu par MLAT ou mandat"],
+        ["PaaS (App Engine, Heroku)", "Code, données", "Journaux de plateforme, journaux applicatifs conservés"],
+        ["IaaS (EC2, Azure VM)", "Système, applications, données, journaux", "Journaux de la couche cloud ; le reste chez le client"],
+    ], "note": "Paradoxe : un compte **Gmail** s'investigue plus directement qu'une **instance EC2** compromise, que le fournisseur ne voit pas de l'intérieur."},
+    {"k": "definition", "title": "AWS CloudTrail", "kicker": "L'audit de chaque appel d'API", "items": [
+        ("Ce qu'il enregistre", "**Qui** (userIdentity), **quoi** (eventName), **quand** (eventTime, UTC), **d'où** (sourceIPAddress), **avec quels paramètres** (requestParameters) et **quel résultat** (responseElements)."),
+        ("Équivalents", "Azure : **Activity Log** et **Sign-In Logs** ; Google : **Cloud Audit Logs**."),
+    ]},
+    {"k": "scenario", "title": "CloudTrail dans MVOM", "label": "Compte AWS de TRANSBOIS SA", "text": [
+        "02:10:45 **GetPasswordData** depuis 10.0.0.15 ; 02:13:45 **AssumeRole** depuis 185.220.XX.XX ; DescribeInstances, **RunInstances**, **PutObject** vers transbois-backup.",
+        "02:19:48 **StopLogging** : tentative d'interrompre la journalisation.",
+        "Les journaux antérieurs, dans un compartiment S3 en **écriture unique** (Object Lock), ne peuvent pas être effacés : l'anti-forensique cloud a échoué."]},
+    {"k": "table", "title": "La demande au portail LEA", "kicker": "Sept éléments, sinon le rejet", "head": ["Élément", "Contenu"], "widths": [3.0, 9.4], "rows": [
+        ["Type", "**Preservation** (urgence), Production (standard), Emergency (menace imminente)"],
+        ["Identifiants", "Au moins **deux** croisés : courriel, téléphone, URL, IMEI"],
+        ["Base légale", "Loi n° 2010/012 art. 52 et 57 ; Budapest art. 16-17 ; SCA § 2703 pour les fournisseurs américains"],
+        ["Qualification", "Faits et qualification dans les deux pays (double incrimination)"],
+        ["Période", "Début et fin précis ; jamais « toute la vie du compte »"],
+        ["Données", "Métadonnées (sans mandat) ou contenu (MLAT)"],
+        ["Contact", "Nom, fonction, courriel officiel, téléphone direct"],
+    ]},
+    {"k": "points", "title": "La réponse du fournisseur, une preuve", "kicker": "Valeur probatoire", "items": [
+        "Aux États-Unis : un **business record** (FRE 803(6)), directement admissible",
+        "Au Cameroun : document étranger authentifié, expliqué par un **expert judiciaire**",
+        "**Empreinte SHA-256** du fichier reçu, calculée immédiatement",
+        "Custody de la réponse comme de toute evidence (SEC4031, chapitre 8)",
+    ]},
+    {"k": "exercice", "title": "Modèle et preuves", "duree": "25 minutes, en binôme",
+     "text": "Pour chaque situation : modèle de service, ce que le fournisseur peut livrer, instrument juridique.",
+     "questions": [
+        "Gmail utilisé pour l'hameçonnage : contenu et IP de connexion.",
+        "Rançongiciel déployé depuis une instance EC2 : qui l'a lancée, d'où ?",
+        "Données de paiement volées sur Dropbox : métadonnées et fichiers.",
+        "Groupe WhatsApp de coordination, chiffré de bout en bout : que fournit Meta ?",
+     ],
+     "notes": "Corrigé (exercice 17.1). SaaS, IP par portail LEA, contenu par MLAT ; IaaS, CloudTrail du client ; SaaS, métadonnées par portail, fichiers par MLAT après conservation ; Meta : métadonnées seulement."},
+    {"k": "synthese", "items": [
+        "Trois défis : **souveraineté, éphéméralité, multi-tenancy**",
+        "SaaS, PaaS, IaaS : **qui contrôle détient la preuve**",
+        "**CloudTrail** : qui, quoi, quand, d'où, paramètres, résultat",
+        "Une demande LEA a **sept éléments** ; la réponse se hache et entre en custody",
+    ]},
+    {"k": "maison", "lecture": ["Chapitre 17, sections 17.1 à 17.3", "Préparer : sections 17.4 à 17.6"]},
+    {"k": "fin", "next": "Jour 8 · Forensique cloud (2)", "items": [
+        "L'éphéméralité et la conservation d'urgence",
+        "Le snapshot forensique",
+        "Corréler plusieurs fournisseurs"]},
+]

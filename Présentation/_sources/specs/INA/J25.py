@@ -1,0 +1,70 @@
+SPEC = [
+    {"k": "title", "tag": "Jour 25 / 30 · Séance de 2 heures", "title": "Le Trilemme CRO (2) : théorèmes et capacité",
+     "sub": "Aucune sophistication cryptographique ne compense un goulot de compréhension.",
+     "right": "Partie VI · Chapitre C27 §27.3-27.7"},
+    {"k": "synthese", "title": "Rappel de la séance précédente", "kicker": "Jour 24 · CRO (1)", "items": [
+        "CLO ajoute **Interpret**",
+        "**Opp = I(V ; Σ | C) / H(V | C)**",
+        "Une preuve juste peut être **inopposable**",
+    ]},
+    {"k": "agenda", "items": [
+        ("25 min", "**Théorèmes 1 et 2** : bornes et goulot contextuel"),
+        ("25 min", "**Théorème 3** : le trilemme conditionnel"),
+        ("20 min", "**Le paramètre Δ** : capacité d'extraction"),
+        ("25 min", "**Helios, zk-SNARKs, ECDSA** ; l'architecture en couches"),
+        ("25 min", "**Exercice** : appliquer à une affaire · fiche C27"),
+    ]},
+    {"k": "definition", "title": "Théorème 2 : le goulot contextuel", "kicker": "Section 27.3.1",
+     "items": [
+        ("Énoncé", "Opp(P, C) = I(V;Σ|C) / H(V|C) ≤ min{1, H(C) / H(V|C)}"),
+        ("Lecture", "L'opposabilité est plafonnée par la **capacité de connaissance de l'interprète**, H(C) : formation du juge, richesse du cadre légal, expertise."),
+    ]},
+    {"k": "points", "title": "Une lecture camerounaise", "kicker": "Encadré du chapitre", "items": [
+        "Le Théorème 2 explique un constat de SEC4031, ch. 12 : la formation des magistrats **limite** l'opposabilité",
+        "Indépendamment de la qualité technique de l'expertise",
+        "Investir dans **H(C)** (juges, OPJ, avocats) **élève le plafond** pour toutes les preuves",
+        "Une implication directe pour la stratégie nationale (chapitre 25)",
+    ]},
+    {"k": "definition", "title": "Théorème 3 : le trilemme conditionnel", "kicker": "Section 27.3.2",
+     "items": [
+        ("Énoncé", "Pour des protocoles réguliers et λ ≥ 64 : Conf · Rel · Opp ≤ Δ/λ + O(λ⁻²) + negl(λ)"),
+        ("Lecture", "On ne peut pas maximiser les trois à la fois : le **produit** est borné par la capacité d'extraction **Δ** rapportée au paramètre de sécurité **λ**."),
+    ]},
+    {"k": "table", "title": "Le paramètre Δ", "kicker": "Tableau 27.1 · ancré dans Miller (7 ± 2)", "head": ["Composante", "Estimation"], "widths": [6.4, 6.0], "rows": [
+        ["Capacité individuelle (7 chunks × 3 bits)", "≈ 21 bits"],
+        ["Documentation institutionnelle", "+5 à 10 bits"],
+        ["Collaboration (collège, équipe)", "+10 à 20 bits"],
+        ["Spécialisation (expert agréé)", "+10 à 15 bits"],
+        ["**Institution bien dotée**", "**Δ entre 20 et 60 bits**"],
+    ]},
+    {"k": "table", "title": "Trois études de cas documentées", "kicker": "Section 27.6", "head": ["Protocole", "Domaine", "Opp", "Point du compromis"], "widths": [2.6, 3.2, 1.6, 5.0], "rows": [
+        ["Helios", "Vote électronique", "≈ 0,50", "Confidentialité forte, verdict difficile à lire"],
+        ["zk-SNARKs", "Conformité financière", "≈ 0,67", "Équilibre"],
+        ["ECDSA", "Preuve juridique", "≈ 0,90", "Transparence maximale, confidentialité faible"],
+    ]},
+    {"k": "points", "title": "La réponse pratique : les couches", "kicker": "Section 27.7", "items": [
+        "Architecture **Gold-Iron-Clay**, prouvée optimale dans sa classe",
+        "Combiner des couches complémentaires plutôt qu'une primitive impossible",
+        "Elle correspond à la pratique enseignée : empreinte, custody, rapport",
+        "Rendre l'arbitrage **explicite, justifié, documenté**",
+    ]},
+    {"k": "exercice", "title": "Application à une affaire du cours", "duree": "25 minutes, en équipe",
+     "text": "Reprenez une affaire (MVOM, FAKO ou SANAGA). Identifiez la preuve centrale et le contexte d'interprétation.",
+     "questions": [
+        "Quelle mesure (Conf, Rel, Opp) a été sacrifiée, et pourquoi ?",
+        "Estimez qualitativement H(C) pour le tribunal concerné.",
+        "Quelle mesure institutionnelle élèverait le plafond ?",
+     ],
+     "notes": "Voir l'exercice 27.3 et son corrigé. Attendu : un arbitrage nommé, une estimation argumentée de H(C) (tribunal général ≈ 8 bits), et une proposition sur la formation ou la documentation."},
+    {"k": "synthese", "items": [
+        "**Théorème 2** : Opp plafonnée par H(C)",
+        "**Théorème 3** : Conf · Rel · Opp ≤ Δ/λ + …",
+        "**Δ** : la capacité d'extraction humaine et institutionnelle",
+        "Investir dans **H(C)** élève le plafond de toutes les preuves",
+    ]},
+    {"k": "maison", "lecture": ["Chapitre 27", "NDAP SUKULU : **fiche C27**", "Préparer : chapitre 28"]},
+    {"k": "fin", "next": "Jour 26 · Analyse des primitives", "items": [
+        "La méthode en quatre étapes",
+        "Helios, zk-SNARK, ECDSA : les calculs",
+        "Trois régimes de capacité"]},
+]

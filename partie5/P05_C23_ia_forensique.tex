@@ -1,0 +1,635 @@
+% ============================================================================
+% Fichier  : partie5/P05_C23_ia_forensique.tex
+% Titre    : Intelligence Artificielle et Forensique
+% Auteur   : MINKA MI NGUIDJOÏ Thierry Emmanuel
+% Version  : 1.0 -- Juin 2026
+% ============================================================================
+
+\chapter{Intelligence Artificielle et Forensique}
+\label{chap:ia-for}
+
+\epigraph{%
+    « L'intelligence artificielle ne ment pas mieux que l'humain,
+    elle ment plus vite, à plus grande échelle, et laisse des traces
+    différentes. »%
+}{Adapté de la pratique forensique contemporaine}
+
+\niveauChapitre{Expert}{%
+    Notions de machine learning recommandées mais non indispensables~:
+    ce chapitre explique les concepts nécessaires. Lecture du cas
+    MUNGO (Ch.~\ref{chap:cas-int}) recommandée.%
+}
+
+\begin{boxobjectifs}
+\begin{itemize}
+    \item Distinguer les deux usages de l'IA en forensique~: l'IA
+          comme outil d'investigation et l'IA comme objet d'investigation.
+    \item Appliquer des techniques de triage automatisé pour
+          prioriser l'analyse de grands volumes de données.
+    \item Détecter forensiquement les contenus générés ou modifiés
+          par IA~: images, audio (deepfakes), texte.
+    \item Comprendre les limites épistémologiques des outils d'IA
+          en contexte judiciaire~: biais, explicabilité, robustesse
+          au contre-interrogatoire.
+    \item Documenter une analyse assistée par IA dans le respect
+          de la distinction constatation/analyse (NIST~SP~800-86~\cite{nist80086}).
+    \item Anticiper les évolutions de l'IA générative et leur
+          impact sur l'admissibilité des preuves numériques.
+\end{itemize}
+\end{boxobjectifs}
+
+\bigskip
+
+% ============================================================================
+\section*{Deux visages de l'intelligence artificielle en forensique}
+% ============================================================================
+
+Le cas MUNGO (Ch.~\ref{chap:cas-int}) a posé une question restée
+ouverte~: comment analyser forensiquement un clip audio deepfake~?
+Ce chapitre y répond en élargissant le cadre~: l'intelligence
+artificielle se présente sous deux visages distincts pour
+l'investigateur numérique.
+
+\begin{enumerate}
+    \item \textbf{L'IA comme outil}~: accélérer le triage de
+          téraoctets de données, détecter des anomalies invisibles
+          à l'\oe il humain, automatiser des tâches répétitives.
+    \item \textbf{L'IA comme objet}~: les contenus générés par IA
+          (deepfakes, textes synthétiques, images générées) deviennent
+          eux-mêmes des preuves ou des éléments à authentifier.
+\end{enumerate}
+
+Ces deux visages exigent des compétences différentes mais
+complémentaires.
+
+\separateur
+
+% ============================================================================
+\section{L'IA comme Outil~: Triage et Détection d'Anomalies}
+\label{sec:ia-outil}
+% ============================================================================
+
+\subsection{Le problème du volume}
+
+Une investigation moderne implique fréquemment des volumes de données
+qu'aucune analyse manuelle exhaustive ne peut traiter dans des délais
+raisonnables~: des millions d'emails, des téraoctets de logs réseau,
+des dizaines de milliers de photos. Le rôle de l'IA n'est pas de
+remplacer l'investigateur mais de \textbf{prioriser} ce qu'il doit
+examiner en premier.
+
+\begin{boxdef}
+\textbf{Triage assisté par IA}\index{triage assisté par IA}~:
+utilisation d'algorithmes de classification ou de détection
+d'anomalies pour ordonner un volume de données selon leur pertinence
+probable, \emph{sans} se substituer à la décision finale de
+l'investigateur humain.
+\end{boxdef}
+
+\subsection{Classification d'emails et de documents}
+
+\begin{boxoutils}{Triage d'emails avec classification supervisée}
+\begin{lstlisting}[language=bash_forensique]
+# Cas type : 50 000 emails saisis dans l'affaire FAKO (Ch.20)
+# Objectif : identifier les emails pertinents pour la fraude
+# comptable sans les lire un par un
+
+# Approche 1 : classification par mots-cles ponderes (simple,
+# explicable -- recommande en premiere passe)
+python3 << 'EOF'
+import re
+from collections import Counter
+
+mots_cles = {
+    'virement': 3, 'compte bancaire': 3, 'urgent': 1,
+    'confidentiel': 2, 'ne pas divulguer': 3, 'IBAN': 3,
+    'mot de passe': 2, 'autorisation': 1
+}
+
+def score_email(texte):
+    texte_lower = texte.lower()
+    return sum(poids for mot, poids in mots_cles.items()
+               if mot in texte_lower)
+
+# Trier les emails par score decroissant
+# Les 200 emails les plus eleves sont examines en priorite
+EOF
+
+# Approche 2 : modele de classification (necessite jeu
+# d'entrainement -- moins explicable, a documenter avec precaution)
+# scikit-learn, classification Naive Bayes ou SVM
+# ATTENTION : un modele "boite noire" pose un probleme
+# d'explicabilite en contexte judiciaire (cf. section limites)
+\end{lstlisting}
+\end{boxoutils}
+
+\begin{boxCRO}
+\textbf{Analyse CRO. Triage IA et risque de biais}
+
+$\mathcal{R}$ (Fiabilité)~: un modèle de triage bien calibré accélère
+l'identification de preuves pertinentes, mais peut introduire des
+faux négatifs systématiques (documents pertinents non identifiés
+car ne correspondant pas aux patterns d'entraînement).
+
+$\mathcal{O}$ (Opposabilité)~: un tri qui \emph{exclut} des documents
+de l'examen humain pose un risque majeur~: si la défense découvre
+qu'un document à décharge a été écarté par l'algorithme sans examen
+humain, c'est l'ensemble du processus qui est compromis.
+
+\cro{$\sim$}{$\uparrow$ vitesse, $\downarrow$ risque faux négatifs}{$\downarrow\downarrow$ si exclusion sans validation humaine}
+
+\textbf{Règle pratique impérative~:} l'IA \textbf{priorise}, elle
+ne \textbf{décide jamais} de l'exclusion définitive d'un document
+de l'examen. Tout document, même classé comme peu pertinent, doit
+rester accessible et son score de classification documenté.
+\end{boxCRO}
+
+\subsection{Détection d'anomalies dans les logs}
+
+\begin{boxoutils}{Détection d'anomalies comportementales (UEBA)}
+\begin{lstlisting}[language=bash_forensique]
+# UEBA : User and Entity Behavior Analytics
+# Principe : etablir une baseline du comportement normal d'un
+# utilisateur ou systeme, puis detecter les ecarts statistiques
+
+# Exemple simplifie : detection d'horaires de connexion anormaux
+python3 << 'EOF'
+import pandas as pd
+from sklearn.ensemble import IsolationForest
+
+# Chargement des logs de connexion (Event ID 4624, Ch. 14)
+df = pd.read_csv('connexions.csv')
+# Colonnes : heure_connexion, jour_semaine, duree_session, volume_donnees
+
+# Modele de detection d'anomalies (non supervise)
+modele = IsolationForest(contamination=0.05, random_state=42)
+df['anomalie'] = modele.fit_predict(
+    df[['heure_connexion', 'jour_semaine', 'duree_session']]
+)
+
+# Les connexions marquees -1 sont des anomalies statistiques
+anomalies = df[df['anomalie'] == -1]
+print(f"{len(anomalies)} connexions anormales identifiees sur "
+      f"{len(df)} totales")
+EOF
+
+# IMPORTANT : une anomalie statistique n'est PAS une preuve de
+# malveillance. C'est un signal de priorisation pour examen humain.
+# Documenter : "X connexions ont ete identifiees comme statistiquement
+# atypiques par le modele Isolation Forest (parametres : contamination=
+# 0.05) et ont fait l'objet d'un examen manuel detaille."
+\end{lstlisting}
+\end{boxoutils}
+
+\subsection{Reconnaissance d'objets dans les preuves visuelles}
+
+\begin{boxoutils}{Détection automatisée dans des collections de médias}
+\begin{lstlisting}[language=bash_forensique]
+# Cas type : 15 000 photos extraites d'un telephone (Ch. 16)
+# Objectif : identifier rapidement les photos contenant des
+# documents, des armes, ou des visages specifiques
+
+# Outils disponibles dans Autopsy (Ch. 16) :
+# - Module "Object Detection" : categories generiques
+#   (personne, vehicule, document, arme)
+# - Module "Facial Recognition" : regroupement par visage
+#   (PAS d'identification -- juste regroupement de similarite)
+
+# Limite cruciale : la reconnaissance faciale automatisee a un
+# taux d'erreur variable selon les populations -- documenter
+# systematiquement le taux de faux positifs/negatifs du modele
+# utilise et ne JAMAIS presenter une correspondance faciale
+# automatisee comme une identification certaine sans validation
+# par un examinateur qualifie
+\end{lstlisting}
+\end{boxoutils}
+
+% ============================================================================
+\section{L'IA comme Objet~: Détecter les Contenus Synthétiques}
+\label{sec:ia-objet}
+% ============================================================================
+
+\subsection{Taxonomie des contenus générés par IA}
+
+\begin{tableaucours}{p{2.8cm}p{3.5cm}p{5.0cm}}{%
+    \tableauHeader{Type} &
+    \tableauHeader{Technologie typique} &
+    \tableauHeader{Contexte forensique camerounais}
+}
+\textbf{Deepfake vidéo} & GAN, modèles de diffusion vidéo &
+    Vidéos compromettantes fabriquées, désinformation politique \\
+\textbf{Deepfake audio} & Clonage vocal (modèles \textit{text-to-speech}) &
+    Fausses déclarations attribuées (cas MUNGO, Ch.~\ref{chap:cas-int})~;
+    arnaques par usurpation vocale \\
+\textbf{Image générée} & Diffusion (Midjourney, Stable Diffusion) &
+    Faux documents d'identité, fausses preuves visuelles \\
+\textbf{Texte généré} & LLM (GPT, Claude, Llama) &
+    Faux témoignages écrits, emails de phishing sophistiqués,
+    faux articles de presse \\
+\end{tableaucours}
+\vspace{-0.8em}
+\begin{center}{\small\itshape Tableau~23.1. Taxonomie des contenus synthétiques}\end{center}
+
+\subsection{Détection de deepfakes audio~: le cas MUNGO résolu}
+
+Reprenons la question laissée ouverte au Ch.~\ref{chap:cas-int}~:
+comment analyser forensiquement les 12~clips audio deepfake de
+l'affaire MUNGO~?
+
+\begin{boxoutils}{Analyse forensique d'un clip audio suspect}
+\begin{lstlisting}[language=bash_forensique]
+# Etape 1 : analyse des metadonnees du fichier audio
+exiftool clip_suspect.mp3
+# Chercher : logiciel d'encodage, absence de metadonnees
+# d'enregistrement original (date GPS, modele d'appareil)
+# -- un enregistrement authentique sur smartphone a generalement
+# des metadonnees riches ; un deepfake genere n'en a souvent aucune
+
+# Etape 2 : analyse spectrale (spectrogramme)
+sox clip_suspect.mp3 -n spectrogram -o spectrogramme.png
+# Les voix de synthese presentent souvent :
+# - une absence de bruit de fond naturel (silence trop "propre")
+# - des artefacts de frequence caracteristiques du vocoder utilise
+# - une regularite anormale du rythme respiratoire (souvent absent)
+
+# Etape 3 : outils de detection specialises
+# (recherche academique active, taux de detection variable)
+# - Resemblyzer (analyse d'empreinte vocale)
+python3 -c "
+from resemblyzer import VoiceEncoder, preprocess_wav
+encoder = VoiceEncoder()
+wav = preprocess_wav('clip_suspect.wav')
+embedding = encoder.embed_utterance(wav)
+# Comparer avec un echantillon authentique connu du candidat
+"
+
+# - Detecteurs commerciaux : Pindrop, Resemble Detect,
+#   Microsoft Video Authenticator (limites : taux de faux
+#   positifs/negatifs evoluent avec chaque nouvelle generation
+#   de modeles generatifs -- TOUJOURS documenter la version
+#   de l'outil et sa date d'evaluation independante)
+
+# Etape 4 : analyse contextuelle (la plus fiable a ce jour)
+# - Comparer avec des enregistrements authentiques connus
+#   (discours publics du candidat, interviews)
+# - Verifier la coherence factuelle du contenu attribue
+# - Tracer l'origine de diffusion (premiere apparition,
+#   compte source -- cf. Ch. 15, analyse reseau)
+\end{lstlisting}
+\end{boxoutils}
+
+\begin{boxalert}
+\textbf{L'état de l'art~: course technologique sans fin}
+
+La détection de deepfakes est un domaine de recherche en évolution
+rapide et \textbf{aucun outil de détection actuel n'offre une
+fiabilité absolue}. Chaque amélioration des détecteurs est suivie
+d'une amélioration des générateurs (course aux armements
+\textit{GAN vs détecteur}). Conséquence pour le rapport forensique~:
+\begin{itemize}
+    \item Ne jamais affirmer ``ce clip est un deepfake'' avec
+          certitude absolue sur la seule base d'un détecteur
+          automatisé~;
+    \item Toujours croiser l'analyse technique avec l'analyse
+          contextuelle (provenance, cohérence factuelle, témoignages)~;
+    \item Documenter le taux de faux positifs/négatifs connu
+          de l'outil utilisé à la date de l'analyse.
+\end{itemize}
+\end{boxalert}
+
+\subsection{Détection d'images générées par IA}
+
+\begin{boxoutils}{Indices forensiques d'images générées}
+\begin{lstlisting}[language=bash_forensique]
+# Indices visuels classiques (modeles de diffusion, 2023-2025) :
+# - mains avec un nombre incorrect de doigts (de moins en moins
+#   fiable : les modeles recents corrigent ce defaut)
+# - incoherences dans les reflets, ombres, perspectives
+# - texte illisible ou deforme dans l'image (panneaux, etiquettes)
+# - metadonnees EXIF absentes ou incoherentes avec le contexte allegue
+
+exiftool image_suspecte.jpg
+# Rechercher specifiquement :
+# - Software tag (certains generateurs laissent une signature,
+#   ex : "Software: Midjourney" -- de moins en moins frequent
+#   car facilement supprime)
+# - Absence totale de donnees EXIF (suspect pour une photo
+#   pretendue prise avec un smartphone)
+
+# Detection par analyse de frequence (artefacts de generation)
+# Outils specialises : 
+# - Hugging Face model hub (modeles de detection open source)
+# - C2PA (Coalition for Content Provenance and Authenticity)
+#   -- standard emergent de signature de provenance des medias,
+#   verifie via : c2patool inspect image.jpg
+
+# IMPORTANT : l'absence d'indicateur de generation IA NE PROUVE
+# PAS l'authenticite -- elle signifie seulement qu'aucun indicateur
+# connu n'a ete detecte par les outils disponibles a la date
+# de l'analyse
+\end{lstlisting}
+\end{boxoutils}
+
+\subsection{Détection de texte généré par IA}
+
+\begin{boxoutils}{Analyse de texte suspecté généré par LLM}
+\begin{lstlisting}[language=bash_forensique]
+# Contexte : un temoignage ecrit, un email, ou un document
+# est suspecte d'avoir ete redige par un LLM plutot que par
+# son auteur pretendu
+
+# Indices linguistiques (faible fiabilite individuelle, a
+# combiner) :
+# - structures syntaxiques tres regulieres
+# - absence de fautes typiques de l'auteur pretendu
+#   (si l'auteur a un niveau de francais connu, par exemple)
+# - vocabulaire incoherent avec le profil socio-educatif declare
+# - "perplexite" textuelle anormalement basse (mesure statistique
+#   de la previsibilite du texte selon un modele de langage)
+
+# Outils de detection (fiabilite limitee et contestee
+# scientifiquement -- a utiliser avec EXTREME prudence en
+# contexte judiciaire) :
+# - GPTZero, Originality.ai, etc.
+# ATTENTION : ces outils ont des taux de faux positifs
+# significatifs, particulierement sur les textes d'auteurs
+# non-natifs du francais/anglais -- RISQUE DE BIAIS DISCRIMINATOIRE
+# a documenter explicitement si ces outils sont utilises
+
+# Approche forensique privilegiee : analyse de la chaine de
+# production du document (metadonnees du fichier, historique
+# de versions, horodatage de creation vs publication) plutot
+# que l'analyse stylometrique seule
+\end{lstlisting}
+\end{boxoutils}
+
+% ============================================================================
+\section{Limites Épistémologiques de l'IA en Contexte Judiciaire}
+\label{sec:limites-ia}
+% ============================================================================
+
+\subsection{Le problème de l'explicabilité}
+
+\begin{boxdef}
+\textbf{Explicabilité (XAI)}\index{explicabilité}~: capacité d'un
+système d'IA à justifier sa décision dans des termes compréhensibles
+par un humain. Les modèles de \textit{deep learning} complexes
+(réseaux de neurones profonds) sont notoirement peu explicables, ils produisent un résultat sans qu'on puisse facilement tracer
+le raisonnement qui y a mené.
+\end{boxdef}
+
+\begin{boxjuris}
+\textbf{L'explicabilité et le standard FRE~Rule~702 / témoignage expert}
+
+Le Chapitre~11~(UE~SEC4031) a présenté les \textit{Federal Rules
+of Evidence}. La Rule~702 (méthodologie de l'expert) exige que les
+méthodes employées soient \textbf{fiables et vérifiables}. Un modèle
+d'IA ``boîte noire'' dont même son concepteur ne peut expliquer le
+raisonnement pose un problème direct~: comment l'expert peut-il
+attester de la fiabilité d'une méthode qu'il ne peut pas expliquer~?
+
+\textbf{Conséquence pratique~:} privilégier, chaque fois que possible,
+des méthodes explicables (classification par règles, scores pondérés
+documentés) pour les conclusions qui seront présentées au tribunal.
+Réserver les modèles complexes (deep learning) au triage préliminaire,
+suivi systématique d'une validation humaine explicable.
+\end{boxjuris}
+
+\subsection{Biais algorithmique et discrimination}
+
+\begin{boxalert}
+\textbf{Le risque de biais dans les outils forensiques IA}
+
+Les modèles d'IA héritent des biais présents dans leurs données
+d'entraînement. En contexte forensique, ce risque est documenté
+pour~:
+\begin{itemize}
+    \item \textbf{Reconnaissance faciale}~: taux d'erreur
+          significativement plus élevés pour certaines catégories
+          démographiques selon de nombreuses études indépendantes
+          (NIST, MIT Media Lab)~;
+    \item \textbf{Détection de texte généré par IA}~: biais
+          documentés contre les locuteurs non-natifs de la
+          langue d'analyse~;
+    \item \textbf{Reconnaissance vocale}~: performance variable
+          selon les accents régionaux.
+\end{itemize}
+\textbf{Implication pour le Cameroun~:} les outils d'IA forensique
+sont majoritairement entraînés sur des corpus occidentaux.
+Leur application à des sujets, des voix ou des textes camerounais
+(accents locaux, mélange français/anglais/langues locales)
+\textbf{peut présenter des taux d'erreur non documentés}.
+Exiger systématiquement, avant utilisation en contexte judiciaire,
+une évaluation indépendante du taux d'erreur de l'outil sur des
+échantillons représentatifs de la population concernée.
+\end{boxalert}
+
+\subsection{Robustesse au contre-interrogatoire}
+
+\begin{boxscenario}{Contre-interrogatoire d'une conclusion assistée par IA}
+\textbf{Contexte~:} dans l'affaire MUNGO, l'expert a utilisé un outil
+de détection de deepfake (taux de détection annoncé par l'éditeur~:
+94\%) pour conclure que 8~des~12~clips audio sont des deepfakes.
+
+\textbf{Q~:} ``Quel est le taux de faux positifs de cet outil~?''\\
+\textbf{R~:} ``L'éditeur annonce un taux de faux positifs de~3\%
+sur son jeu de test publié. Je n'ai pas de donnée indépendante
+sur la performance spécifique pour des voix en français camerounais.
+J'ai en conséquence croisé cette analyse avec une comparaison
+contextuelle [détails de l'analyse contextuelle].''
+
+\textbf{Q~:} ``Pouvez-vous expliquer pourquoi l'algorithme a classé
+ce clip spécifique comme deepfake~?''\\
+\textbf{R~:} ``L'outil utilisé fournit un score de confiance global
+(87\% dans ce cas) mais ne détaille pas les caractéristiques
+spécifiques ayant motivé ce score, ce qui constitue une limite que
+je documente dans mon rapport. Pour cette raison, ma conclusion
+ne repose pas uniquement sur ce score mais sur la convergence avec
+[analyse spectrale manuelle, incohérences contextuelles].''
+
+\textbf{Constat~:} la deuxième réponse illustre la bonne pratique~:
+l'expert reconnaît la limite de l'outil ET montre que sa conclusion
+ne dépend pas uniquement de cette boîte noire.
+\end{boxscenario}
+
+% ============================================================================
+\section{Documenter une Analyse Assistée par IA dans le Rapport}
+\label{sec:documentation-ia}
+% ============================================================================
+
+\begin{lstlisting}[language=bash_forensique,
+    caption={Modèle de documentation d'une analyse assistée par IA}]
+3.X MÉTHODOLOGIE -- OUTIL DE DÉTECTION ASSISTÉE PAR IA
+
+Outil utilisé        : [Nom, version, éditeur]
+Date d'utilisation    : [date]
+Type de modèle        : [ex : réseau de neurones convolutif
+                          entraîné pour la détection de deepfakes
+                          audio]
+Performance annoncée  : [taux de détection / faux positifs selon
+                          la documentation de l'éditeur, avec
+                          référence à la publication ou au rapport
+                          technique correspondant]
+Validation indépendante : [Oui/Non -- si Non, le mentionner
+                          explicitement comme une limite]
+Limite identifiée      : [absence de données de performance
+                          spécifiques au contexte linguistique/
+                          démographique camerounais, le cas échéant]
+
+CONSTATATION (résultat brut de l'outil) :
+"L'outil [nom] a attribué un score de confiance de 87% à
+l'hypothèse que le clip audio [référence] est généré par
+synthèse vocale."
+[Ceci EST une constatation : c'est un fait vérifiable -- l'outil
+a produit ce score. Ce N'EST PAS une preuve que le clip est
+effectivement un deepfake.]
+
+ANALYSE (interprétation avec niveau de confiance) :
+"Ce résultat, combiné avec [analyse spectrale manuelle révélant
+X, absence de métadonnées d'enregistrement original, incohérence
+contextuelle Y], converge vers la conclusion que ce clip audio
+est très probablement un contenu synthétique, avec un niveau
+de confiance modéré à élevé. Cette conclusion ne repose pas
+exclusivement sur le score de l'outil automatisé."
+\end{lstlisting}
+
+\separateur
+
+% --- Encadré lab NDAP SUKULU ---
+\begin{boiteRemarque}{Notions mobilisées par le laboratoire INA-LAB-10}
+\begin{itemize}
+    \item \textbf{Mesurer un classifieur} sur un échantillon dont la vérité
+          est connue~: au seuil $s$, un élément de score $\geq s$ est
+          déclaré positif. On compte les vrais positifs (VP), faux positifs
+          (FP) et faux négatifs (FN), puis
+          \[
+          \text{précision} = \frac{VP}{VP+FP}, \qquad
+          \text{rappel} = \frac{VP}{VP+FN}.
+          \]
+    \item \textbf{Effet du seuil}~: relever le seuil réduit les faux
+          positifs (la précision monte) mais laisse passer des éléments
+          pertinents (le rappel baisse). Le taux annoncé par l'éditeur ne
+          remplace pas cette mesure.
+    \item \textbf{Contenus synthétiques}~: un enregistrement fait par un
+          téléphone porte des métadonnées riches (modèle, date, durée)~; un
+          clip généré n'en a souvent aucune. L'absence de métadonnées est un
+          \emph{indice}, jamais une preuve.
+\end{itemize}
+\end{boiteRemarque}
+
+\begin{boxresume}
+\textbf{Ce qu'il faut retenir de ce chapitre~:}
+\begin{itemize}
+    \item \textbf{Deux visages de l'IA}~: outil (triage, détection
+          d'anomalies, accélération) et objet (deepfakes, contenus
+          synthétiques à authentifier). Compétences différentes,
+          rigueur identique.
+
+    \item \textbf{Règle d'or du triage}~: l'IA \textbf{priorise},
+          elle ne \textbf{décide jamais} de l'exclusion définitive
+          d'un document. Tout document doit rester accessible
+          et son score documenté.
+
+    \item \textbf{Détection de deepfakes}~: croiser systématiquement
+          analyse technique (métadonnées, spectrogramme, outils
+          spécialisés) et analyse contextuelle (provenance,
+          cohérence factuelle). Aucun outil n'offre une fiabilité
+          absolue, course technologique permanente.
+
+    \item \textbf{Explicabilité}~: privilégier les méthodes
+          explicables pour les conclusions présentées au tribunal.
+          Les modèles ``boîte noire'' posent un problème direct
+          au regard du standard FRE~Rule~702.
+
+    \item \textbf{Biais algorithmique~:} les outils d'IA forensique
+          sont majoritairement entraînés sur des corpus occidentaux.
+          Exiger une évaluation indépendante de leur performance
+          sur des échantillons représentatifs avant usage judiciaire
+          au Cameroun.
+
+    \item \textbf{Documentation}~: le résultat brut d'un outil IA
+          est une \textbf{constatation} (``l'outil a produit ce
+          score'')~; son interprétation est une \textbf{analyse}
+          (avec niveau de confiance et hypothèses alternatives).
+          Ne jamais présenter un score automatisé comme une
+          conclusion en soi.
+
+    \item \textbf{Contre-interrogatoire}~: anticiper systématiquement
+          les questions sur le taux de faux positifs, l'explicabilité
+          et la validation indépendante de tout outil d'IA utilisé.
+\end{itemize}
+\end{boxresume}
+
+\bigskip
+
+\begin{boxexo}[title={\ding{45}\quad Exercice~23.1. Triage vs décision \niveaubase}]
+Pour chacune des situations suivantes, déterminez si l'usage de
+l'IA décrit respecte la règle ``l'IA priorise, ne décide jamais''~:
+\begin{enumerate}[(a)]
+    \item Un outil de classification trie 50~000~emails par score
+          de pertinence~; l'investigateur examine les 500~premiers
+          puis conclut son rapport sans mentionner les~49~500~autres.
+    \item Un outil UEBA signale 12~connexions comme anormales sur
+          5~000~; l'investigateur documente les 12~connexions
+          \emph{et} précise dans son rapport les critères et
+          paramètres du modèle utilisé.
+    \item Un détecteur de deepfake conclut ``deepfake~: 91\%
+          de confiance''~; le rapport cite uniquement ce score
+          comme preuve de falsification.
+\end{enumerate}
+Pour chaque cas, identifiez le risque CRO associé.
+\end{boxexo}
+
+\begin{boxexo}[title={\ding{45}\quad Exercice~23.2. Analyse de deepfake \niveaumoyen}]
+Vous recevez un clip audio de 45~secondes dans lequel une voix
+ressemblant à celle du Directeur Financier d'une entreprise
+camerounaise autorise un virement de 80~millions~FCFA par téléphone.
+\begin{enumerate}[(a)]
+    \item Listez les 4~étapes d'analyse forensique que vous
+          appliqueriez (référez-vous à la structure de ce chapitre).
+    \item Quelles métadonnées chercheriez-vous en premier~? Que
+          signifierait leur absence totale~?
+    \item Si l'outil de détection automatisé donne un score
+          ambigu (52\% de confiance ``deepfake''), quelle est votre
+          démarche~? Quelles autres sources mobilisez-vous
+          (pensez aux Ch.~15~et~17)~?
+    \item Rédigez la section ``Constatation'' et ``Analyse''
+          correspondant à votre conclusion, en respectant
+          la structure du Ch.~\ref{chap:rapport}.
+\end{enumerate}
+\end{boxexo}
+
+\begin{boxexo}[title={\ding{45}\quad Exercice~23.3. IA et biais en contexte camerounais \niveauexpert}]
+L'ANTIC envisage de déployer un outil commercial de reconnaissance
+vocale pour automatiser le traitement des plaintes orales déposées
+par téléphone, en complément du travail des OPJ.
+\begin{enumerate}[(a)]
+    \item Quelles questions poseriez-vous à l'éditeur de l'outil
+          avant son déploiement, en lien avec les biais algorithmiques
+          présentés dans ce chapitre~?
+    \item Le Cameroun est un pays multilingue (français, anglais,
+          plus de 250~langues locales, avec des accents régionaux
+          marqués). Quel risque spécifique cela pose-t-il pour
+          un outil entraîné sur des corpus majoritairement
+          occidentaux~?
+    \item Si cet outil devait être utilisé pour trier les plaintes
+          par ordre de priorité, quelles garanties proposeriez-vous
+          pour respecter le principe ``l'IA priorise, ne décide
+          jamais''~?
+    \item Rédigez une recommandation de politique d'usage (5~points
+          maximum) pour l'adoption responsable de cet outil par
+          l'ANTIC, en vous appuyant sur les principes
+          d'explicabilité et de validation indépendante.
+\end{enumerate}
+\end{boxexo}
+
+\bigskip
+
+\begin{boxinfo}
+\textbf{Transition.} L'intelligence artificielle transforme à la
+fois les capacités de l'investigateur et la nature des preuves
+à analyser. Cette transformation se prolonge dans l'infrastructure
+elle-même~: conteneurs et orchestrateurs rendent les systèmes
+abstraits et éphémères, au point que la preuve peut disparaître
+en quelques secondes. C'est l'objet du chapitre suivant.
+\end{boxinfo}

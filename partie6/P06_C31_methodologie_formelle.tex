@@ -1,0 +1,555 @@
+% ============================================================================
+% Fichier  : partie6/P06_C31_methodologie_formelle.tex
+% Titre    : Méthodologie d'Analyse Formelle de Protocoles
+% Auteur   : MINKA MI NGUIDJOÏ Thierry Emmanuel
+% Version  : 2.0 -- Juin 2026
+% ============================================================================
+
+\chapter{Méthodologie d'Analyse Formelle de Protocoles}
+\label{chap:form-meth}
+
+\epigraph{%
+    « Sans modélisation formelle, la sécurité n'est qu'une illusion de
+    confiance. »%
+}{Andrew Yao}
+
+\niveauChapitre{Recherche}{%
+    Logique formelle de base recommandée. Chapitre~\ref{chap:cryptanal}
+    (cryptanalyse) indispensable~: ce chapitre formalise et outille
+    la démarche cryptanalytique qui y a été présentée.%
+}
+
+\begin{boxobjectifs}
+\begin{itemize}
+    \item Maîtriser le modèle de menace Dolev-Yao~\cite{dolevyao1983}~: ses hypothèses,
+          sa portée, et pourquoi il reste le standard de l'analyse
+          de protocoles malgré ses limites assumées.
+    \item Formaliser des propriétés de sécurité (non-répudiation,
+          confidentialité, authenticité, intégrité) sous forme de
+          lemmes vérifiables.
+    \item Comprendre les principes de fonctionnement et les usages
+          respectifs de Tamarin Prover, ProVerif et CryptoVerif.
+    \item Appliquer une méthodologie d'audit en cinq étapes,
+          combinant analyse manuelle et vérification automatisée.
+    \item Interpréter correctement un résultat ``non prouvé'' rendu
+          par un outil de vérification formelle~: distinguer
+          limitation outil et faille réelle.
+    \item Relier la vérification formelle de protocoles à la
+          méthodologie de rédaction de rapport forensique
+          (Ch.~\ref{chap:rapport})~: même exigence de rigueur,
+          même distinction entre ce qui est prouvé et ce qui ne
+          l'est pas.
+\end{itemize}
+\end{boxobjectifs}
+
+\bigskip
+
+% ============================================================================
+\section*{De la cryptanalyse informelle à la preuve formelle}
+% ============================================================================
+
+Le Chapitre~\ref{chap:cryptanal} a présenté la cryptanalyse comme
+discipline de test adverse, indispensable au même titre que la
+falsification active du PIU (E9bis, Ch.~6~(UE~SEC4031)). Mais
+``tester un protocole'' et ``prouver qu'il résiste à toute attaque
+dans un modèle donné'' sont deux démarches de nature différente~:
+la première est empirique et jamais exhaustive~; la seconde, quand
+elle aboutit, offre une garantie mathématique au sein des hypothèses
+posées. Ce chapitre présente la méthodologie et les outils qui
+permettent de passer de l'une à l'autre.
+
+\separateur
+
+% ============================================================================
+\section{Modélisation des Menaces}
+\label{sec:modelisation-menaces}
+% ============================================================================
+
+Toute analyse formelle commence par la définition précise de la
+puissance et des objectifs de l'adversaire considéré. Sans cette
+définition explicite, affirmer qu'un protocole est ``sûr'' n'a
+aucun sens vérifiable, sûr contre quel adversaire, capable de
+quoi~?
+
+\subsection{Le modèle Dolev-Yao}
+
+\begin{boxdef}
+\textbf{Modèle Dolev-Yao}~(1983)~: modèle standard pour l'analyse
+formelle des protocoles cryptographiques. Il pose que l'attaquant~:
+\begin{itemize}
+    \item \textbf{contrôle entièrement le réseau}~: il peut écouter,
+          bloquer, injecter et modifier n'importe quel message en
+          transit~;
+    \item \textbf{est un participant légitime}~: il possède les
+          clés publiques attendues et peut engager des sessions
+          comme n'importe quel acteur honnête~;
+    \item \textbf{ne peut pas casser les primitives cryptographiques
+          par la force}~: le chiffrement, les signatures et les
+          fonctions de hachage sont traités comme des
+          \textbf{boîtes noires parfaites} (modèle de l'oracle), 
+          un message chiffré est totalement opaque sans la clé,
+          une signature ne peut être forgée sans la clé privée.
+\end{itemize}
+\end{boxdef}
+
+\begin{boxalert}
+\textbf{Pourquoi cette séparation des préoccupations est une force,
+pas une faiblesse}
+
+Le modèle Dolev-Yao \textbf{ignore délibérément} la cryptanalyse des
+primitives (objet du Ch.~\ref{chap:cryptanal}, Section~``contre les
+primitives'' du Tableau~30.1) pour se concentrer exclusivement sur
+les \textbf{failles logiques du protocole}~: l'agencement des
+messages, l'ordre des étapes, la gestion des identités. Cette
+séparation permet d'isoler deux questions distinctes~: ``la
+mathématique sous-jacente est-elle solide~?'' (cryptanalyse des
+primitives, Ch.~\ref{chap:cryptanal}) et ``même avec une mathématique
+parfaite, le protocole est-il logiquement bien conçu~?'' (analyse
+formelle, ce chapitre). Un protocole peut échouer sur l'une de ces
+deux dimensions indépendamment de l'autre, la taxonomie du
+Tableau~30.1 distingue précisément les failles ``contre le
+protocole'' (logiques, du ressort de Dolev-Yao) des failles ``contre
+les primitives'' (mathématiques, hors du périmètre Dolev-Yao).
+\end{boxalert}
+
+\subsection{Formalisation des propriétés de sécurité}
+
+Les propriétés de sécurité attendues d'un protocole doivent être
+exprimées de manière formelle et mécaniquement vérifiable, pas
+seulement décrites en langage naturel. Quatre propriétés reviennent
+systématiquement dans l'analyse de protocoles à vocation forensique
+ou juridique~:
+
+\begin{tableaucours}{p{3.5cm}p{3.0cm}p{4.5cm}}{%
+    \tableauHeader{Propriété} &
+    \tableauHeader{Lemme typique} &
+    \tableauHeader{Pertinence forensique}
+}
+Non-répudiation & \texttt{lemma\_nonRep\_origin} &
+    Un signataire ne peut nier avoir produit une signature,
+    fondement de la valeur probatoire d'eIDAS
+    (Ch.~11~(UE~SEC4031)) \\
+Confidentialité & \texttt{lemma\_confidentiality} &
+    Aucune information sur le message n'est exposée au-delà de ce
+    qui est strictement nécessaire, correspond à $\mathsf{Conf}$
+    (Ch.~\ref{chap:CRO}) \\
+Authenticité & \texttt{lemma\_unforgeability} &
+    Une signature ne peut être forgée sans la clé privée
+    correspondante, fondement de la chaîne de custody
+    numérique (Ch.~8~(UE~SEC4031)) \\
+Intégrité (engagement) & \texttt{lemma\_binding} &
+    Une preuve ne peut être réinterprétée \textit{a posteriori}
+    pour correspondre à un message différent, analogue au
+    hash SHA-256 garantissant qu'une image E01 n'a pas été
+    altérée (Ch.~8~(UE~SEC4031)) \\
+\end{tableaucours}
+\vspace{-0.8em}
+\begin{center}{\small\itshape Tableau~31.1. Quatre propriétés de
+sécurité fondamentales et leur formalisation typique}\end{center}
+
+% ============================================================================
+\section{Outils d'Analyse Formelle}
+\label{sec:outils-formels}
+% ============================================================================
+
+\subsection{Le \textit{prover} Tamarin}
+
+\termecle{Tamarin Prover}\index{Tamarin Prover} est l'outil de
+référence pour les preuves symboliques de protocoles. Il modélise
+le protocole et les capacités de l'adversaire (typiquement,
+Dolev-Yao) via des \textbf{règles de réécriture}, et permet de
+vérifier automatiquement des propriétés de sécurité exprimées en
+\textbf{logique temporelle}, c'est-à-dire des propriétés qui
+portent non seulement sur les états du système mais sur la
+\textbf{séquence} des événements (``si~$A$ se produit, alors~$B$
+s'est nécessairement produit avant'').
+
+\begin{boxoutils}{Principe de fonctionnement de Tamarin~(vue conceptuelle)}
+\begin{lstlisting}[language=bash_forensique]
+# STRUCTURE TYPE D'UN MODELE TAMARIN (illustration pedagogique,
+# pas un fichier executable -- la syntaxe Tamarin reelle est plus
+# riche ; se referer a la documentation officielle du projet
+# pour toute utilisation effective)
+
+# 1. Declaration des regles de reecriture (le protocole)
+rule Register_Key:
+    [ Fr(~ltk) ]
+    --[ KeyGen($A, ~ltk) ]->
+    [ !Ltk($A, ~ltk), !Pk($A, pk(~ltk)) ]
+
+rule Sign_Message:
+    [ !Ltk($A, ~ltk), In(m) ]
+    --[ Signed($A, m) ]->
+    [ Out(sign(m, ~ltk)) ]
+
+# 2. Declaration des capacites de l'adversaire (Dolev-Yao
+#    standard, generalement implicite dans Tamarin)
+
+# 3. Formalisation des lemmes (proprietes a verifier)
+lemma non_repudiation:
+    "All A m #i. Signed(A, m) @ i ==>
+        (Ex #j. KeyGen(A, ltk) @ j & j < i)"
+
+# 4. Execution : Tamarin explore l'espace des etats accessibles
+#    a l'adversaire et tente soit de PROUVER le lemme (preuve
+#    valide pour tous les etats), soit de trouver une TRACE
+#    D'ATTAQUE qui le viole
+\end{lstlisting}
+\end{boxoutils}
+
+\begin{boiteRemarque}{L'état ``non prouvé'' n'est pas une faille}
+Un résultat fréquent en pratique~: Tamarin (ou ProVerif) termine
+sur un état \textbf{``non prouvé''} (\textit{inconclusive}), ni
+preuve de validité, ni trace d'attaque trouvée. Ce résultat
+\textbf{n'indique pas une faille du protocole}, c'est une
+limitation bien documentée de ces outils, due à
+l'\textbf{explosion de l'espace d'états}~: pour des protocoles
+complexes combinant plusieurs primitives, l'espace des
+comportements possibles de l'adversaire devient trop vaste pour
+une exploration automatique exhaustive en temps fini. Un résultat
+``non prouvé'' signale la nécessité de~: (a)~preuves manuelles
+complémentaires ciblées sur les parties non couvertes, ou
+(b)~une simplification du modèle (au prix d'une perte de
+généralité), ou (c)~un découpage du protocole en sous-composants
+analysés séparément. \textbf{Cette distinction, absence de
+preuve $\neq$ preuve d'absence, est rigoureusement la même
+que celle pratiquée en investigation forensique}~: l'absence
+d'une preuve dans un dossier ne démontre jamais l'innocence, elle
+signale seulement une question restée sans réponse
+(Ch.~7~(UE~SEC4031), distinction constatation/analyse).
+\end{boiteRemarque}
+
+\subsection{Panorama comparatif des outils}
+
+\begin{tableaucours}{p{2.5cm}p{3.5cm}p{4.5cm}}{%
+    \tableauHeader{Outil} &
+    \tableauHeader{Type de preuve} &
+    \tableauHeader{Application principale}
+}
+\textbf{Tamarin} & Preuve symbolique &
+    Protocoles complexes, propriétés temporelles (séquences
+    d'événements, ordre causal entre actions) \\
+\textbf{ProVerif} & Vérification automatique &
+    Protocoles plus simples, propriétés d'équivalence
+    (indistinguabilité de deux exécutions) \\
+\textbf{CryptoVerif} & Preuve computationnelle &
+    Preuves dans le modèle standard (au-delà du modèle
+    symbolique~: tient compte des probabilités d'attaque,
+    pas seulement de leur possibilité logique) \\
+\end{tableaucours}
+\vspace{-0.8em}
+\begin{center}{\small\itshape Tableau~31.2. Comparatif des principaux
+outils d'analyse formelle}\end{center}
+
+\begin{boiteRemarque}{Symbolique vs computationnel~: une distinction
+qui rejoint le Ch.~\ref{chap:CRO}}
+Tamarin et ProVerif opèrent dans le \textbf{modèle symbolique}
+(Dolev-Yao~: les primitives sont des boîtes noires parfaites).
+CryptoVerif opère dans le \textbf{modèle computationnel}, plus
+proche de l'approche information-théorique du cadre CLO
+(Ch.~\ref{chap:CRO})~: les primitives y sont modélisées avec leurs
+véritables propriétés probabilistes (négligeabilité, avantage de
+l'adversaire), pas comme des oracles parfaits. Un protocole
+``prouvé sûr'' dans le modèle symbolique offre une garantie plus
+faible qu'un protocole ``prouvé sûr'' dans le modèle computationnel~:
+le premier suppose que les primitives sous-jacentes sont parfaites
+(hypothèse simplificatrice), le second quantifie explicitement le
+risque résiduel, exactement la démarche des Théorèmes~1 à~3 du
+Ch.~\ref{chap:CRO}, qui bornent $\mathsf{Conf}$, $\mathsf{Rel}$,
+$\mathsf{Opp}$ par des quantités explicitement probabilistes
+($\mathrm{negl}(\lambda)$), pas par de simples impossibilités
+logiques.
+\end{boiteRemarque}
+
+% ============================================================================
+\section{Méthodologie d'Audit en Cinq Étapes}
+\label{sec:methodologie-audit}
+% ============================================================================
+
+Cette méthodologie systématique, standard dans la pratique
+professionnelle de l'audit de protocoles cryptographiques, guide
+l'analyse de tout protocole, qu'il s'agisse d'un nouveau schéma
+proposé ou d'un mécanisme existant que l'investigateur doit évaluer
+en contexte forensique (Ch.~\ref{chap:rapport}, témoignage
+d'expert sur la fiabilité d'un mécanisme contesté).
+
+\begin{tableaucours}{p{2.3cm}p{8.7cm}}{%
+    \tableauHeader{Étape} &
+    \tableauHeader{Contenu}
+}
+\textbf{1. Compréhension} & Analyse approfondie du \textit{whitepaper},
+    de la documentation et, si disponible, du code source.
+    Identification des acteurs, des messages échangés, des
+    primitives cryptographiques employées et des objectifs de
+    sécurité annoncés. \\
+\textbf{2. Modélisation} & Définition explicite du modèle de menace
+    (typiquement Dolev-Yao, Section~\ref{sec:modelisation-menaces})
+    et formalisation des propriétés de sécurité attendues sous
+    forme de lemmes vérifiables (Tableau~31.1). \\
+\textbf{3. Analyse manuelle} & Recherche ciblée de vulnérabilités
+    connues~: attaque par rejeu de \textit{nonce}, faiblesse du
+    générateur de nombres aléatoires, mauvaise gestion de l'état
+    des sessions, erreurs de composition entre primitives
+    individuellement sûres (cf.~Tableau~30.1, faille ``contre le
+    protocole''). \\
+\textbf{4. Analyse automatisée} & Implémentation du modèle dans
+    un outil tel que Tamarin ou ProVerif (Section~\ref{sec:outils-formels})
+    pour une vérification exhaustive des propriétés contre un
+    adversaire actif, dans les limites de l'explosion de l'espace
+    d'états. \\
+\textbf{5. Test d'implémentation} & Si une implémentation concrète
+    est disponible~: tests pratiques (\textit{fuzzing} des entrées,
+    analyse dynamique, tests de performance sous charge) et analyse
+    statique du code source pour détecter des bugs d'implémentation
+    (Tableau~30.1, faille ``d'implémentation'', distincte d'une
+    faille conceptuelle). \\
+\end{tableaucours}
+\vspace{-0.8em}
+\begin{center}{\small\itshape Tableau~31.3. Méthodologie d'audit
+en cinq étapes}\end{center}
+
+\begin{boxscenario}{Application de la méthodologie à un cas du cours~:
+audit d'un mécanisme de signature de rapport}
+Supposons qu'un nouveau mécanisme de signature pour les rapports
+d'expertise forensique camerounais (Ch.~\ref{chap:rapport}) vous
+soit soumis pour audit.
+
+\textbf{Étape~1 (Compréhension)}~: lecture de la spécification~:
+le mécanisme combine une signature ECDSA (Ch.~\ref{chap:prim-crypt})
+avec un horodatage qualifié.
+
+\textbf{Étape~2 (Modélisation)}~: modèle Dolev-Yao standard.
+Lemmes à vérifier~: \texttt{non\_repudiation} (l'expert ne peut nier
+avoir signé), \texttt{temporal\_integrity} (l'horodatage ne peut
+être falsifié indépendamment de la signature).
+
+\textbf{Étape~3 (Analyse manuelle)}~: vérifier si le mécanisme est
+vulnérable à une attaque par rejeu, un rapport signé pourrait-il
+être présenté une seconde fois, dans une affaire différente, comme
+preuve falsifiée~? Cela dépend de la présence d'un identifiant de
+session unique dans le message signé.
+
+\textbf{Étape~4 (Analyse automatisée)}~: modélisation dans
+Tamarin~; si le résultat est ``non prouvé'' pour la propriété de
+non-rejeu, cela signale, conformément à la
+Section~\ref{sec:outils-formels}, la nécessité d'une preuve
+manuelle complémentaire, pas nécessairement une faille avérée.
+
+\textbf{Étape~5 (Test d'implémentation)}~: si une implémentation
+logicielle existe pour ce mécanisme, fuzzer les champs d'entrée
+(date, identifiant d'affaire) pour détecter d'éventuels bugs de
+validation.
+\end{boxscenario}
+
+% ============================================================================
+\section{Rigueur sur les Travaux en Cours~: une Réserve Méthodologique}
+\label{sec:reserve-zk-nr}
+% ============================================================================
+
+\begin{boiteRemarque}{Cohérence avec le Chapitre~\ref{chap:cryptanal}}
+Le Ch.~\ref{chap:cryptanal} a mentionné le protocole de recherche
+ZK-NR (\textit{Zero-Knowledge Non-Repudiation}), développé par
+l'auteur de ce cours, en signalant explicitement qu'aucun article
+complet correspondant n'était disponible pour vérification dans le
+cadre de ce projet. La même réserve s'applique ici~: toute
+affirmation précise sur le nombre de règles symboliques, de lemmes
+formalisés, ou sur le statut exact (prouvé / non prouvé / réfuté)
+d'une vérification Tamarin appliquée à ce protocole spécifique
+\textbf{ne peut être incluse dans ce cours sans accès à une
+publication ou un rapport technique vérifiable}.
+
+\textbf{Ce qui peut être affirmé en toute rigueur}~: la méthodologie
+en cinq étapes présentée dans ce chapitre (Section~\ref{sec:methodologie-audit})
+constitue le cadre approprié pour conduire, le moment venu, l'audit
+formel de tout protocole combinant plusieurs primitives, y compris
+un protocole tel que ZK-NR, combinant engagements, preuves à
+divulgation nulle et signatures à seuil. L'application effective
+de cette méthodologie, et la publication de ses résultats
+(prouvés, réfutés, ou non conclusifs), relève d'un travail de
+recherche distinct de ce cours.
+
+Cette transparence sur les limites de ce qui peut être affirmé,
+ici comme au Ch.~\ref{chap:cryptanal}, illustre elle-même le
+principe central de ce chapitre~: \textbf{distinguer rigoureusement
+ce qui est prouvé, ce qui est en cours d'investigation, et ce qui
+demeure une question ouverte}, exactement la discipline exigée
+d'un rapport forensique (Ch.~\ref{chap:rapport}).
+\end{boiteRemarque}
+
+% ============================================================================
+\section{De la Preuve de Protocole à la Preuve Forensique}
+\label{sec:preuve-protocole-forensique}
+% ============================================================================
+
+\begin{boxCRO}
+\textbf{Analyse CRO. Vérification formelle et opposabilité}
+
+La vérification formelle d'un protocole, quand elle aboutit à une
+preuve complète, constitue un argument d'opposabilité d'un type
+particulier~: elle ne dépend pas de la confiance accordée à un
+expert individuel, mais de la \textbf{vérifiabilité mécanique et
+reproductible} de la preuve elle-même par n'importe quel tiers
+disposant de l'outil utilisé.
+
+$\mathcal{O}$~: une preuve Tamarin complète, soumise au tribunal,
+peut en principe être \textbf{rejouée indépendamment} par un
+expert de la partie adverse, un niveau de vérifiabilité supérieur
+à un simple rapport d'expertise narratif (Ch.~\ref{chap:rapport}).
+
+$\mathcal{R}$~: cette garantie est cependant \textbf{relative au
+modèle de menace posé} (Dolev-Yao, Section~\ref{sec:modelisation-menaces})~:
+une preuve formelle de sécurité ne dit rien sur la résistance aux
+attaques par canal auxiliaire, aux failles d'implémentation, ou
+à la cryptanalyse des primitives elles-mêmes (Ch.~\ref{chap:cryptanal}).
+
+\cro{$\sim$}{$\uparrow$ dans le modèle posé~; limité hors modèle}{$\uparrow\uparrow$ rejouabilité indépendante}
+
+\textbf{Implication pour le témoignage d'expert}
+(Ch.~\ref{chap:rapport})~: un expert présentant une preuve formelle
+doit, comme pour toute conclusion technique, \textbf{énoncer
+explicitement le modèle de menace sous lequel la preuve est
+valide}, exactement la discipline de la section
+``Limitations'' déjà pratiquée dans le modèle de rapport du
+Ch.~\ref{chap:rapport}.
+\end{boxCRO}
+
+\separateur
+
+\begin{boxresume}
+\textbf{Ce qu'il faut retenir de ce chapitre~:}
+\begin{itemize}
+    \item Le \textbf{modèle Dolev-Yao} sépare délibérément l'analyse
+          logique du protocole (son objet) de la cryptanalyse des
+          primitives (objet du Ch.~\ref{chap:cryptanal})~: l'adversaire
+          contrôle le réseau mais ne peut casser les primitives
+          par force brute.
+
+    \item \textbf{Quatre propriétés fondamentales} à formaliser~:
+          non-répudiation, confidentialité, authenticité, intégrité
+          (engagement), chacune directement reliable à un
+          mécanisme forensique déjà rencontré dans ce cours.
+
+    \item \textbf{Tamarin Prover}~: outil de référence pour les
+          preuves symboliques avec propriétés temporelles. Un
+          résultat ``non prouvé'' \textbf{n'est pas une faille}~:
+          c'est une limitation par explosion de l'espace d'états,
+          signalant un besoin de preuve manuelle complémentaire.
+
+    \item \textbf{Trois outils complémentaires}~: Tamarin
+          (symbolique, temporel), ProVerif (automatique,
+          équivalence), CryptoVerif (computationnel, quantifie le
+          risque résiduel plutôt que de poser des primitives
+          parfaites), ce dernier rejoignant l'esprit
+          probabiliste du cadre CLO (Ch.~\ref{chap:CRO}).
+
+    \item \textbf{Méthodologie en cinq étapes}~: compréhension,
+          modélisation, analyse manuelle, analyse automatisée, test
+          d'implémentation, applicable à tout protocole, y
+          compris en contexte d'audit forensique d'un mécanisme
+          contesté.
+
+    \item \textbf{Rigueur sur les affirmations non vérifiables}~:
+          ce chapitre s'est volontairement abstenu de détails
+          précis sur le protocole de recherche ZK-NR, faute
+          d'article vérifiable, cohérence méthodologique directe
+          avec la réserve posée au Ch.~\ref{chap:cryptanal}.
+
+    \item \textbf{Vérification formelle et opposabilité}~: une
+          preuve formelle complète et rejouable constitue un
+          argument d'opposabilité fort, mais \textbf{toujours
+          relatif au modèle de menace posé}, à énoncer
+          explicitement dans tout témoignage d'expert
+          (Ch.~\ref{chap:rapport}).
+\end{itemize}
+\end{boxresume}
+
+\bigskip
+
+\begin{boxexo}[title={\ding{45}\quad Exercice~31.1. Maîtrise du modèle Dolev-Yao \niveaubase}]
+\begin{enumerate}[(a)]
+    \item Le modèle Dolev-Yao suppose que l'adversaire ne peut pas
+          casser les primitives cryptographiques par force brute.
+          En quoi cette hypothèse diffère-t-elle de l'approche du
+          cadre CLO (Ch.~\ref{chap:CRO}), qui borne explicitement
+          un terme $\mathrm{negl}(\lambda)$ plutôt que de le
+          supposer nul~?
+    \item Pour chacune des quatre propriétés du Tableau~31.1,
+          identifiez le mécanisme forensique de ce cours qui
+          l'illustre le mieux, en justifiant.
+    \item Un protocole de vote électronique permet à un adversaire
+          de rejouer un bulletin déjà soumis. À quelle étape de la
+          méthodologie d'audit (Tableau~31.3) cette vulnérabilité
+          serait-elle le plus probablement détectée en premier~?
+          Justifiez.
+\end{enumerate}
+\end{boxexo}
+
+\begin{boxexo}[title={\ding{45}\quad Exercice~31.2. Interprétation d'un résultat de vérification \niveaumoyen}]
+Un outil Tamarin appliqué à un protocole de signature de rapport
+forensique (sur le modèle du \texttt{boxscenario} de ce chapitre)
+renvoie un résultat ``non prouvé'' pour le lemme
+\texttt{non\_repudiation}.
+\begin{enumerate}[(a)]
+    \item Pourquoi serait-il méthodologiquement incorrect de
+          conclure directement que le protocole est vulnérable~?
+    \item Quelles sont les trois pistes mentionnées dans ce
+          chapitre (Section~\ref{sec:outils-formels}) pour
+          progresser face à un tel résultat~? Laquelle
+          privilégieriez-vous pour un protocole destiné à un usage
+          judiciaire à haute criticité, et pourquoi~?
+    \item En vous appuyant sur l'analogie posée dans ce chapitre
+          (absence de preuve $\neq$ preuve d'absence), rédigez un
+          paragraphe expliquant comment cette même règle
+          s'applique à la rédaction d'un rapport forensique
+          (Ch.~\ref{chap:rapport})~: que doit faire un investigateur
+          qui n'a pas trouvé de preuve d'une hypothèse, sans pouvoir
+          non plus la réfuter formellement~?
+\end{enumerate}
+\end{boxexo}
+
+\begin{boxexo}[title={\ding{45}\quad Exercice~31.3. Audit complet d'un protocole proposé \niveauexpert}]
+Un développeur camerounais propose un nouveau protocole de
+``scellement numérique'' pour les pièces à conviction électroniques,
+destiné à être utilisé par les OPJ (Ch.~8~(UE~SEC4031)). Le
+protocole combine~: un hachage SHA-256 de l'evidence, une signature
+ECDSA de l'OPJ, et un horodatage via une autorité tierce.
+\begin{enumerate}[(a)]
+    \item Appliquez l'Étape~1 (Compréhension) de la méthodologie~:
+          identifiez les acteurs, les messages échangés, les
+          primitives utilisées et les trois objectifs de sécurité
+          que ce protocole devrait viser (référez-vous au
+          Ch.~8~(UE~SEC4031)).
+    \item Appliquez l'Étape~2 (Modélisation)~: formalisez au moins
+          deux lemmes de sécurité pertinents pour ce protocole,
+          sur le modèle du Tableau~31.1.
+    \item Appliquez l'Étape~3 (Analyse manuelle)~: identifiez au
+          moins une vulnérabilité potentielle de composition entre
+          les trois primitives (hachage~+ signature~+ horodatage), par exemple, que se passe-t-il si l'horodatage est
+          obtenu \emph{avant} la signature plutôt qu'après~?
+    \item Pour les Étapes~4 et~5, décrivez (sans les exécuter
+          réellement) ce que vous chercheriez à vérifier
+          automatiquement, et quels tests d'implémentation
+          seraient prioritaires si ce protocole devait être
+          déployé dans les unités PNC.
+    \item Rédigez un court paragraphe de synthèse destiné à
+          l'ANTIC, présentant votre niveau de confiance dans ce
+          protocole à l'issue de cet audit partiel, en respectant
+          scrupuleusement la distinction entre ce que votre analyse
+          établit et ce qui resterait à vérifier avant tout
+          déploiement opérationnel.
+\end{enumerate}
+\end{boxexo}
+
+\bigskip
+
+\begin{boxinfo}
+\textbf{Transition.} La Partie~VI a parcouru l'ensemble du socle
+théorique de ce cours~: formalisation du Trilemme CRO
+(Ch.~\ref{chap:CRO}), application aux primitives réelles
+(Ch.~\ref{chap:prim-crypt}), conception et cryptanalyse
+(Ch.~\ref{chap:cryptanal}), et enfin l'outillage de la preuve
+formelle (ce chapitre). Le chapitre suivant et dernier de ce cours
+propose un \textbf{cas pratique intégrateur} mobilisant l'ensemble
+de ces outils théoriques sur une situation forensique complète,
+clôturant ainsi le parcours entamé au Prologue.
+\end{boxinfo}

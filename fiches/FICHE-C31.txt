@@ -1,0 +1,233 @@
+NDAP SUKULU · INA · fiche FICHE-C31
+Chapitre 31 : Méthodologie d'analyse formelle de protocoles
+
+Version papier, à utiliser en attendant l'ouverture du portail NDAP SUKULU.
+La fiche complète compte 40 questions. Répondez sur la grille en fin de fiche.
+Durée indicative : 60 minutes. Seuil de réussite : 60 %.
+Les corrections figurent dans le livret de correction du cours.
+
+========================================================================
+Questions à choix multiple (une seule bonne réponse)
+========================================================================
+
+ 1. Que contrôle l'attaquant dans le modèle Dolev-Yao ?
+      a) L'ensemble du réseau : écoute, blocage, injection, modification
+      b) Les clés privées de tous
+      c) Le matériel des victimes
+      d) Rien
+
+ 2. Que ne peut pas faire l'attaquant Dolev-Yao ?
+      a) Casser les primitives par la force
+      b) Injecter un message
+      c) Rejouer un message
+      d) Ouvrir une session légitime
+
+ 3. Comment les primitives sont-elles traitées dans ce modèle ?
+      a) Comme des boîtes noires parfaites
+      b) Comme des fonctions cassables
+      c) Comme du texte clair
+      d) Comme des clés publiques
+
+ 4. En quelle année le modèle Dolev-Yao a-t-il été posé ?
+      a) 1983
+      b) 1994
+      c) 2010
+      d) 1965
+
+ 5. Pourquoi séparer analyse du protocole et cryptanalyse des primitives ?
+      a) Pour isoler les failles logiques des failles mathématiques
+      b) Pour aller plus vite
+      c) Pour éviter les tests
+      d) Parce que les primitives sont toujours cassées
+
+ 6. Laquelle de ces propriétés figure parmi les quatre propriétés formalisées ?
+      a) La non-répudiation
+      b) La disponibilité
+      c) La compression
+      d) La portabilité
+
+ 7. Comment les propriétés doivent-elles être exprimées ?
+      a) De manière formelle et mécaniquement vérifiable
+      b) En langage naturel seulement
+      c) Par un dessin
+      d) Par un exemple
+
+ 8. Quelle force distingue Tamarin ?
+      a) Les preuves symboliques avec propriétés temporelles
+      b) Le calcul de probabilités exactes
+      c) La compilation de code
+      d) L'analyse de disque
+
+ 9. Que signifie un résultat « non prouvé » dans Tamarin ?
+      a) Une limite d'exploration, pas une faille
+      b) Une faille démontrée
+      c) Un protocole cassé
+      d) Une erreur de syntaxe
+
+10. Quel outil est computationnel et quantifie le risque résiduel ?
+      a) CryptoVerif
+      b) Tamarin
+      c) ProVerif
+      d) Wireshark
+
+11. Pour quelles propriétés ProVerif est-il réputé ?
+      a) L'équivalence, de façon automatique
+      b) L'analyse de mémoire
+      c) La signature post-quantique
+      d) Le carving
+
+12. Quelle est la première étape de l'audit ?
+      a) La compréhension
+      b) Le test d'implémentation
+      c) L'analyse automatisée
+      d) La publication
+
+13. Que fait l'étape de modélisation ?
+      a) Définir explicitement le modèle de menace et le protocole
+      b) Écrire le code
+      c) Signer le rapport
+      d) Réquisitionner l'opérateur
+
+14. Quelle est la dernière étape ?
+      a) Le test d'implémentation
+      b) La compréhension
+      c) La modélisation
+      d) L'analyse manuelle
+
+15. Quels outils servent à l'analyse automatisée ?
+      a) Tamarin ou ProVerif
+      b) Autopsy ou FTK
+      c) Volatility
+      d) Maltego
+
+16. Pourquoi le chapitre ne détaille-t-il pas ZK-NR ?
+      a) Faute d'article vérifiable
+      b) Parce que ZK-NR est interdit
+      c) Parce que ZK-NR est trivial
+      d) Par manque de place
+
+17. Une preuve formelle complète est-elle valable sans condition ?
+      a) Non, elle vaut relativement au modèle de menace posé
+      b) Oui, toujours
+      c) Oui, si elle est longue
+      d) Non, jamais
+
+18. Que doit énoncer l'expert dans son témoignage sur une preuve formelle ?
+      a) Le modèle de menace explicitement
+      b) Le prix de l'outil
+      c) Le nom du développeur
+      d) Rien de plus que le résultat
+
+19. Dans Dolev-Yao, l'attaquant peut-il être un participant légitime ?
+      a) Oui, il possède les clés publiques et peut ouvrir des sessions
+      b) Non, jamais
+      c) Seulement s'il a la clé privée
+      d) Seulement hors réseau
+
+20. Quel outil rejoint l'esprit probabiliste du cadre CLO ?
+      a) CryptoVerif
+      b) ProVerif
+      c) Tamarin
+      d) Aucun
+
+========================================================================
+Vrai ou faux
+========================================================================
+
+21. L'attaquant Dolev-Yao peut forger une signature sans la clé privée.
+      Vrai / Faux
+
+22. Le modèle Dolev-Yao ignore délibérément la cryptanalyse des primitives.
+      Vrai / Faux
+
+23. « Non prouvé » dans Tamarin signifie qu'une attaque existe.
+      Vrai / Faux
+
+24. Un résultat non prouvé appelle une preuve manuelle complémentaire.
+      Vrai / Faux
+
+25. Tamarin, ProVerif et CryptoVerif sont complémentaires.
+      Vrai / Faux
+
+26. L'audit commence par l'analyse automatisée.
+      Vrai / Faux
+
+27. La méthode en cinq étapes s'applique aussi à l'audit forensique d'un mécanisme contesté.
+      Vrai / Faux
+
+28. Une preuve formelle rejouable est un argument d'opposabilité fort.
+      Vrai / Faux
+
+29. Le chapitre donne les détails précis du protocole ZK-NR.
+      Vrai / Faux
+
+30. L'intégrité par engagement fait partie des quatre propriétés.
+      Vrai / Faux
+
+========================================================================
+Textes à trous
+========================================================================
+
+31. Le modèle d'attaquant qui contrôle le réseau porte les noms ______-Yao.
+
+32. Le prouveur symbolique de référence du chapitre s'appelle ______.
+
+33. L'outil automatique réputé pour l'équivalence s'appelle ______.
+
+34. L'outil computationnel qui quantifie le risque résiduel s'appelle ______.
+
+35. La méthodologie d'audit compte ______ étapes.
+
+36. La deuxième étape de l'audit est la ______.
+
+37. La dernière étape est le test d'______.
+
+38. La propriété qui empêche de nier un message est la non-______.
+
+39. Une preuve formelle vaut toujours relativement au modèle de ______ posé.
+
+40. Le modèle Dolev-Yao a été publié en ______.
+
+========================================================================
+Grille de réponses   Nom : ............................  Matricule : ............
+========================================================================
+ 1. ............................................
+ 2. ............................................
+ 3. ............................................
+ 4. ............................................
+ 5. ............................................
+ 6. ............................................
+ 7. ............................................
+ 8. ............................................
+ 9. ............................................
+10. ............................................
+11. ............................................
+12. ............................................
+13. ............................................
+14. ............................................
+15. ............................................
+16. ............................................
+17. ............................................
+18. ............................................
+19. ............................................
+20. ............................................
+21. ............................................
+22. ............................................
+23. ............................................
+24. ............................................
+25. ............................................
+26. ............................................
+27. ............................................
+28. ............................................
+29. ............................................
+30. ............................................
+31. ............................................
+32. ............................................
+33. ............................................
+34. ............................................
+35. ............................................
+36. ............................................
+37. ............................................
+38. ............................................
+39. ............................................
+40. ............................................

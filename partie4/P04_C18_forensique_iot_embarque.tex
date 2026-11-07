@@ -1,0 +1,748 @@
+% ============================================================================
+% Fichier  : partie4/P04_C18_forensique_iot_embarque.tex
+% Titre    : Forensique IoT et Systèmes Embarqués
+% Auteur   : MINKA MI NGUIDJOÏ Thierry Emmanuel
+% Version  : 1.0 -- Juin 2026
+% ============================================================================
+
+\chapter{Forensique IoT et Systèmes Embarqués}
+\label{chap:for-iot}
+
+\epigraph{%
+    « The Internet of Things is the Internet of Vulnerabilities. »%
+}{Bruce Schneier}
+
+\niveauChapitre{Expert}{%
+    Notions d'électronique embarquée, Linux embarqué et protocoles
+    série (UART/I2C/SPI) souhaitables. Ce chapitre est le plus
+    technique de la Partie~IV.%
+}
+
+\begin{boxobjectifs}
+\begin{itemize}
+    \item Comprendre les architectures IoT typiques et identifier
+          où résident les données forensiquement utiles.
+    \item Extraire les logs d'un routeur compromis via son interface
+          d'administration ou via UART.
+    \item Analyser le firmware d'un appareil IoT~: identifier les
+          systèmes de fichiers, les configurations, les backdoors.
+    \item Investiguer les caméras IP et systèmes DVR/NVR~:
+          extraction des enregistrements et logs d'accès.
+    \item Appliquer les principes de custody et d'intégrité à des
+          preuves IoT~: volatilité extrême, absence de write blocker
+          standardisé.
+    \item Identifier les spécificités IoT du contexte camerounais~:
+          Box opérateurs, compteurs prépayés, caméras de surveillance.
+\end{itemize}
+\end{boxobjectifs}
+
+\bigskip
+
+% ============================================================================
+\section*{L'IoT au Cameroun~: contexte forensique}
+% ============================================================================
+
+L'IoT forensique n'est pas encore au c\oe ur des investigations camerounaises,
+mais plusieurs incidents récents imposent de s'y préparer~:
+
+\begin{itemize}
+    \item Routeurs ADSL/4G (MTN Box, Orange HomeBox) compromis pour
+          des attaques Man-in-the-Middle sur les clients~;
+    \item Caméras IP de surveillance (hôtels, banques, aéroport
+          de Nsimalen) piratées~; enregistrements utilisés pour
+          du chantage ou effacés après un incident~;
+    \item Compteurs électriques prépayés SONATREL compromis
+          par manipulation des compteurs~;
+    \item Décodeurs Canal+/DSTV modifiés pour contourner les
+          protections DRM~: dommages aux droits d'auteur.
+\end{itemize}
+
+La particularité forensique de ces appareils~: ils produisent des
+preuves importantes (logs de connexion, enregistrements vidéo,
+configuration réseau) mais leur acquisition requiert des techniques
+très différentes de celles couvertes dans les chapitres précédents.
+
+\separateur
+
+% ============================================================================
+\section{Architecture IoT~: où Résident les Données Forensiques}
+\label{sec:architecture-iot}
+% ============================================================================
+
+\subsection{Composants typiques d'un appareil IoT}
+
+\begin{tableaucours}{p{2.8cm}p{3.5cm}p{5.5cm}}{%
+    \tableauHeader{Composant} &
+    \tableauHeader{Type de mémoire} &
+    \tableauHeader{Données forensiques}
+}
+\textbf{Flash NAND/NOR} & Non volatile (persiste hors tension) &
+    Firmware, configuration, logs persistants, données utilisateur \\
+\textbf{RAM (DRAM/SRAM)} & Volatile (perdue à l'extinction) &
+    Processus actifs, connexions réseau, clés de session,
+    configuration temporaire \\
+\textbf{eMMC} & Non volatile (stockage embarqué) &
+    Système d'exploitation Linux, journaux, historique d'activité \\
+\textbf{SD Card} & Non volatile (amovible) &
+    Enregistrements (caméras IP), logs (DVR), sauvegarde config \\
+\textbf{EEPROM} & Non volatile & Configuration critique, clés, calibrations \\
+\end{tableaucours}
+\vspace{-0.8em}
+\begin{center}{\small\itshape Tableau~18.1. Mémoires IoT et données forensiques}\end{center}
+
+\subsection{Priorité de collecte~: RFC~3227 appliquée à l'IoT}
+
+La RFC~3227~\cite{rfc3227} (ordre de volatilité, Ch.~7~(UE~SEC4031)) s'applique
+à l'IoT avec des adaptations~:
+
+\begin{enumerate}
+    \item \textbf{RAM et processus actifs}~: capturer via interface
+          d'administration (SSH/Telnet/API) \emph{avant} toute autre action.
+          Durée de vie~: de quelques secondes (si l'appareil est en train
+          d'être réinitialisé) à des jours.
+    \item \textbf{Logs système en mémoire}~: \texttt{dmesg},
+          \texttt{syslog} en RAM. Exportés via interface admin avant
+          extinction.
+    \item \textbf{Logs persistants sur flash}~: survivent à l'extinction,
+          mais souvent effacés au redémarrage ou en rotation courte.
+    \item \textbf{Configuration}~: paramètres réseau, identifiants,
+          règles de pare-feu. Non volatile mais peut être modifiée.
+    \item \textbf{Firmware complet}~: extraction via UART ou déchippage~;
+          analyse offline.
+\end{enumerate}
+
+\begin{boxalert}
+\textbf{Le piège du ``factory reset''}
+
+La première réaction d'un suspect en possession d'un appareil IoT
+compromis est souvent d'effectuer un reset d'usine. Contrairement
+aux idées reçues~:
+\begin{itemize}
+    \item Le factory reset sur la plupart des routeurs efface les logs
+          et la configuration en RAM, mais \textbf{pas nécessairement
+          le firmware} ni les données de la partition système~;
+    \item Sur les caméras IP avec SD~Card, la SD~Card n'est pas
+          systématiquement effacée par le reset (elle est montée
+          séparément)~;
+    \item L'enregistrement du reset lui-même peut apparaître dans les
+          logs de l'opérateur (réinitialisation du bail DHCP,
+          reconnexion réseau).
+\end{itemize}
+\textbf{Protocole~:} saisir physiquement l'appareil \emph{avant}
+toute tentative de reset~; retirer la carte SD si présente~; couper
+l'alimentation proprement (pas d'arrêt brutal qui pourrait corrompre
+les données flash).
+\end{boxalert}
+
+% ============================================================================
+\section{Forensique Routeur~: la Cible Prioritaire}
+\label{sec:forensique-routeur}
+% ============================================================================
+
+\subsection{Pourquoi les routeurs sont des cibles forensiques clés}
+
+Un routeur compromis est idéalement placé pour~:
+\begin{itemize}
+    \item Voir \textbf{tout le trafic} passant par lui (Man-in-the-Middle)~;
+    \item Rediriger le DNS pour du phishing (DNS poisoning)~;
+    \item Exfiltrer les credentials Wi-Fi de tous les clients~;
+    \item Servir de rebond pour des attaques vers d'autres cibles
+          (point de pivot).
+\end{itemize}
+
+Un routeur \emph{victime} d'une attaque contient les logs qui prouvent
+l'intrusion. Un routeur \emph{appartenant au suspect} contient les
+logs de ses communications.
+
+\subsection{Extraction via interface d'administration}
+
+\begin{boxoutils}{Extraction de logs via interface admin (SSH)}
+\begin{lstlisting}[language=bash_forensique]
+# Connexion SSH au routeur (si SSH est actif)
+# PREREQUIS : credentials connus + autorisation judiciaire art. 52
+
+ssh admin@192.168.1.1
+
+# Routeurs sous OpenWRT / DD-WRT (Linux embarque)
+# Lister les processus actifs
+cat /proc/running_processes
+# Ou
+ps aux
+
+# Connexions reseau actives (equivalent netstat)
+cat /proc/net/tcp   # connexions TCP
+cat /proc/net/arp   # table ARP (machines connectees recemment)
+cat /proc/net/dev   # interfaces reseau et statistiques
+
+# Logs systeme
+cat /tmp/syslog    # syslog en RAM (volatile !)
+logread            # commande OpenWRT pour les logs systeme
+
+# Configuration actuelle (non volatile)
+cat /etc/config/network    # configuration reseau
+cat /etc/config/firewall   # regles de pare-feu
+cat /etc/config/dhcp       # baux DHCP (machines ayant eu une IP)
+cat /etc/config/wireless   # configuration Wi-Fi (SSID, mot de passe)
+
+# Historique DHCP (clients ayant ete connectes)
+cat /tmp/dhcp.leases
+# Format : timestamp MAC-address IP hostname
+# Exemple :
+# 1710288900 aa:bb:cc:dd:ee:ff 192.168.1.42 LAPTOP-SUSPECT
+# 1710289200 11:22:33:44:55:66 192.168.1.55 iPhone-MBONGO
+
+# EXPORTER IMMEDIATEMENT avant toute action
+scp admin@192.168.1.1:/tmp/syslog /output/router_syslog.txt
+scp admin@192.168.1.1:/tmp/dhcp.leases /output/router_dhcp.txt
+\end{lstlisting}
+\end{boxoutils}
+
+\subsection{Extraction via UART~: quand l'interface admin est inaccessible}
+
+Quand les credentials de l'interface admin sont inconnus (changés par
+l'attaquant, ou appareil saisi dont le propriétaire refuse de coopérer),
+l'accès physique via \termecle{UART}\index{UART} permet d'obtenir une
+console série directe sur l'appareil.
+
+\begin{boxdef}
+\textbf{UART} (\textit{Universal Asynchronous Receiver-Transmitter})~:
+interface série physique présente sur la quasi-totalité des cartes
+électroniques embarquées. Elle donne accès à une console root lors
+du démarrage du bootloader (U-Boot) et souvent tout au long du
+fonctionnement. Fonctionne via 3 broches~: TX (émission), RX
+(réception), GND (masse).
+\end{boxdef}
+
+\begin{boxoutils}{Accès UART à un routeur}
+\begin{lstlisting}[language=bash_forensique]
+# Matériel nécessaire :
+# - Convertisseur USB-to-UART (CH340G ou FT232RL, ~5 USD)
+# - Voltmetre (pour mesurer le niveau logique : 3.3V ou 5V)
+# - Fils Dupont / sonde oscilloscope
+
+# Etape 1 : Ouvrir le boitier et localiser les broches UART
+# Sur la plupart des routeurs : groupe de 4 broches (VCC, TX, RX, GND)
+# Identifier GND (masse) avec le voltmetre
+
+# Etape 2 : Mesurer le niveau logique
+# Si VCC mesure 3.3V -> utiliser un adaptateur 3.3V
+# Si VCC mesure 5V -> adaptateur 5V ou niveau-shifter 5V->3.3V
+
+# Etape 3 : Connecter (CROISER TX<->RX)
+# Convertisseur TX -> Routeur RX
+# Convertisseur RX -> Routeur TX
+# Convertisseur GND -> Routeur GND
+
+# Etape 4 : Terminal serie (Linux)
+screen /dev/ttyUSB0 115200    # vitesse la plus courante
+# Alternatives : minicom, picocom
+picocom -b 115200 /dev/ttyUSB0
+
+# Resultat : console U-Boot puis Linux au demarrage
+# [    0.000000] Linux version 5.4.152 (OpenWrt)
+# [    2.341827] eth0: Link is Up - 1Gbps/Full
+# OpenWrt login: root     # <- shell root accessible !
+
+# Commande de sauvegarde complete depuis UART
+# (lente mais complete : dump de la flash NAND entiere)
+cat /dev/mtdblock0 > /tmp/firmware_dump.bin
+# Puis exfiltrer via SCP ou TFTP
+tftp -p -l /tmp/firmware_dump.bin 192.168.1.100
+\end{lstlisting}
+\end{boxoutils}
+
+\begin{boiteRemarque}{UART et responsabilité}
+L'accès UART à un appareil implique son ouverture physique (vis, parfois
+clips) et la manipulation de son électronique. Documenter photographiquement
+l'état de l'appareil \emph{avant} toute manipulation~: position des
+broches, état de la carte, numéro de série visible. Toute modification
+physique doit être mentionnée dans le rapport (ACPO~\cite{acpo2012} Principe~2~: si une
+modification est nécessaire, elle doit être documentée et justifiée).
+\end{boiteRemarque}
+
+% ============================================================================
+\section{Analyse de Firmware~: ce que l'Appareil Cache}
+\label{sec:analyse-firmware}
+% ============================================================================
+
+\subsection{Extraction et analyse avec Binwalk}
+
+\termecle{Binwalk}\index{Binwalk} est l'outil de référence pour l'analyse
+de firmware. Il identifie et extrait automatiquement les systèmes de
+fichiers, les images compressées et les signatures dans un binaire.
+
+\begin{boxoutils}{Analyse de firmware avec Binwalk}
+\begin{lstlisting}[language=bash_forensique]
+# Analyser un fichier firmware (telecharge sur le site du fabricant
+# ou extrait de l'appareil)
+binwalk firmware.bin
+
+# Resultat type :
+# DECIMAL   HEX       DESCRIPTION
+# 0         0x0       TRX firmware header
+# 28        0x1C      LZMA compressed data
+# 131072    0x20000   Squashfs filesystem, little endian, version 4.0
+#                     Compression: xz
+#                     Total inodes: 2847
+#                     Block size: 262144
+
+# Extraire automatiquement tous les composants identifie
+binwalk -e --directory=/output/firmware_extracted/ firmware.bin
+
+# Contenu type apres extraction :
+ls /output/firmware_extracted/
+# _firmware.bin.extracted/
+#   0.bin          <- bootloader
+#   20000.squashfs <- systeme de fichiers (monter pour analyser)
+
+# Monter le systeme de fichiers SquashFS
+sudo mount -o loop,ro \
+    /output/firmware_extracted/_firmware.bin.extracted/20000.squashfs \
+    /mnt/firmware/
+
+# Explorer le contenu
+ls /mnt/firmware/
+# bin/  etc/  lib/  overlay/  proc/  sbin/  usr/  var/
+
+# Chercher les configurations et identifiants
+cat /mnt/firmware/etc/shadow      # hash des mots de passe
+cat /mnt/firmware/etc/passwd      # comptes utilisateurs
+cat /mnt/firmware/etc/config/     # configuration OpenWRT
+find /mnt/firmware/ -name "*.conf" -exec grep -l "password\|passwd" {} \;
+
+# Rechercher les backdoors (cles SSH pre-installees)
+find /mnt/firmware/ -name "authorized_keys"
+find /mnt/firmware/ -name "*.key" -o -name "*.pem"
+
+# Identifier les services actifs au demarrage
+cat /mnt/firmware/etc/rc.d/
+cat /mnt/firmware/etc/inittab
+\end{lstlisting}
+\end{boxoutils}
+
+\begin{boxscenario}{Backdoor découverte dans un routeur MTN Box}
+L'analyse Binwalk du firmware d'un routeur MTN Box saisi dans une
+investigation de cybercriminalité révèle~:
+
+\begin{lstlisting}[language=bash_forensique]
+find /mnt/firmware/ -name "authorized_keys"
+# /mnt/firmware/root/.ssh/authorized_keys
+
+cat /mnt/firmware/root/.ssh/authorized_keys
+# ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAB... attacker@remote-c2.ru
+\end{lstlisting}
+
+\textbf{Constatation~:} le fichier \texttt{/root/.ssh/authorized\_keys}
+du firmware extrait contient une clé SSH publique associée à
+\texttt{attacker@remote-c2.ru}. Cette clé permet un accès root sans
+mot de passe au routeur depuis l'IP contrôlée par cet attaquant.\\[0.3ex]
+\textbf{Hash du fichier firmware~:}
+\hash{SHA-256}{a3f7b29c8e1d4f56a2c8b7e3d9f0a142b5c8d3e6f1a4b7c0d2e5f8a1b4c7d0e3}\\[0.3ex]
+\textbf{Corrélation~:} l'adresse \texttt{remote-c2.ru} apparaît dans
+les logs SIEM de l'entreprise victime sur les 3 derniers mois, le
+routeur servait de backdoor persistante.
+\end{boxscenario}
+
+% ============================================================================
+\section{Forensique Caméras IP et Systèmes DVR/NVR}
+\label{sec:cameras-ip}
+% ============================================================================
+
+\subsection{Architecture d'un système de vidéosurveillance}
+
+Un système de vidéosurveillance IP typique comprend~:
+\begin{itemize}
+    \item Des \textbf{caméras IP} (ou caméras CCTV analogiques
+          convertis par des encodeurs)~;
+    \item Un \textbf{NVR} (\textit{Network Video Recorder}) ou
+          \textbf{DVR} (\textit{Digital Video Recorder}) qui stocke
+          les enregistrements~;
+    \item Un \textbf{HDD interne} (3,5 pouces SATA) dans le NVR~;
+    \item Des \textbf{logs d'accès} au système de gestion vidéo (VMS).
+\end{itemize}
+
+\subsection{Extraction des enregistrements}
+
+\begin{boxoutils}{Acquisition forensique d'un NVR/DVR}
+\begin{lstlisting}[language=bash_forensique]
+# OPTION 1 : Export via interface web du NVR (le plus simple)
+# Connexion a l'interface web (IP:port)
+# Playback -> Exporter la plage horaire d'interet -> Format H.264/MP4
+
+# OPTION 2 : Extraction du disque dur interne
+# Retirer le HDD du NVR (etiqueter le cable SATA et son emplacement)
+# Photographier avant extraction
+# Connecter via write blocker SATA sur le poste forensique
+
+# Identifier le systeme de fichiers (souvent proprietaire)
+fdisk -l /dev/sdb
+# Resultat type :
+# Disk /dev/sdb: 2 TiB
+# Device     Boot   Start       End    Sectors  Size Type
+# /dev/sdb1          2048   2099199    2097152    1G  Linux filesystem
+# /dev/sdb2       2099200 3906250751 3904151552  1.8T  (inconnu/propriétaire)
+
+# Si le systeme de fichiers est reconnu (ext4, FAT) :
+mount -o ro /dev/sdb1 /mnt/nvr/
+ls /mnt/nvr/record/
+# Fichiers .dav, .mp4, .avi selon le fabricant
+
+# Si le systeme de fichiers est proprietaire (Hikvision, Dahua)
+# utiliser les outils specifiques :
+# VideoInspector, DVR-Examiner, ou
+# Outil Python : python-dvr (open source)
+python3 dvr_examiner.py /dev/sdb2 --export /output/nvr_records/
+
+# OPTION 3 : Carving video sur espace brut
+# Si le FS est corrompu ou efface :
+bulk_extractor -o /output/bulk/ /dev/sdb
+# bulk_extractor detecte les en-tetes video (H.264 NAL units)
+# et extrait les fragments
+\end{lstlisting}
+\end{boxoutils}
+
+\subsection{Logs d'accès au VMS~: qui a visionné quoi}
+
+\begin{boxoutils}{Analyse des logs d'accès VMS}
+\begin{lstlisting}[language=bash_forensique]
+# Systemes Hikvision (les plus repandus en Afrique)
+# Logs dans /var/log/hikvision/ ou /mnt/mtd/log/
+
+ssh admin@192.168.1.64
+cat /mnt/mtd/log/access.log
+
+# Contenu type :
+# [2026-03-13 02:14:15] LOGIN  admin  192.168.1.1   Success
+# [2026-03-13 02:14:22] PLAYBACK  admin  Camera1  2026-03-12 18:00 -> 18:30
+# [2026-03-13 02:15:01] DELETE  admin  Camera1  2026-03-12 18:00 -> 18:30
+# [2026-03-13 02:15:02] FORMAT  admin  HDD1
+
+# La sequence : Login -> Playback -> Delete -> Format
+# indique une tentative de destruction de preuves
+
+# Verifier si le formatage a ete complet (les secteurs non
+# réécrits peuvent contenir des donnees recuperables)
+# Apres saisie du HDD :
+# dd if=/dev/sdb of=/output/nvr_image.dd bs=65536
+# foremost -t avi,mp4 -i /output/nvr_image.dd -o /output/nvr_carved/
+\end{lstlisting}
+\end{boxoutils}
+
+\begin{boxjuris}
+\textbf{Enregistrements de vidéosurveillance~: admissibilité}
+
+En droit camerounais, les enregistrements de vidéosurveillance sont
+admissibles comme preuves si~:
+\begin{itemize}
+    \item Le système a été installé conformément à la réglementation
+          (signalétique, déclaration auprès de l'autorité compétente)~;
+    \item La chaîne de custody est documentée depuis le NVR/DVR
+          jusqu'à la présentation en audience~;
+    \item L'intégrité des fichiers est attestée par hash SHA-256~;
+    \item Un expert judiciaire atteste de l'authenticité et de
+          l'horodatage (synchronisation NTP du système).
+\end{itemize}
+\textbf{Point de vigilance~:} vérifier la synchronisation horaire
+du NVR~: une dérive de plusieurs heures invalide la corrélation
+avec d'autres sources. Documenter dans le rapport~: ``Heure affichée
+du NVR au moment de la saisie~: 14h22~; heure de référence GPS~:
+14h25~; dérive estimée~: +3~minutes.''
+\end{boxjuris}
+
+% ============================================================================
+\section{IoT Spécifiques~: Box Opérateurs et Compteurs}
+\label{sec:iot-cameroun}
+% ============================================================================
+
+\subsection{Box opérateurs MTN/Orange~: forensique des données de trafic}
+
+Les Box Internet des opérateurs camerounais (MTN HomeBox 4G,
+Orange LiveBox) sont des routeurs 4G intégrant un modem,
+un switch Wi-Fi et souvent un décodeur TV.
+
+\begin{boxoutils}{Extraction des données forensiques d'une Box 4G}
+\begin{lstlisting}[language=bash_forensique]
+# Interface d'administration web (typiquement 192.168.1.1)
+# Identifiants par defaut (si non changes) :
+# MTN HomeBox : admin/admin ou admin/[IMEI partiel]
+# Orange LiveBox : admin/[code sur etiquette]
+
+# Via SSH (si active) :
+ssh admin@192.168.1.1
+
+# Historique des connexions clients Wi-Fi
+cat /tmp/hostapd_events.log
+# Ou via commande propriétaire :
+wl assoclist              # Clients actuellement connectes
+cat /proc/net/arp         # Cache ARP (connexions recentes)
+
+# Logs DNS (si dnsmasq actif avec logging)
+cat /tmp/dnsmasq.log
+# Format : timestamp IP-client query type domain
+# 2026-01-15 14:22:05 192.168.1.42 A medequip-portugal.com
+# -> le client .42 a resolu ce domaine (phishing !)
+
+# Volume de trafic par client (utile pour detecter exfiltration)
+cat /proc/net/ip_conntrack | awk '{print $5}' | \
+    cut -d= -f2 | sort | uniq -c | sort -rn | head -10
+
+# IMPORTANT : les Box operateurs sauvegardent aussi les logs
+# sur leurs serveurs centraux. Complement indispensable via
+# requisition art. 57 Loi 2010/012 aupres de MTN/Orange.
+\end{lstlisting}
+\end{boxoutils}
+
+\subsection{Compteurs prépayés~: manipulation et traces}
+
+Les compteurs électriques prépayés (système SONATREL) utilisent
+des tokens prépayés transmis par SMS ou via un clavier.
+Les fraudes incluent~: modification du firmware pour altérer
+les mesures, utilisation de tokens volés, court-circuit du compteur.
+
+\begin{tableaucours}{p{3.5cm}p{4.0cm}p{4.5cm}}{%
+    \tableauHeader{Type de fraude} &
+    \tableauHeader{Trace forensique} &
+    \tableauHeader{Où la trouver}
+}
+Modification firmware & Firmware non signé ou corrompu &
+    Extraction UART/JTAG~; vérification signature du fabricant \\
+Utilisation tokens volés & Tokens non générés par SONATREL &
+    Logs de la base de données tokens SONATREL (réquisition) \\
+Court-circuit du compteur & Absence de données de consommation
+    sur la période fraudée &
+    Logs du concentrateur PLC/RF de SONATREL~; relevés voisins \\
+Clonage du numéro de série & Deux compteurs avec le même SN &
+    Base de données SONATREL~; inspection physique \\
+\end{tableaucours}
+\vspace{-0.8em}
+\begin{center}{\small\itshape Tableau~18.2. Fraudes compteurs prépayés et traces forensiques}\end{center}
+
+% ============================================================================
+\section{Principes de Custody pour les Preuves IoT}
+\label{sec:custody-iot}
+% ============================================================================
+
+\subsection{Défis spécifiques à l'IoT}
+
+\begin{tableaucours}{p{3.5cm}p{4.0cm}p{4.5cm}}{%
+    \tableauHeader{Défi} &
+    \tableauHeader{Impact forensique} &
+    \tableauHeader{Mitigation}
+}
+Absence de write blocker standardisé &
+    Connexion à l'interface admin peut modifier les logs &
+    Documenter chaque connexion~; ne jamais écrire via SSH \\
+Volatilité extrême de la RAM &
+    Les logs en RAM disparaissent en secondes &
+    Exporter immédiatement~; documenter l'heure d'export \\
+Horloge non synchronisée &
+    Dérive de l'horloge rend les logs inutilisables &
+    Mesurer la dérive NTP au moment de la saisie~;
+    corriger dans la timeline \\
+Firmware propriétaire &
+    Difficile à analyser sans outils du fabricant &
+    Binwalk~; contacter le fabricant via réquisition \\
+Alimentation continue &
+    Couper l'alimentation efface la RAM &
+    Exporter d'abord~; couper seulement quand prêt \\
+\end{tableaucours}
+\vspace{-0.8em}
+\begin{center}{\small\itshape Tableau~18.3. Défis custody IoT et mitigations}\end{center}
+
+\subsection{Protocole de saisie IoT}
+
+\begin{boxPNC}
+\textbf{Protocole. Saisie d'un appareil IoT (routeur, caméra, DVR)}
+
+\begin{enumerate}
+    \item \textbf{Ne pas éteindre immédiatement.}
+          Photographier l'état des LEDs, des câbles connectés,
+          l'écran si présent. Documenter l'IP affichée.
+    \item \textbf{Tenter l'accès à l'interface admin} (SSH, web,
+          Telnet)~: exporter les logs volatils en priorité.
+          Si l'accès échoue~: passer à l'étape~5.
+    \item \textbf{Vérifier la synchronisation horaire.}
+          Comparer l'heure de l'appareil avec une référence GPS.
+          Documenter la dérive exacte (ex.~: ``2026-03-13~14h22
+          affiché sur l'appareil~= 14h25 heure GPS, dérive~: +3~min'').
+    \item \textbf{Exporter les données volatiles}~: syslog, dmesg,
+          table ARP, connexions actives, baux DHCP. Calculer le hash
+          SHA-256 de chaque fichier exporté.
+    \item \textbf{Couper l'alimentation proprement} (via commande
+          \texttt{halt} ou \texttt{poweroff} si possible)~; sinon
+          débrancher l'alimentation. Ne jamais appuyer sur le
+          bouton reset.
+    \item \textbf{Retirer les supports amovibles} (SD Card, USB)
+          \emph{avant} de couper l'alimentation~: ils constituent
+          des preuves indépendantes.
+    \item \textbf{Documenter et sceller~:} étiquette avec N° dossier
+          N° evidence, date/heure, OPJ~; sachet antistatique
+          (important pour l'électronique).
+    \item \textbf{Transport}~: protection antistatique et
+          antichoc~; jamais dans le même sachet que d'autres
+          appareils électroniques.
+\end{enumerate}
+\end{boxPNC}
+
+\separateur
+
+% --- Encadré lab NDAP SUKULU ---
+\begin{boiteRemarque}{Notions mobilisées par le laboratoire INA-LAB-06}
+\begin{itemize}
+    \item \textbf{Intégrité du firmware}~: \texttt{sha256sum firmware.bin}
+          donne une empreinte de 64~caractères hexadécimaux, à comparer
+          caractère par caractère à celle du procès-verbal de saisie.
+    \item \textbf{Où se cache une porte dérobée}~: un compte supplémentaire
+          d'UID~0 dans \texttt{etc/passwd} (troisième champ), une clé dans
+          \texttt{root/.ssh/authorized\_keys} (dossier caché~:
+          \texttt{ls -la}), un service lancé au démarrage par les scripts
+          \texttt{etc/inittab} ou \texttt{etc/init.d/rcS} (par exemple un
+          shell sans authentification sur un port), une tâche planifiée.
+    \item \textbf{Journal du VMS}~: chaque ligne dit qui a regardé en
+          direct (\texttt{LIVE}), relu (\texttt{PLAYBACK}), exporté
+          (\texttt{EXPORT}) ou supprimé (\texttt{DELETE}) quel enregistrement
+          de quelle caméra, et depuis quelle adresse~; on compte les suppressions et on cherche la
+          caméra visée par la séquence complète.
+\end{itemize}
+\end{boiteRemarque}
+
+\begin{boxresume}
+\textbf{Ce qu'il faut retenir de ce chapitre~:}
+\begin{itemize}
+    \item \textbf{Ne pas éteindre en premier~:} contrairement aux PC,
+          les appareils IoT stockent leurs logs principalement en RAM.
+          Exporter les logs via l'interface admin \emph{avant} toute
+          extinction.
+
+    \item \textbf{Synchronisation horaire obligatoire~:} mesurer la
+          dérive de l'horloge IoT par rapport à une référence GPS
+          au moment de la saisie~; corriger dans la timeline. Sans
+          cette correction, les logs IoT sont inexploitables pour
+          la corrélation temporelle.
+
+    \item \textbf{Binwalk~:} outil universel d'analyse de firmware.
+          Identifie et extrait les systèmes de fichiers, les images
+          compressées, les signatures. \texttt{binwalk -e firmware.bin}
+          puis analyser le SquashFS extrait.
+
+    \item \textbf{UART~:} accès console root sur presque tout
+          appareil embarqué. Matériel~: adaptateur USB-UART ($\approx$~5~USD).
+          Documenter photographiquement avant ouverture du boîtier
+          (ACPO Principe~2).
+
+    \item \textbf{DVR/NVR~:} exporter d'abord via interface web~;
+          si effacement suspect~: extraire le HDD, image DD avec
+          write blocker, carving vidéo avec \texttt{bulk\_extractor}
+          ou \texttt{foremost}.
+
+    \item \textbf{Vérifier la synchronisation horaire du NVR~:} une
+          dérive de quelques heures invalide la corrélation avec
+          les autres sources de la timeline.
+
+    \item \textbf{Contexte camerounais~:} logs DNS des Box opérateurs
+          (dnsmasq)~; historique connexions Wi-Fi (table ARP,
+          \texttt{hostapd\_events.log})~; toujours compléter par
+          réquisition opérateur (art.~57 Loi~2010).
+
+    \item \textbf{Factory reset~:} n'efface pas systématiquement
+          la SD Card~; n'efface pas le firmware~; laisse des traces
+          dans les logs opérateur. Saisir physiquement avant
+          tout reset.
+\end{itemize}
+\end{boxresume}
+
+\bigskip
+
+\begin{boxexo}[title={\ding{45}\quad Exercice~18.1. Priorité de collecte IoT \niveaubase}]
+Vous arrivez sur la scène d'un cybercafé de Yaoundé. Un routeur TP-Link
+sous OpenWRT est allumé~; l'écran du propriétaire affiche une interface
+web indiquant que le routeur est connecté à Internet. Vous suspectez
+qu'il a servi de point d'accès pour une fraude en ligne.
+\begin{enumerate}[(a)]
+    \item Listez vos actions dans l'ordre exact (6~étapes minimum),
+          en justifiant chaque priorité par la volatilité des données.
+    \item Quelles données exportez-vous en priorité absolue, et
+          pourquoi~? Donnez les commandes exactes.
+    \item Si le propriétaire tente de réinitialiser le routeur
+          pendant que vous l'examinez, que faites-vous~? Quelles
+          preuves subsisteraient malgré le reset~?
+    \item Calculez et documentez les hachages SHA-256 des
+          exports~: à quel moment dans la séquence d'actions~?
+\end{enumerate}
+\end{boxexo}
+
+\begin{boxexo}[title={\ding{45}\quad Exercice~18.2. Analyse firmware \niveaumoyen}]
+Le firmware \texttt{mtnbox\_fw\_v3.2.bin} a été extrait d'une MTN Box
+saisie. \texttt{binwalk mtnbox\_fw\_v3.2.bin} révèle un SquashFS à
+l'offset \texttt{0x20000}. Après extraction~:
+\begin{lstlisting}[language=bash_forensique]
+cat /mnt/firmware/etc/shadow
+# root:$1$salt$abc123defghi:18000:0:99999:7:::
+# admin:$1$salt$xyz789uvwxyz:18000:0:99999:7:::
+
+find /mnt/firmware/ -name "authorized_keys"
+# /mnt/firmware/root/.ssh/authorized_keys
+cat /mnt/firmware/root/.ssh/authorized_keys
+# ssh-rsa AAAAB3NzaC1yc2E... root@185.220.XX.XX
+\end{lstlisting}
+\begin{enumerate}[(a)]
+    \item Identifiez les indicateurs de compromission dans ce firmware.
+    \item Quel type d'accès la clé SSH autorisée permet-elle~?
+          Quelle IP contrôle cette clé (comment le savez-vous)~?
+    \item Comment vérifier si ce firmware est une version modifiée
+          par rapport au firmware officiel du fabricant~? Quelle
+          commande utilisez-vous~?
+    \item Rédigez la constatation forensique correspondante, puis
+          l'analyse avec niveau de confiance.
+\end{enumerate}
+\end{boxexo}
+
+\begin{boxexo}[title={\ding{45}\quad Exercice~18.3. Timeline IoT multi-sources \niveauexpert}]
+Dans l'affaire MBONGO (Chapitre~8~(UE~SEC4031)), la caméra IP
+installée dans le bureau comptabilité de SONATRAV~SA est au c\oe ur
+de l'investigation~: elle aurait enregistré MBONGO en train de
+manipuler le système de virement. Le NVR Hikvision affiche dans
+ses logs~:
+\begin{lstlisting}[language=bash_forensique]
+[2026-01-15 13:50:22] LOGIN  admin  192.168.5.14  Success
+[2026-01-15 13:50:45] PLAYBACK  admin  Camera-Bureau-Compta
+                       2026-01-15 12:30 -> 13:00
+[2026-01-15 13:51:02] DELETE  admin  Camera-Bureau-Compta
+                       2026-01-15 12:00 -> 14:00
+[2026-01-15 13:51:08] EXPORT  admin  Camera-Couloir-1
+                       2026-01-15 12:00 -> 14:00 -> USB1
+\end{lstlisting}
+L'heure GPS lors de la saisie du NVR est 14h28. L'heure affichée
+sur le NVR est 14h21 (dérive~: --7~minutes).
+\begin{enumerate}[(a)]
+    \item Corrigez les horodatages NVR pour les aligner sur l'heure
+          réelle. Que devient l'horodatage du DELETE~?
+    \item Que révèlent les logs NVR sur les intentions de l'auteur~?
+          Quelles données ont été supprimées~? Quelles données
+          ont été exportées~? Pourquoi cette distinction est-elle
+          significative~?
+    \item Les enregistrements supprimés (12h00--14h00) sont-ils
+          récupérables~? Quelle procédure appliquez-vous~?
+    \item L'IP \texttt{192.168.5.14} a accédé au NVR. Comment
+          identifier la machine correspondante~? Quelles sources
+          corroborent cette identification~?
+\end{enumerate}
+\end{boxexo}
+
+\bigskip
+
+\begin{boxinfo}
+\textbf{Clôture de la Partie~IV.} Ce chapitre clôt la Partie~IV
+(Techniques Avancées). Les cinq chapitres de cette partie ont
+couvert~: Forensique Système (Ch.~\ref{chap:for-sys}), Forensique
+Réseau (Ch.~\ref{chap:for-res}), Forensique Mobile
+(Ch.~\ref{chap:for-mob}), Forensique Cloud (Ch.~\ref{chap:for-cloud})
+et ce chapitre (IoT/Embarqué).
+
+La \textbf{Partie~V} aborde les contre-mesures~: Anti-Forensique
+(Ch.~19. techniques d'effacement et obfuscation~; comment les
+détecter et les documenter) et les investigations avancées
+(Ch.~20--22). La connaissance de l'anti-forensique est indissociable
+de la maîtrise des techniques forensiques présentées dans
+cette Partie~IV.
+\end{boxinfo}

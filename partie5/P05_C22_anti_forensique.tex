@@ -1,0 +1,626 @@
+% ============================================================================
+% Fichier  : partie5/P05_C22_anti_forensique.tex
+% Titre    : Anti-Forensique et Contremesures
+% Auteur   : MINKA MI NGUIDJOÏ Thierry Emmanuel
+% Version  : 1.0 -- Juin 2026
+% ============================================================================
+
+\chapter{Anti-Forensique et Contremesures}
+\label{chap:anti-for}
+
+\epigraph{%
+    « L'absence de preuve est elle-même une preuve à condition
+    de savoir où et comment cette absence a été créée. »%
+}{Thierry Minka}
+
+\niveauChapitre{Expert}{%
+    Maîtrise complète de la Partie~IV (Ch.~\ref{chap:for-sys}
+    à~\ref{chap:rapport}) indispensable. Ce chapitre suppose la
+    connaissance des artefacts normaux pour en détecter l'absence
+    anormale.%
+}
+
+\begin{boxobjectifs}
+\begin{itemize}
+    \item Comprendre la logique de l'anti-forensique~: pourquoi
+          l'effacement parfait est techniquement très difficile.
+    \item Identifier les techniques d'anti-forensique système~:
+          timestomping, suppression sélective de logs, wiping.
+    \item Détecter les tentatives d'anti-forensique réseau~:
+          désactivation de logging, usurpation, chiffrement opportuniste.
+    \item Reconnaître les techniques anti-forensique mobile et IoT~:
+          factory reset, suppression d'historique, applications vault.
+    \item Appliquer le principe de Locard~\cite{locard1920} inversé~: toute tentative
+          d'effacement laisse elle-même une trace.
+    \item Documenter une tentative d'anti-forensique dans le rapport
+          forensique de façon juridiquement opposable.
+\end{itemize}
+\end{boxobjectifs}
+
+\bigskip
+
+% ============================================================================
+\section*{La logique de l'anti-forensique}
+% ============================================================================
+
+Tout au long des Chapitres~\ref{chap:for-sys} à~\ref{chap:for-iot},
+plusieurs scénarios ont montré des attaquants tentant d'effacer leurs
+traces~: suppression du script \texttt{enc\_all.ps1} dans l'affaire MVOM
+(Ch.~\ref{chap:for-sys}), \texttt{StopLogging} sur CloudTrail
+(Ch.~\ref{chap:for-cloud}), tentatives de \textit{factory reset}
+sur des appareils IoT (Ch.~\ref{chap:for-iot}). Dans chaque cas,
+\textbf{la tentative a échoué à effacer toutes les traces}.
+
+Ce n'est pas un hasard pédagogique~: c'est une réalité technique.
+La redondance forensique (Ch.~\ref{chap:for-sys}, Tableau~14.1)
+signifie qu'effacer \emph{toutes} les traces d'une action exige
+de connaître et neutraliser \emph{chaque} artefact qu'elle a produit, une tâche d'une difficulté croissante avec la sophistication
+des systèmes modernes.
+
+\separateur
+
+% ============================================================================
+\section{Principes Généraux de l'Anti-Forensique}
+\label{sec:principes-anti-for}
+% ============================================================================
+
+\subsection{Taxonomie des techniques anti-forensiques}
+
+\begin{tableaucours}{p{3.0cm}p{3.5cm}p{5.0cm}}{%
+    \tableauHeader{Catégorie} &
+    \tableauHeader{Objectif} &
+    \tableauHeader{Exemples}
+}
+\textbf{Destruction} & Éliminer la preuve définitivement &
+    Wiping disque, suppression sécurisée, factory reset, destruction
+    physique \\
+\textbf{Obfuscation} & Rendre la preuve illisible ou non identifiable &
+    Chiffrement, packing de malware, stéganographie, encodage \\
+\textbf{Falsification} & Modifier la preuve pour induire en erreur &
+    Timestomping, usurpation d'identité réseau, faux logs \\
+\textbf{Minimisation} & Réduire la quantité de preuves produites &
+    Désactivation de logging, mode furtif, utilisation de RAM uniquement \\
+\textbf{Diversion} & Détourner l'attention de l'investigateur &
+    False flag (faire accuser un tiers), bruit de fond généré
+    artificiellement \\
+\end{tableaucours}
+\vspace{-0.8em}
+\begin{center}{\small\itshape Tableau~22.1. Taxonomie des techniques anti-forensiques}\end{center}
+
+\subsection{Le principe de Locard inversé}
+
+\begin{boxdef}
+\textbf{Principe de Locard inversé}\index{Locard inversé}~:
+toute tentative d'effacement ou de modification d'une preuve produit
+elle-même de nouvelles traces. L'acte de suppression est lui-même
+un événement système qui laisse des artefacts, souvent dans des
+emplacements que l'attaquant ne maîtrise pas ou ignore.
+\end{boxdef}
+
+Ce principe explique pourquoi, dans l'affaire MVOM, la suppression du
+script \texttt{enc\_all.ps1} (Ch.~\ref{chap:for-sys}) a elle-même été
+enregistrée dans le \texttt{\$UsnJrnl} avec horodatage précis~: l'acte
+de \texttt{FileDelete} est un événement journalisé au même titre
+que \texttt{FileCreate}.
+
+\begin{boxCRO}
+\textbf{Analyse CRO. L'asymétrie fondamentale de l'anti-forensique}
+
+$\mathcal{R}$ (côté attaquant)~: pour effacer parfaitement une trace,
+l'attaquant doit connaître \emph{tous} les artefacts qu'elle a générés, une connaissance rarement complète, même pour un attaquant
+sophistiqué.
+
+$\mathcal{R}$ (côté investigateur)~: il suffit qu'\emph{un seul}
+artefact survive parmi les nombreux générés (redondance forensique)
+pour révéler l'activité initiale ET la tentative d'effacement.
+
+$\mathcal{O}$~: une tentative d'effacement détectée renforce
+paradoxalement l'opposabilité du dossier~: elle démontre l'intention
+(\textit{mens rea}) de dissimuler une activité, un élément
+souvent utile à la qualification pénale.
+
+\cro{$\sim$}{$\downarrow$ pour l'attaquant~; $\uparrow\uparrow$ pour l'investigateur}{$\uparrow$ preuve d'intention}
+
+\textbf{Conclusion~:} l'asymétrie structurelle favorise l'investigateur.
+La sophistication nécessaire pour un effacement parfait dépasse les
+moyens de la grande majorité des attaquants, y compris sophistiqués.
+\end{boxCRO}
+
+% ============================================================================
+\section{Anti-Forensique Système~: Détection des Tentatives}
+\label{sec:anti-for-systeme}
+% ============================================================================
+
+\subsection{Timestomping~: manipulation des horodatages}
+
+Le Chapitre~\ref{chap:for-sys} a introduit le timestomping et sa
+détection par croisement \texttt{\$MFT}/\texttt{\$UsnJrnl}. Ce chapitre
+approfondit les techniques et leurs limites.
+
+\begin{boxoutils}{Outils de timestomping et leurs limites}
+\begin{lstlisting}[language=bash_forensique]
+# Outils couramment utilises par les attaquants :
+# - timestomp.exe (Metasploit)
+# - SetMACE
+# - PowerShell natif :
+Set-ItemProperty -Path "C:\malware.exe" -Name CreationTime `
+    -Value "2020-01-01 00:00:00"
+Set-ItemProperty -Path "C:\malware.exe" -Name LastWriteTime `
+    -Value "2020-01-01 00:00:00"
+
+# CE QUE CES OUTILS NE PEUVENT PAS MODIFIER :
+# 1. Le $UsnJrnl -- enregistre l'evenement de modification
+#    des timestamps lui-meme (USN_REASON_BASIC_INFO_CHANGE)
+MFTECmd.exe -f \$UsnJrnl:\$J --csv ./output/
+# Chercher : Reason contient "BasicInfoChange"
+# Cet evenement EST la preuve du timestomping
+
+# 2. Le $LogFile (journal de transactions NTFS)
+# Contient l'historique des transactions, y compris les
+# modifications de timestamps, sur une fenetre plus courte
+# (quelques heures a quelques jours selon l'activite disque)
+LogFileParser.exe -f \$LogFile --csv ./output/logfile.csv
+
+# 3. Les artefacts independants (Prefetch, UserAssist, ShimCache)
+# ne sont PAS synchronises avec les modifications du $MFT
+# -- ils gardent leurs propres horodatages independants
+\end{lstlisting}
+\end{boxoutils}
+
+\begin{boxscenario}{Détection de timestomping, méthode systématique}
+\textbf{Étape~1~:} comparer les 4~horodatages MACE d'un fichier suspect.
+Une cohérence parfaite (les~4~identiques à la seconde près) est
+elle-même suspecte, un fichier créé normalement présente rarement
+4~horodatages strictement identiques.
+
+\textbf{Étape~2~:} croiser avec le \texttt{\$UsnJrnl}. Si le
+\texttt{\$UsnJrnl} contient un événement \texttt{FileCreate} à une
+date différente de celle affichée dans le \texttt{\$MFT}, c'est
+une preuve directe de manipulation.
+
+\textbf{Étape~3~:} croiser avec les artefacts indépendants
+(Prefetch, UserAssist). Si Prefetch enregistre une exécution à
+une date que le \texttt{\$MFT} affiche comme antérieure à la
+création du fichier, c'est une incohérence logique irréfutable.
+
+\textbf{Constatation type~:}
+``Le \texttt{\$MFT} affiche pour le fichier \texttt{rootkit.dll}
+une date de création du 12/08/2019. Le \texttt{\$UsnJrnl} enregistre
+un événement \texttt{FileCreate} pour ce même fichier le 13/03/2026
+à 02h19:15, soit 6~ans et 7~mois après la date affichée par le
+\texttt{\$MFT}. Cette divergence constitue une preuve technique
+de modification des horodatages (timestomping).''
+\end{boxscenario}
+
+\subsection{Suppression sélective de logs}
+
+\begin{boxoutils}{Techniques de suppression de logs Windows et détection}
+\begin{lstlisting}[language=bash_forensique]
+# Technique attaquant : effacer le journal des evenements
+wevtutil cl Security
+wevtutil cl System
+# Efface TOUT le journal -- action elle-meme detectable
+
+# DETECTION : l'effacement génère un evenement
+# Event ID 1102 : "The audit log was cleared"
+# Cet evenement EST enregistre dans le journal Security
+# AVANT que celui-ci soit vide, OU dans le journal qui suit
+
+# Recherche de l'Event ID 1102 (preuve d'effacement de logs)
+wevtutil qe Security /q:"*[System[(EventID=1102)]]" /f:text
+
+# Technique plus sophistiquee : suppression selective d'evenements
+# (modification directe du fichier .evtx)
+# DETECTION : comparer le nombre d'evenements attendu
+# (frequence normale) avec le nombre observe -- un "trou"
+# dans la sequence des Event ID est suspect
+
+# Verifier la continuite des RecordNumber (numero sequentiel)
+# Si RecordNumber saute de 4521 a 4598, 76 evenements manquent
+Get-WinEvent -Path security.evtx |
+    Select-Object RecordId, TimeCreated, Id |
+    Sort-Object RecordId
+\end{lstlisting}
+\end{boxoutils}
+
+\begin{boxalert}
+\textbf{L'Event~ID~1102~: la signature universelle de l'effacement Windows}
+
+\texttt{wevtutil cl} (\textit{clear log}) est la commande la plus
+utilisée par les attaquants pour effacer leurs traces. Elle génère
+\emph{systématiquement} l'Event~ID~1102 (``Le journal d'audit a été
+effacé''), qui survit à l'effacement lui-même car il est écrit
+\emph{après} l'opération de nettoyage. \textbf{Chercher l'Event~ID~1102
+doit être un réflexe systématique} dans toute investigation Windows
+suspectant une dissimulation.
+\end{boxalert}
+
+\subsection{Wiping et suppression sécurisée}
+
+\begin{boxoutils}{Détection de wiping de fichiers}
+\begin{lstlisting}[language=bash_forensique]
+# Outils de wiping courants : sdelete (Sysinternals), CCleaner,
+# Eraser -- ecrivent des donnees aleatoires sur l'espace libere
+
+# DETECTION 1 : signature de sdelete dans le $MFT
+# sdelete renomme le fichier en une chaine de caracteres avant
+# suppression -- cette sequence de renommages est visible dans
+# le $UsnJrnl
+MFTECmd.exe -f \$UsnJrnl:\$J --csv ./output/ |
+    grep -E "RenameOldName|RenameNewName"
+# Plusieurs renommages successifs rapides = signature sdelete
+
+# DETECTION 2 : entropie de l'espace libere
+# Wiping remplit l'espace de donnees aleatoires (haute entropie)
+# Espace libere normalement (juste marque disponible) garde
+# le contenu original jusqu'a reecriture -- entropie variable
+photorec /d /output/ -cmd /dev/sdb1 freespace
+# Analyser l'entropie de l'espace libere :
+ent /output/freespace_dump.bin
+# Entropie proche de 8.0 bits/byte sur de larges plages = wiping
+
+# DETECTION 3 : logs d'execution de l'outil de wiping lui-meme
+# (ironie : l'outil de suppression de preuves laisse ses propres
+# traces -- Prefetch, UserAssist, ShimCache pour sdelete.exe)
+PECmd.exe -f SDELETE.EXE-XXXXXXXX.pf
+\end{lstlisting}
+\end{boxoutils}
+
+% ============================================================================
+\section{Anti-Forensique Réseau~: Désactivation et Camouflage}
+\label{sec:anti-for-reseau}
+% ============================================================================
+
+\subsection{Désactivation de logging~: le cas CloudTrail}
+
+Le Chapitre~\ref{chap:for-cloud} a présenté la tentative
+\texttt{StopLogging} dans l'affaire MVOM. Ce mécanisme se généralise~:
+
+\begin{tableaucours}{p{3.0cm}p{4.0cm}p{4.5cm}}{%
+    \tableauHeader{Plateforme} &
+    \tableauHeader{Action de désactivation} &
+    \tableauHeader{Contre-mesure architecturale}
+}
+AWS CloudTrail & \texttt{StopLogging}, \texttt{DeleteTrail} &
+    Object Lock (WORM) sur le bucket~S3~; alerte CloudWatch
+    sur ces actions \\
+Azure Activity Log & Désactivation via portail (rare, nécessite
+    droits élevés) & Logs exportés vers Log~Analytics
+    (rétention indépendante) \\
+Logs Windows & \texttt{wevtutil cl} &
+    Forwarding vers serveur Syslog centralisé (SIEM) en temps réel \\
+journald (Linux) & \texttt{journalctl --vacuum-time} &
+    Forwarding rsyslog vers serveur distant~; \texttt{Storage=persistent} \\
+\end{tableaucours}
+\vspace{-0.8em}
+\begin{center}{\small\itshape Tableau~22.2. Désactivation de logging et contre-mesures}\end{center}
+
+\begin{boiteRemarque}{Le principe du forwarding~: la meilleure défense}
+La contre-mesure la plus efficace contre toute désactivation de
+logging \emph{locale} est le \textbf{forwarding en temps réel} vers
+un système distant que l'attaquant ne contrôle pas. Un attaquant
+qui compromet un serveur et désactive ses logs locaux ne peut pas
+effacer ce qui a déjà été transmis ailleurs. Cette architecture
+(SIEM centralisé) devrait être recommandée dans toute mission de
+sécurisation post-incident.
+\end{boiteRemarque}
+
+\subsection{Chiffrement opportuniste et tunneling}
+
+\begin{boxoutils}{Détection de canaux chiffrés non identifiés}
+\begin{lstlisting}[language=bash_forensique]
+# L'attaquant chiffre son C2 pour eviter l'inspection du contenu
+# (vu en Ch. 15 : tunneling DNS, HTTPS legitime detourne)
+
+# Detection par metadonnees (meme si contenu illisible) :
+# 1. Certificat TLS auto-signe ou recent
+tshark -r capture.pcap -Y "tls.handshake.type == 11" \
+    -T fields -e tls.handshake.certificate
+# Verifier la date d'emission du certificat -- recent = suspect
+
+# 2. JA3/JA3S fingerprinting (signature du client TLS)
+# Outil : ja3 (python)
+python3 ja3.py capture.pcap
+# Comparer avec des bases de signatures malveillantes connues
+# (ja3er.com, abuse.ch SSL Blacklist)
+
+# 3. Pattern de connexion meme sans dechiffrement
+# (beaconing -- vu en Ch. 15 -- fonctionne meme sur trafic chiffre,
+# car les METADONNEES de connexion restent visibles)
+\end{lstlisting}
+\end{boxoutils}
+
+% ============================================================================
+\section{Anti-Forensique Mobile et IoT}
+\label{sec:anti-for-mobile-iot}
+% ============================================================================
+
+\subsection{Factory reset~: ce qui survit réellement}
+
+Le Chapitre~\ref{chap:for-iot} a introduit la limite du factory reset.
+Cette section approfondit, avec application au mobile (Ch.~\ref{chap:for-mob}).
+
+\begin{tableaucours}{p{3.2cm}p{4.0cm}p{4.5cm}}{%
+    \tableauHeader{Données} &
+    \tableauHeader{Effacées par factory reset~?} &
+    \tableauHeader{Source de récupération}
+}
+Stockage interne (\texttt{/data}) & Oui (en général) &
+    Carving sur l'espace non réécrit (extraction physique avant
+    réécriture complète) \\
+Carte SD externe & \textbf{Non} (sauf reformatage explicite) &
+    Extraction directe de la SD \\
+Logs opérateur (appels, SMS, data) & Non (jamais sur l'appareil) &
+    Réquisition opérateur (art.~57 Loi~2010) \\
+Données cloud synchronisées
+    (avant le reset) & Non &
+    Réquisition fournisseur (Google, iCloud) \\
+Historique réseau opérateur
+    (cellules GSM) & Non &
+    Réquisition + analyse Cell~ID (Ch.~\ref{chap:for-mob}) \\
+\end{tableaucours}
+\vspace{-0.8em}
+\begin{center}{\small\itshape Tableau~22.3. Factory reset~: ce qui est réellement effacé}\end{center}
+
+\subsection{Applications ``vault'' et conteneurs cachés}
+
+\begin{boxalert}
+\textbf{Applications vault~: dissimulation par camouflage}
+
+Les applications de type ``vault'' (\textit{Calculator+},
+\textit{Vault -- Hide Photos}) se présentent sous l'apparence
+d'une application anodine (calculatrice) mais cachent un conteneur
+chiffré accessible par un code secret.
+
+\textbf{Détection~:}
+\begin{itemize}
+    \item \texttt{adb shell pm list packages -f} révèle le nom de
+          package réel, souvent différent du nom affiché
+          (ex.~: \texttt{com.vault.hideit} pour une icône
+          ``Calculatrice'')~;
+    \item Analyse de la taille du stockage de l'application
+          (\texttt{adb shell dumpsys package <package>}) -- une
+          calculatrice de 200~Mo est suspecte~;
+    \item Liste des permissions demandées (accès photos, stockage)
+          incohérente avec la fonction affichée.
+\end{itemize}
+\end{boxalert}
+
+\subsection{Suppression sélective WhatsApp/Telegram}
+
+\begin{boxoutils}{Détection de suppression de conversations}
+\begin{lstlisting}[language=bash_forensique]
+-- Sur msgstore.db (WhatsApp, Ch. 16), verifier les "trous"
+-- dans la sequence des _id (cles primaires auto-incrementees)
+SELECT _id, timestamp FROM messages ORDER BY _id;
+-- Si _id saute de 1847 a 1901, 53 messages ont ete supprimes
+
+-- WhatsApp conserve des backups automatiques quotidiens
+-- (msgstore-YYYY-MM-DD.1.db.crypt15) sur 7 jours par defaut
+-- Comparer le backup de la veille avec la base actuelle :
+-- les messages presents dans le backup mais absents de la base
+-- actuelle ont ete supprimes par l'utilisateur
+
+-- Telegram (cache local, moins de retention) :
+-- chercher les fichiers cache/ supprimes via carving
+-- (Ch. 9 -- foremost/scalpel) sur l'extraction du telephone
+\end{lstlisting}
+\end{boxoutils}
+
+% ============================================================================
+\section{Documenter une Tentative d'Anti-Forensique dans le Rapport}
+\label{sec:documentation-anti-for}
+% ============================================================================
+
+La détection d'une tentative d'anti-forensique doit être documentée
+selon les mêmes règles que toute autre constatation
+(Ch.~\ref{chap:rapport}), avec une attention particulière car
+elle constitue souvent un élément d'intention (\textit{mens rea}).
+
+\begin{lstlisting}[language=bash_forensique,
+    caption={Exemple de constatation et analyse, tentative d'anti-forensique}]
+CONSTATATIONS (anti-forensique) :
+
+C.10 : Le journal des événements Security du serveur enregistre
+       un événement Event ID 1102 ("Le journal d'audit a été
+       effacé") à 02h19:48, par le compte "admin".
+       [Source : wevtutil, Annexe H]
+
+C.11 : Le $UsnJrnl enregistre la suppression du fichier
+       "enc_all.ps1" à 02h18:30, 1 minute et 18 secondes avant
+       l'effacement du journal Security (C.10).
+       [Source : MFTECmd, Annexe B]
+
+ANALYSE :
+
+La séquence temporelle C.10-C.11 est cohérente, avec un niveau
+de confiance élevé, avec une tentative de dissimulation des
+traces de l'intrusion par l'auteur de l'attaque. Cette tentative
+n'a cependant pas atteint son objectif : le $UsnJrnl, distinct
+du journal des événements Security, conserve l'historique complet
+des opérations sur le système de fichiers, incluant la création
+et la suppression du script malveillant.
+
+Hypothèse alternative envisagée et écartée : une maintenance
+système légitime aurait pu causer cet effacement de logs.
+Cette hypothèse est écartée car (1) aucune fenêtre de maintenance
+n'était planifiée à cette date selon les procédures de
+l'entreprise (Annexe E) et (2) la proximité temporelle immédiate
+avec la suppression du fichier malveillant (78 secondes) rend
+cette coïncidence hautement improbable.
+\end{lstlisting}
+
+\begin{boxjuris}
+\textbf{Valeur juridique de la tentative d'anti-forensique}
+
+En droit camerounais, la tentative de dissimulation de preuves
+peut constituer un élément aggravant ou un indice de l'intention
+coupable. L'art.~88 \loicam{2010/012}~\cite{cameroun2010a} (refus de remise de clé de
+déchiffrement, Ch.~12~(UE~SEC4031)) illustre ce principe~:
+le législateur sanctionne spécifiquement les comportements
+d'obstruction à l'investigation. La documentation rigoureuse
+d'une tentative d'effacement (avec ses propres constatations
+et sources) renforce la valeur probatoire du dossier dans
+son ensemble.
+\end{boxjuris}
+
+\separateur
+
+% --- Encadré lab NDAP SUKULU ---
+\begin{boiteRemarque}{Notions mobilisées par le laboratoire INA-LAB-09}
+\begin{itemize}
+    \item \textbf{Deux jeux d'horodatages NTFS}~: chaque entrée de la
+          \$MFT porte quatre horodatages (MACE) dans l'attribut
+          \texttt{\$STANDARD\_INFORMATION} (\$SI), modifiable par un outil
+          utilisateur, et quatre autres dans \texttt{\$FILE\_NAME} (\$FN),
+          que seul le noyau écrit. Le timestomping falsifie \$SI~; \$FN et
+          le \$UsnJrnl (\texttt{FileCreate}) gardent la vraie date.
+    \item \textbf{Indices de timestomping}~: quatre horodatages \$SI
+          identiques à la seconde, une date \$SI antérieure à la date \$FN,
+          ou des fractions de seconde à zéro.
+    \item \textbf{Journal effacé}~: l'effacement du journal Security de
+          Windows laisse l'événement \textbf{1102} (« journal d'audit
+          effacé »), avec le compte qui l'a fait~; c'est souvent le premier
+          événement du journal reconstitué.
+    \item \textbf{Suppression sélective}~: compter les événements par heure
+          et comparer au volume habituel~; une heure anormalement vide
+          révèle des suppressions ciblées.
+\end{itemize}
+\end{boiteRemarque}
+
+\begin{boxresume}
+\textbf{Ce qu'il faut retenir de ce chapitre~:}
+\begin{itemize}
+    \item \textbf{Principe de Locard inversé}~: toute tentative
+          d'effacement produit elle-même de nouvelles traces.
+          L'asymétrie favorise structurellement l'investigateur~:
+          un seul artefact survivant suffit à révéler l'activité
+          \emph{et} la tentative de dissimulation.
+
+    \item \textbf{Timestomping}~: détecté par croisement
+          \texttt{\$MFT}/\texttt{\$UsnJrnl}~; les outils de
+          timestomping ne peuvent pas modifier le \texttt{\$UsnJrnl}
+          ni les artefacts indépendants (Prefetch, UserAssist).
+
+    \item \textbf{Event~ID~1102}~: signature universelle de
+          l'effacement des journaux Windows (\texttt{wevtutil cl}).
+          Réflexe systématique de recherche dans toute investigation
+          suspectant une dissimulation.
+
+    \item \textbf{Le forwarding en temps réel} (SIEM centralisé)
+          est la meilleure architecture de défense~: un attaquant
+          qui efface les logs locaux ne peut rien contre ce qui a
+          déjà été transmis ailleurs.
+
+    \item \textbf{Factory reset}~: n'efface ni la SD~Card externe,
+          ni les logs opérateur, ni les données cloud déjà
+          synchronisées. Toujours compléter par réquisition.
+
+    \item \textbf{Applications vault}~: détectées par le nom de
+          package réel (\texttt{pm list packages -f}), la taille
+          de stockage incohérente, les permissions excessives.
+
+    \item \textbf{Documentation}~: une tentative d'anti-forensique
+          se documente comme toute constatation (source, horodatage)
+          suivie d'une analyse avec niveau de confiance et
+          hypothèses alternatives réfutées (E9bis PIU). Elle
+          constitue souvent un indice d'intention coupable.
+\end{itemize}
+\end{boxresume}
+
+\bigskip
+
+\begin{boxexo}[title={\ding{45}\quad Exercice~22.1. Identifier les techniques \niveaubase}]
+Pour chacune des observations suivantes, identifiez la catégorie
+d'anti-forensique (Tableau~22.1) et la contre-mesure de détection
+appropriée~:
+\begin{enumerate}[(a)]
+    \item Un fichier affiche une date de création de 2015 mais
+          son contenu fait référence à un événement de 2026.
+    \item Le journal Security d'un serveur Windows est vide pour
+          toute la journée du 13~mars~2026.
+    \item Un suspect possède une application ``Calculatrice''
+          qui pèse 340~Mo sur son téléphone.
+    \item Un trafic réseau chiffré présente des connexions toutes
+          les exactement 300~secondes vers la même IP.
+\end{enumerate}
+\end{boxexo}
+
+\begin{boxexo}[title={\ding{45}\quad Exercice~22.2. Détection de timestomping \niveaumoyen}]
+L'analyse \texttt{\$MFT} d'un fichier \texttt{backdoor.dll} montre~:
+\begin{lstlisting}[language=bash_forensique]
+Created (E):   2018-03-22 09:15:00
+Modified (M):  2018-03-22 09:15:00
+Accessed (A):  2018-03-22 09:15:00
+Changed (C):   2018-03-22 09:15:00
+\end{lstlisting}
+L'analyse \texttt{\$UsnJrnl} montre~:
+\begin{lstlisting}[language=bash_forensique]
+2026-03-13 02:19:15  backdoor.dll  FileCreate
+2026-03-13 02:19:16  backdoor.dll  DataExtend|Close
+2026-03-13 02:19:20  backdoor.dll  BasicInfoChange
+\end{lstlisting}
+\begin{enumerate}[(a)]
+    \item Interprétez chacune des trois lignes du \texttt{\$UsnJrnl}.
+          Que signifie spécifiquement \texttt{BasicInfoChange}~?
+    \item Rédigez la constatation forensique correspondante,
+          en respectant la distinction constatation/analyse.
+    \item Pourquoi les 4~horodatages MACE parfaitement identiques
+          dans le \texttt{\$MFT} sont-ils eux-mêmes un indice
+          suspect, indépendamment de la divergence avec le
+          \texttt{\$UsnJrnl}~?
+\end{enumerate}
+\end{boxexo}
+
+\begin{boxexo}[title={\ding{45}\quad Exercice~22.3. Investigation complète avec anti-forensique \niveauexpert}]
+Dans l'affaire ONAMBELE (Ch.~3~(UE~SEC4031)), vous découvrez
+les éléments suivants lors de l'analyse du serveur compromis~:
+\begin{itemize}
+    \item Event~ID~1102 dans le journal Security à 03h42:15~;
+    \item \texttt{\$UsnJrnl}~: suppression de 14~fichiers \texttt{.xlsx}
+          entre 03h40:00 et 03h41:30~;
+    \item Un fichier \texttt{cleanup.bat} dans le Prefetch, exécuté
+          à 03h39:50, contenant (reconstitué depuis la RAM via
+          Volatility \texttt{cmdline})~:
+\begin{lstlisting}[language=bash_forensique]
+del C:\Finance\rapports\*.xlsx
+wevtutil cl Security
+wevtutil cl System
+sdelete -p 3 C:\Finance\rapports\*
+\end{lstlisting}
+\end{itemize}
+\begin{enumerate}[(a)]
+    \item Reconstituez la chronologie complète des événements,
+          en distinguant ce qui s'est passé et ce qui a été
+          tenté pour le dissimuler.
+    \item L'utilisation de \texttt{sdelete -p~3} (3~passes
+          d'écrasement) rend-elle les fichiers \texttt{.xlsx}
+          définitivement irrécupérables~? Quelles sources
+          alternatives existent malgré cela (pensez aux chapitres
+          précédents~: sauvegardes, logs réseau, copies cloud)~?
+    \item Rédigez 4~constatations et l'analyse correspondante,
+          en respectant scrupuleusement la structure du
+          Ch.~\ref{chap:rapport}.
+    \item Quelle valeur cette séquence (suppression~$\to$
+          effacement logs~$\to$ wiping sécurisé) apporte-t-elle
+          à la démonstration de l'intention coupable~? Comment
+          formuler cela sans franchir la limite de la qualification
+          juridique (réservée à l'autorité judiciaire)~?
+\end{enumerate}
+\end{boxexo}
+
+\bigskip
+
+\begin{boxinfo}
+\textbf{Transition.} La maîtrise de l'anti-forensique complète le
+socle technique du cours~: vous savez désormais non seulement
+investiguer, mais aussi reconnaître et contrer les tentatives de
+dissimulation. Cette compétence est transversale elle
+s'applique à chaque type d'evidence rencontré dans la Partie~IV.
+
+Les chapitres suivants de la Partie~V (selon le programme retenu)
+abordent les perspectives prospectives~: OSINT avancé, intelligence
+artificielle appliquée à la détection d'anomalies, et impact
+des technologies post-quantiques sur l'intégrité des preuves
+numériques à long terme.
+\end{boxinfo}

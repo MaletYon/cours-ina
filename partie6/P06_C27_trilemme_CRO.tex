@@ -1,0 +1,914 @@
+% ============================================================================
+% Fichier  : partie6/P06_C27_trilemme_CRO.tex
+% Titre    : Le Trilemme CRO -- Formalisation et Implications
+% Auteur   : MINKA MI NGUIDJOÏ Thierry Emmanuel
+% ============================================================================
+
+\chapter{Le Trilemme CRO. Formalisation et Implications}
+\label{chap:CRO}
+
+\epigraph{%
+    « Security is always a trade-off between confidentiality, integrity,
+    and availability. The perfect balance is the holy grail of our
+    field. »%
+}{Bruce Schneier}
+
+\niveauChapitre{Recherche}{%
+    Mathématiques niveau master recommandées (théorie de l'information~:
+    entropie, information mutuelle). Ce chapitre formalise
+    rétrospectivement l'outil utilisé intuitivement dans chaque
+    \texttt{boxCRO} depuis le Prologue~: relire quelques exemples
+    antérieurs avant d'aborder ce chapitre est conseillé.%
+}
+
+\begin{boxobjectifs}
+\begin{itemize}
+    \item Maîtriser les fondements de théorie de l'information
+          nécessaires~: entropie de Shannon, information mutuelle,
+          distance en variation totale, inégalité de Pinsker.
+    \item Comprendre la formalisation rigoureuse du cadre CLO
+          (\textit{Cryptographic Legal Opposability})~: définitions
+          précises de $\mathsf{Conf}$, $\mathsf{Rel}$ et $\mathsf{Opp}$.
+    \item Énoncer et comprendre la preuve du \textbf{théorème
+          d'impossibilité} du Trilemme CRO conditionnel, établi
+          par inégalités de Pinsker et de Fano.
+    \item Analyser les trois études de cas documentées (Helios,
+          zk-SNARKs, ECDSA) et comprendre pourquoi elles illustrent
+          des points distincts de la surface de compromis.
+    \item Relier la borne théorique aux limites cognitives humaines
+          (capacité d'extraction institutionnelle $\Delta$) et à la
+          littérature en sciences cognitives.
+    \item Appliquer ce cadre théorique, désormais établi, à l'analyse
+          de systèmes forensiques concrets rencontrés dans ce cours.
+\end{itemize}
+\end{boxobjectifs}
+
+\bigskip
+
+% ============================================================================
+\section*{Un résultat établi, pas une conjecture}
+% ============================================================================
+
+Depuis le Prologue de ce cours, chaque chapitre a mobilisé une
+\texttt{boxCRO} pour analyser une décision investigative~: fallait-il
+collecter l'intégralité du téléphone de MBONGO ou seulement les
+données pertinentes (Ch.~9~(UE~SEC4031))~? Comment arbitrer entre
+conservation urgente d'une preuve cloud et respect de la vie privée
+(Ch.~10~(UE~SEC4031))~? Pourquoi la chaîne de custody
+maximise-t-elle l'opposabilité au prix d'une contrainte sur la
+confidentialité (Ch.~8~(UE~SEC4031))~?
+
+Ce chapitre formalise l'outil que vous avez utilisé tout au long
+du cours~: le \textbf{Trilemme CRO}. Il ne s'agit plus, à la date
+de rédaction de ce cours, d'une proposition spéculative~: le cadre
+a été \textbf{publié dans IEEE Access}, revue à comité de lecture
+indexée (facteur d'impact~$\approx 3{,}6$, classement Clarivate
+JCR), en deux articles complémentaires~:
+
+\begin{itemize}
+    \item \textbf{CLO Framework}~\cite{minka2026clo} établit les
+          définitions formelles de $\mathsf{Conf}$, $\mathsf{Rel}$
+          et $\mathsf{Opp}$, prouve les bornes fondamentales
+          (Théorème~\ref{thm:bounds} et Théorème~\ref{thm:bottleneck}
+          de ce chapitre) et documente trois études de cas réelles~;
+    \item \textbf{Conditional CRO Trilemma}~\cite{minka2026conditional}
+          établit la \textbf{borne générale d'impossibilité} restée
+          ouverte dans le premier article, le résultat central de
+          ce chapitre (Théorème~\ref{thm:trilemma-general}).
+\end{itemize}
+
+Ce chapitre n'est donc pas un exposé de spéculation théorique~:
+c'est la présentation pédagogique d'un résultat de recherche
+publié et évalué par les pairs, replacé dans le contexte appliqué
+de l'investigation numérique qui occupe ce cours.
+
+\separateur
+
+% ============================================================================
+\section{Fondements de Théorie de l'Information}
+\label{sec:fondements-ti}
+% ============================================================================
+
+La formalisation du Trilemme CRO repose entièrement sur la théorie
+de l'information de Shannon~\cite{shannon1948}. Cette section pose
+les quatre outils mathématiques nécessaires, avec un niveau de
+détail suffisant pour suivre les démonstrations sans exiger un
+cours de théorie de l'information complet.
+
+\subsection{Entropie de Shannon}
+
+\begin{boxdef}
+\textbf{Entropie}\index{entropie de Shannon}~: pour une variable
+aléatoire discrète $X$ de loi $p_X$, l'entropie de Shannon mesure
+l'incertitude moyenne (en bits) associée à $X$~:
+\begin{equation}
+H(X) = -\sum_{x \in \mathcal{X}} p_X(x) \log_2 p_X(x)
+\label{eq:entropie}
+\end{equation}
+L'\textbf{entropie conditionnelle} $H(X \mid Y)$ quantifie
+l'incertitude résiduelle sur $X$ après observation de $Y$.
+\end{boxdef}
+
+\textbf{Intuition forensique}~: $H(V \mid C)$, l'entropie d'un
+verdict $V$ (par exemple, une qualification judiciaire) sachant le
+contexte institutionnel $C$ (les compétences du juge, le cadre
+légal applicable), mesure le nombre de scénarios légaux distincts
+qu'un décideur peut raisonnablement distinguer compte tenu de ce
+qu'il sait déjà.
+
+\subsection{Information mutuelle}
+
+\begin{boxdef}
+\textbf{Information mutuelle}~: mesure la quantité d'information
+partagée entre deux variables aléatoires~:
+\begin{equation}
+I(X;Y) = H(X) - H(X \mid Y) = H(Y) - H(Y \mid X)
+\label{eq:info-mutuelle}
+\end{equation}
+$I(X;Y) = 0$ signifie que $X$ et $Y$ sont indépendants~: observer
+$Y$ ne renseigne en rien sur $X$. $I(X;Y) = H(X)$ signifie que $Y$
+détermine entièrement $X$.
+\end{boxdef}
+
+C'est cette quantité, appliquée aux preuves cryptographiques $\Sigma$
+et aux verdicts institutionnels $V$, qui formalise précisément ce
+que ce cours a appelé intuitivement ``l'opposabilité'' depuis le
+Ch.~8~(UE~SEC4031).
+
+\subsection{Distance en variation totale}
+
+\begin{boxdef}
+\textbf{Distance en variation totale}~: pour deux distributions de
+probabilité $P, Q$ sur le même espace~:
+\begin{equation}
+\mathrm{TV}(P,Q) = \frac{1}{2}\sum_{x} |P(x) - Q(x)|
+= \max_{A} |P(A) - Q(A)|
+\label{eq:tv}
+\end{equation}
+$\mathrm{TV}(P,Q) = 0$ si et seulement si $P = Q$ (distributions
+parfaitement indistinguables)~; $\mathrm{TV}(P,Q) \leq 1$ toujours.
+\end{boxdef}
+
+\textbf{Intuition forensique}~: si deux messages $m_0$ et $m_1$
+produisent des preuves cryptographiques dont les distributions ont
+une distance en variation totale nulle, alors aucun observateur,
+quels que soient ses moyens, ne peut déterminer lequel des deux
+messages a réellement été chiffré. C'est précisément la définition
+de la confidentialité parfaite mobilisée dans le cadre CLO.
+
+\subsection{Inégalité de Pinsker}
+
+\begin{boxjuris}
+\textbf{Lemme (Inégalité de Pinsker)}~: pour deux distributions
+$P, Q$~:
+\begin{equation}
+\mathrm{TV}(P,Q) \leq \sqrt{\tfrac{1}{2}\,D_{\mathrm{KL}}(P \| Q)}
+\label{eq:pinsker}
+\end{equation}
+où $D_{\mathrm{KL}}$ est la divergence de Kullback-Leibler.
+Cette inégalité \textbf{relie une mesure de distinguabilité
+statistique} (variation totale) \textbf{à une mesure
+d'information} (divergence, liée à l'information mutuelle).
+C'est l'outil central qui permet, dans~\cite{minka2026conditional},
+de traduire une exigence de fiabilité (haute information mutuelle
+entre message et preuve) en une borne supérieure sur la
+confidentialité atteignable.
+\end{boxjuris}
+
+\subsection{Inégalité de Fano}
+
+\begin{boxjuris}
+\textbf{Lemme (Inégalité de Fano)}~: pour un estimateur $\hat M$
+d'une variable $M$ à partir d'une observation, avec probabilité
+d'erreur $p_e = \Pr[\hat M \neq M]$~:
+\begin{equation}
+H(M \mid \hat M) \leq h(p_e) + p_e \log_2(|\mathcal{M}|-1)
+\label{eq:fano}
+\end{equation}
+où $h(p_e)$ est l'entropie binaire. Cette inégalité formalise une
+idée intuitive~: \textbf{si l'on peut deviner $M$ avec une faible
+erreur, alors $M$ ne peut pas être trop incertain compte tenu de
+l'observation}. Appliquée au contexte forensique, elle force la
+fiabilité ($\mathsf{Rel}$ élevé, faible erreur de vérification) à
+impliquer une information mutuelle minimale entre message et
+preuve, l'un des deux verrous de la démonstration du théorème
+principal de ce chapitre.
+\end{boxjuris}
+
+% ============================================================================
+\section{Le Cadre CLO~: Définitions Formelles}
+\label{sec:cadre-clo}
+% ============================================================================
+
+\subsection{Le protocole CLO}
+
+\begin{boxdef}
+\textbf{Protocole CLO} (\textit{Cryptographic Legal Opposability})
+\cite{minka2026clo}~: un protocole $\mathcal{P}$ consiste en~:
+\begin{itemize}
+    \item des espaces~: messages $\mathcal{M}$, preuves $\Sigma$,
+          contextes $\mathcal{C}$, verdicts $\mathcal{V}$~;
+    \item des algorithmes~: $\mathsf{Setup}$, $\mathsf{Prove}$,
+          $\mathsf{Verify}$, et surtout
+          $\mathsf{Interpret}(\sigma, c) \to v$~: \textbf{l'algorithme
+          d'interprétation institutionnelle} qui transforme une
+          preuve cryptographique $\sigma$, dans un contexte $c$,
+          en un verdict exploitable $v$.
+\end{itemize}
+\end{boxdef}
+
+L'apport conceptuel central de ce cadre est de formaliser
+explicitement ce que la cryptographie classique ignore~:
+$\mathsf{Verify}$ garantit la correction mathématique~;
+$\mathsf{Interpret}$ formalise la capacité d'un acteur institutionnel
+(juge, auditeur, régulateur, ou, dans ce cours, l'OPJ et le
+magistrat camerounais) à \textbf{extraire un sens exploitable} de
+cette preuve. C'est cette seconde exigence, absente des définitions
+de sécurité cryptographique standard, que ce cours a systématiquement
+appelée ``opposabilité''.
+
+\subsection{Les trois mesures}
+
+\begin{boxdef}
+\textbf{Confidentialité}~\cite{minka2026clo}~:
+\begin{equation}
+\mathsf{Conf}(\mathcal{P}) = 1 - \max_{m_0,m_1 \in \mathcal{M}}
+\mathrm{TV}\bigl(P_{\Sigma \mid M=m_0},\, P_{\Sigma \mid M=m_1}\bigr)
+\label{eq:conf}
+\end{equation}
+$\mathsf{Conf} = 1$~: les preuves sont parfaitement indistinguables
+quel que soit le message (confidentialité parfaite, au sens de la
+théorie de l'information). $\mathsf{Conf} = 0$~: les preuves
+révèlent complètement le message.
+
+\textbf{Fiabilité}~\cite{minka2026clo}~:
+\begin{equation}
+\mathsf{Rel}(\mathcal{P}) = \min_{m \in \mathcal{M}, c \in \mathcal{C}}
+\Pr[\mathsf{Verify}(pk, \mathsf{Prove}(sk,m,c), c) = 1]
+\label{eq:rel}
+\end{equation}
+$\mathsf{Rel} = 1$~: les preuves honnêtes sont toujours vérifiées
+correctement (complétude parfaite).
+
+\textbf{Opposabilité}~\cite{minka2026clo}~:
+\begin{equation}
+\mathsf{Opp}(\mathcal{P}, C) = \frac{I(V; \Sigma \mid C)}{H(V \mid C)}
+\label{eq:opp}
+\end{equation}
+$\mathsf{Opp}$ mesure la \textbf{fraction de l'incertitude sur le
+verdict que l'observation de la preuve permet effectivement de
+lever}, étant donné le contexte institutionnel. $\mathsf{Opp} = 1$~:
+la preuve détermine entièrement le verdict (opposabilité parfaite).
+$\mathsf{Opp} = 0$~: la preuve n'apporte aucune information
+exploitable au-delà du contexte déjà disponible.
+\end{boxdef}
+
+\begin{boxalert}
+\textbf{Sur la nature mesurable de $\mathsf{Opp}$~: une innovation
+du cadre CLO}
+
+Contrairement à la confidentialité et à la fiabilité, déjà
+formalisées de longue date en cryptographie, l'opposabilité au sens
+de la définition~\eqref{eq:opp} \textbf{est une mesure originale}
+introduite dans~\cite{minka2026clo}. C'est elle qui permet de
+quantifier rigoureusement une intuition que ce cours a mobilisée
+de façon qualitative depuis le Prologue~: une preuve peut être
+mathématiquement irréprochable ($\mathsf{Rel}$ élevé) tout en étant
+\textbf{institutionnellement inexploitable} si aucun décideur ne
+peut en extraire un verdict actionnable, exactement le
+``\textit{Invisible Authenticity Paradox}'' documenté dans
+l'article fondateur (Section~\ref{sec:etudes-cas}).
+\end{boxalert}
+
+% ============================================================================
+\section{Les Théorèmes Fondamentaux}
+\label{sec:theoremes}
+% ============================================================================
+
+\subsection{Bornes de mesure et goulot d'étranglement contextuel}
+
+\begin{boxjuris}
+\textbf{Théorème~1 (Bornes de mesure)}~\cite{minka2026clo}~: pour
+tout protocole CLO $\mathcal{P}$~:
+\begin{equation}
+0 \leq \mathsf{Conf}(\mathcal{P}) \leq 1, \quad
+0 \leq \mathsf{Rel}(\mathcal{P}) \leq 1, \quad
+0 \leq \mathsf{Opp}(\mathcal{P}, \mu) \leq 1
+\label{thm:bounds}
+\end{equation}
+\end{boxjuris}
+
+\begin{boxjuris}
+\textbf{Théorème~2 (Goulot d'étranglement contextuel)}~%
+\cite{minka2026clo}~: pour tout protocole CLO avec fonction
+d'interprétation $\mathsf{Interpret}$ et distribution de contexte
+$\mu$ sur $\mathcal{C}$~:
+\begin{equation}
+\mathsf{Opp}(\mathcal{P}, C) = \frac{I(V;\Sigma\mid C)}{H(V\mid C)}
+\leq \min\left\{1,\; \frac{H(C)}{H(V \mid C)}\right\}
+\label{thm:bottleneck}
+\end{equation}
+\textbf{Interprétation}~: l'opposabilité est structurellement
+plafonnée par la \textbf{capacité de connaissance de
+l'interprète}, c'est-à-dire par ce que le contexte institutionnel
+($H(C)$~: la formation du juge, la richesse du cadre légal,
+l'expertise de l'auditeur) permet effectivement de distinguer.
+Aucune sophistication cryptographique supplémentaire ne peut
+compenser un goulot d'étranglement de compréhension institutionnelle.
+\end{boxjuris}
+
+\begin{boiteRemarque}{Une lecture directement applicable au Cameroun}
+Le Théorème~2 explique, en termes rigoureux, une observation
+qualitative déjà rencontrée au Ch.~12~(UE~SEC4031)~: la
+formation des magistrats camerounais au droit du numérique
+constitue un facteur limitant pour l'opposabilité des preuves
+numériques, indépendamment de la qualité technique de l'expertise
+forensique produite. Investir dans $H(C)$ (la formation des juges,
+des OPJ, des avocats) augmente le plafond théorique d'opposabilité
+atteignable par \emph{tout} système de preuve, là où investir
+uniquement dans la sophistication cryptographique ($\Sigma$) ne le
+fait pas.
+\end{boiteRemarque}
+
+\subsection{Le Théorème d'Impossibilité Général}
+
+L'article fondateur~\cite{minka2026clo} avait établi le Corollaire~2
+(la tension qualitative entre les trois dimensions) mais laissait
+ouverte, explicitement, la question d'une \textbf{borne générale
+quantifiée}. C'est cette question que résout
+l'article~\cite{minka2026conditional}.
+
+\begin{boxjuris}
+\textbf{Théorème~3 (Trilemme CRO Conditionnel, pour protocoles
+réguliers)}~\cite{minka2026conditional}~: sous des hypothèses de
+capacité d'extraction bornée, d'espace de verdicts borné et de
+régularité du protocole, pour tout protocole de preuve $\mathcal{P}$
+avec paramètre de sécurité $\lambda \geq 64$~:
+\begin{equation}
+\mathsf{Conf}(\mathcal{P}) \cdot \mathsf{Rel}(\mathcal{P}) \cdot
+\mathsf{Opp}(\mathcal{P}) \;\leq\; \frac{\Delta}{\lambda} +
+O(\lambda^{-2}) + \mathrm{negl}(\lambda)
+\label{thm:trilemma-general}
+\end{equation}
+où $\Delta$ quantifie la \textbf{capacité d'extraction
+institutionnelle} (le nombre de bits d'information décisionnelle
+qu'un interprète humain peut effectivement traiter), et le terme
+$O(\lambda^{-2})$ capture les contraintes cryptographiques d'ordre
+supérieur, négligeables pour les paramètres de sécurité usuels
+($\lambda \geq 128$).
+\end{boxjuris}
+
+\subsection{Esquisse de la démonstration}
+
+La preuve complète, technique, occupe plusieurs pages
+de~\cite{minka2026conditional}~; cette section en donne la structure
+logique, suffisante pour en comprendre la portée sans en reproduire
+tous les détails calculatoires.
+
+\begin{enumerate}
+    \item \textbf{La fiabilité force l'information mutuelle.}
+          Par l'inégalité de Fano~\eqref{eq:fano}, si
+          $\mathsf{Rel} \geq 1/2$ (toute preuve raisonnable doit
+          au moins faire mieux qu'une pièce de monnaie), alors
+          $I(M; \Sigma, C) \geq \mathsf{Rel} \cdot \lambda - 1$~:
+          un système fiable nécessite que la preuve porte une
+          quantité substantielle d'information sur le message.
+    \item \textbf{L'opposabilité est bornée par l'extraction
+          institutionnelle.} Si l'on modélise la capacité
+          d'extraction humaine $K$ comme limitée à $\Delta$~bits
+          (justifié en Section~\ref{sec:capacite-extraction}),
+          alors $I(V;\Sigma\mid C) \lesssim I(M;\Sigma\mid C) + \Delta$.
+    \item \textbf{L'espace des verdicts est borné.} Par le théorème
+          de codage de source de Shannon, un espace de verdicts
+          institutionnellement gérable impose
+          $H(V \mid C) \geq \alpha \cdot H(C) - 1$ pour un paramètre
+          $\alpha$ de granularité des verdicts.
+    \item \textbf{La confidentialité est bornée par Pinsker.} Une
+          forte information mutuelle $I(M;\Sigma\mid C)$ (requise
+          pour la fiabilité, étape~1) implique, via
+          l'inégalité~\eqref{eq:pinsker}, une borne supérieure sur
+          $\mathsf{Conf}$~: plus la preuve est informative sur le
+          message, moins elle peut rester confidentielle.
+    \item \textbf{Combinaison et optimisation.} En combinant ces
+          quatre bornes et en optimisant sur la variable
+          $x = I(M;\Sigma\mid C)$ (un compromis interne entre
+          fiabilité et confidentialité), on obtient le maximum
+          atteignable du produit
+          $\mathsf{Conf} \cdot \mathsf{Rel} \cdot \mathsf{Opp}$,
+          qui se révèle être exactement~$\Delta/\lambda$ à des
+          termes négligeables près.
+\end{enumerate}
+
+\begin{boxalert}
+\textbf{Honnêteté scientifique sur la portée du résultat}
+
+Comme tout résultat de recherche rigoureux, ce théorème s'applique
+sous des \textbf{hypothèses explicites} (protocoles ``réguliers'',
+capacité d'extraction additive et non multiplicative, espace de
+verdicts borné), discutées et justifiées
+dans~\cite{minka2026conditional}, mais qui délimitent le domaine
+de validité du résultat. Les auteurs eux-mêmes identifient des
+formes alternatives de bornes (sous-linéaire, saturante) comme
+pistes de recherche future. Cette transparence sur les limites
+d'un résultat est elle-même une compétence forensique~:
+documenter ce qu'une analyse établit \emph{et} ce qu'elle
+n'établit pas (Ch.~\ref{chap:rapport}, distinction
+constatation/analyse).
+\end{boxalert}
+
+% ============================================================================
+\section{Capacité d'Extraction Institutionnelle~: le Paramètre $\Delta$}
+\label{sec:capacite-extraction}
+% ============================================================================
+
+\subsection{Fondement en sciences cognitives}
+
+Le paramètre $\Delta$ n'est pas un artifice mathématique sans
+ancrage empirique~: il est directement relié aux travaux fondateurs
+de Miller~\cite{miller1956} sur la capacité de la mémoire de travail
+humaine, estimée à $7 \pm 2$ ``chunks'' d'information.
+
+\begin{tableaucours}{p{3.5cm}p{3.0cm}p{4.5cm}}{%
+    \tableauHeader{Composante} &
+    \tableauHeader{Estimation} &
+    \tableauHeader{Justification}
+}
+Capacité individuelle de base & $\approx 21$~bits &
+    7~chunks~$\times$~3~bits par chunk (distinction entre~8~états
+    possibles par chunk) \\
++ Documentation institutionnelle & $+5$ à $10$~bits &
+    Procédures écrites, matériaux de référence
+    (ex.~: guides de qualification, Ch.~12~(UE~SEC4031)) \\
++ Collaboration & $+10$ à $20$~bits &
+    Délibération multi-acteurs, mise en commun d'expertise
+    (collège de juges, équipe d'enquête) \\
++ Spécialisation & $+10$ à $15$~bits &
+    Formation spécifique au-delà de la cognition générale
+    (expert agréé, Ch.~12~(UE~SEC4031)) \\
+\end{tableaucours}
+\vspace{-0.8em}
+\begin{center}{\small\itshape Tableau~27.1. Construction du paramètre
+$\Delta$ pour une institution bien dotée}\end{center}
+
+Cette construction additive conduit à une estimation
+$\Delta \in [20, 60]$~bits pour des institutions bien dotées en
+ressources, cohérente avec les analyses empiriques de contextes
+réels présentées dans les deux articles.
+
+\subsection{Estimations empiriques de $H(C)$ par contexte}
+
+\begin{tableaucours}{p{3.5cm}p{2.5cm}p{5.0cm}}{%
+    \tableauHeader{Contexte institutionnel} &
+    \tableauHeader{$H(C)$ estimé} &
+    \tableauHeader{Justification}
+}
+Tribunal de juridiction générale & $\approx 8$~bits &
+    $\approx 256$~contextes évidentiaires distingués \\
+Régulateur spécialisé & $\approx 11$~bits &
+    $\approx 2048$~contextes (réglementation financière détaillée) \\
+Expert technique de domaine & $\approx 20$~bits &
+    $\approx 10^6$~contextes (connaissance fine du domaine) \\
+Contexte électoral (Helios) & $30$ à $50$~bits &
+    Registre des électeurs, structure du scrutin, règles du
+    district \\
+Conformité financière (zk-SNARKs) & $40$ à $70$~bits &
+    Historique des transactions, réglementation, pistes d'audit \\
+Signature contractuelle (ECDSA) & $20$ à $40$~bits &
+    Parties, termes, juridiction, contexte volontairement
+    restreint \\
+\end{tableaucours}
+\vspace{-0.8em}
+\begin{center}{\small\itshape Tableau~27.2. Estimations empiriques de
+$H(C)$ par type de contexte (d'après~\cite{minka2026clo,minka2026conditional})}\end{center}
+
+\begin{boiteRemarque}{Le paradoxe de l'écart de capacité}
+Une observation frappante des deux articles~: atteindre une
+opposabilité significative ($\mathsf{Opp} \gtrsim 0{,}5$) pour des
+paramètres de sécurité cryptographique usuels ($\lambda = 128$
+à~$256$~bits) exigerait un contexte institutionnel
+$H(C) \approx 64$ à~$128$~bits. Or les estimations empiriques de
+contextes institutionnels réels (Tableau~27.2) plafonnent typiquement
+à~$8$ à~$20$~bits, un \textbf{écart d'un facteur~5 à~10} entre
+ce que la cryptographie moderne exige et ce que les institutions
+peuvent effectivement traiter. C'est ce paradoxe que les auteurs
+nomment l'\textit{Invisible Authenticity Paradox}.
+\end{boiteRemarque}
+
+% ============================================================================
+\section{Trois Études de Cas Documentées}
+\label{sec:etudes-cas}
+% ============================================================================
+
+L'article fondateur~\cite{minka2026clo} analyse trois systèmes
+cryptographiques réellement déployés, révélant des positions
+distinctes et cohérentes sur la surface de compromis CRO.
+
+\subsection{Helios~: vérifiabilité électorale}
+
+Le protocole de vote électronique Helios~\cite{adida2009helios}
+combine chiffrement ElGamal et preuves à divulgation nulle pour
+garantir l'intégrité du scrutin sans compromettre le secret du vote.
+
+\begin{boxscenario}{Helios, l'institutionnalisation impossible}
+Lors de l'élection présidentielle de l'\textit{Université catholique
+de Louvain} (mars~2009)~\cite{adida2009university}, les
+``\textit{trustees}'' (fiduciaires) sélectionnés parmi des étudiants
+et le personnel administratif, choisis pour leur représentativité
+institutionnelle, pas pour leur expertise cryptographique,
+n'ont pas pu exécuter eux-mêmes les opérations de génération et de
+déchiffrement des clés. Des experts cryptographiques externes ont
+dû intervenir. Plus frappant encore~: l'\textit{International
+Association for Cryptologic Research} (IACR), pourtant composée
+de cryptographes professionnels, a dû \textbf{annuler entièrement}
+son élection de novembre~2025 après qu'un fiduciaire a
+irrémédiablement perdu sa portion de la clé de déchiffrement
+distribuée~\cite{iacr2025}.
+\end{boxscenario}
+
+\textbf{Lecture CRO}~: Helios atteint une confidentialité et une
+fiabilité élevées (le secret du vote et l'intégrité du dépouillement
+sont mathématiquement garantis), mais une opposabilité
+institutionnelle estimée à $\mathsf{Opp} \approx 0{,}50$, même
+des cryptographes professionnels peinent à opérer le système de
+façon autonome.
+
+\subsection{zk-SNARKs~: conformité financière}
+
+Les preuves à divulgation nulle succinctes (zk-SNARKs) permettent
+à une institution financière de prouver sa conformité réglementaire
+(lutte anti-blanchiment, filtrage des sanctions) via une preuve
+de quelques centaines d'octets, sans révéler le détail des
+transactions sous-jacentes.
+
+\textbf{Lecture CRO}~: confidentialité quasi-parfaite des
+transactions individuelles, mais lorsqu'un schéma suspect émerge
+et qu'une investigation ciblée devient nécessaire (exactement le
+type de situation rencontré au Ch.~\ref{chap:for-cloud} de ce
+cours, analyse blockchain), l'opacité cryptographique qui protège
+la confidentialité des clients \textbf{empêche précisément
+l'investigation que la réglementation est censée permettre}.
+L'article estime $\mathsf{Opp} \approx 0{,}67$ pour ce type de
+système, meilleur qu'Helios, mais encore loin de l'optimum.
+
+\subsection{ECDSA~: preuve juridique}
+
+À l'opposé du spectre, les signatures numériques à courbes
+elliptiques (ECDSA)~\cite{johnson2001ecdsa}, omniprésentes dans
+les infrastructures à clé publique (Ch.~11~(UE~SEC4031),
+eIDAS), atteignent une \textbf{acceptation judiciaire quasi
+universelle}~: les tribunaux comprennent l'affirmation sémantique
+``la partie A a autorisé le document D'' sans formation
+cryptographique, via des décennies de jurisprudence et
+d'infrastructure PKI établie.
+
+\textbf{Lecture CRO}~: $\mathsf{Opp} \approx 0{,}90$, la plus
+élevée des trois systèmes étudiés, mais au prix d'une
+confidentialité quasi nulle~: la vérification exige de révéler
+publiquement les messages signés et les relations entre clés,
+incompatible avec des contextes exigeant confidentialité
+(contrats sensibles, documents judiciaires scellés).
+
+\subsection{Synthèse}
+
+\begin{tableaucours}{p{3.0cm}p{2.2cm}p{2.2cm}p{2.2cm}p{2.8cm}}{%
+    \tableauHeader{Système} &
+    \tableauHeader{$\mathsf{Conf}$} &
+    \tableauHeader{$\mathsf{Rel}$} &
+    \tableauHeader{$\mathsf{Opp}$} &
+    \tableauHeader{Tension dominante}
+}
+Helios (vote) & Élevé & Élevé & $\approx 0{,}50$ &
+    Confidentialité/Fiabilité $\to$ Opposabilité \\
+zk-SNARK (finance) & Quasi-parfait & Élevé & $\approx 0{,}67$ &
+    Confidentialité $\to$ Opposabilité (audit ciblé impossible) \\
+ECDSA (juridique) & Quasi-nul & Élevé & $\approx 0{,}90$ &
+    Opposabilité $\to$ Confidentialité \\
+\end{tableaucours}
+\vspace{-0.8em}
+\begin{center}{\small\itshape Tableau~27.3. Synthèse des trois études
+de cas (d'après~\cite{minka2026clo})~: les produits
+$\mathsf{Conf}\cdot\mathsf{Rel}\cdot\mathsf{Opp}$ observés s'échelonnent
+de~$0{,}27$ à~$0{,}57$ selon le système, cohérent avec la borne du
+Théorème~3}\end{center}
+
+% ============================================================================
+\section{Implications pour la Conception de Systèmes Forensiques}
+\label{sec:implications-conception}
+% ============================================================================
+
+\subsection{Du calcul optimal à l'ingénierie sous contrainte}
+
+L'implication méthodologique majeure des deux
+articles~\cite{minka2026clo,minka2026conditional} est un
+\textbf{changement de paradigme de conception}~: puisqu'aucun
+protocole ne peut maximiser simultanément les trois dimensions
+(Théorème~3), la question pertinente n'est plus ``quelle est la
+primitive optimale~?'' mais ``\textbf{quel arbitrage spécifique
+ce contexte institutionnel exige-t-il, et quelle architecture
+satisfait ce besoin~?}''
+
+\begin{boxCRO}
+\textbf{Analyse CRO. L'architecture Gold-Iron-Clay
+(\textit{Semantic One-Time Pad})}
+
+L'article fondateur~\cite{minka2026clo} propose et prouve
+optimale, au sein de sa classe de construction, une architecture
+en trois couches~: \textbf{Gold} (confidentialité parfaite via
+masque jetable), \textbf{Iron} (fiabilité via engagement
+cryptographique liant), \textbf{Clay} (préservation contextuelle
+pour l'opposabilité). Cette construction atteint
+$\mathsf{Conf} \cdot \mathsf{Rel} \cdot \mathsf{Opp} =
+H(C)/\lambda \cdot (1 - \mathrm{negl}(\lambda))$, l'optimum
+exact permis par la borne du Théorème~2, démontrant qu'une
+architecture multicouche peut effectivement \textbf{atteindre}
+(et non simplement approcher) la limite théorique.
+
+$\mathcal{R}$~: chaque couche apporte sa force dominante plutôt
+que de chercher une primitive unique universelle, exactement
+la logique de la chaîne de custody du Ch.~8~(UE~SEC4031)
+(hash pour l'intégrité, signature pour l'authenticité, formulaire
+papier pour la traçabilité).
+
+$\mathcal{O}$~: la preuve d'optimalité, publiée et vérifiable,
+confère à cette architecture une légitimité scientifique directement
+opposable dans une discussion technique.
+
+\cro{$\uparrow\uparrow$ couche Gold}{$\uparrow\uparrow$ couche Iron}{$\uparrow\uparrow$ couche Clay}
+\end{boxCRO}
+
+\subsection{Application à l'architecture forensique de ce cours}
+
+\begin{tableaucours}{p{3.0cm}p{4.0cm}p{4.5cm}}{%
+    \tableauHeader{Dimension prioritaire} &
+    \tableauHeader{Mécanisme apportant cette force} &
+    \tableauHeader{Exemple dans ce cours}
+}
+$\mathsf{Rel}$ (Fiabilité) & Hash cryptographique
+    (SHA-256/512) & Formulaire de custody
+    (Ch.~8~(UE~SEC4031))~: hash calculé avant et après
+    acquisition \\
+$\mathsf{Opp}$ (Opposabilité) & Signature qualifiée +
+    horodatage + formation du décideur & eIDAS
+    (Ch.~11~(UE~SEC4031))~; investissement dans $H(C)$ via la
+    formation des magistrats (Ch.~12~(UE~SEC4031)) \\
+$\mathsf{Conf}$ (Confidentialité) & Chiffrement +
+    minimisation de la collecte & Extraction ADB ciblée plutôt
+    qu'exhaustive (Ch.~\ref{chap:for-mob})~; proportionnalité
+    (\loicam{2024/017}~\cite{cameroun2024donnees}, art.~27) \\
+\end{tableaucours}
+\vspace{-0.8em}
+\begin{center}{\small\itshape Tableau~27.4. Architecture en couches
+appliquée au cadre forensique de ce cours}\end{center}
+
+Cette table révèle une cohérence remarquable~: la pratique
+forensique enseignée tout au long de ce cours, chaîne de custody,
+distinction constatation/analyse, principe de proportionnalité,
+\textbf{constitue, sans que cela ait été formulé explicitement avant
+ce chapitre, une instanciation pratique de l'architecture en couches
+prouvée optimale par le cadre CLO}.
+
+% ============================================================================
+\section{Application Forensique Intégrative}
+\label{sec:application-forensique}
+% ============================================================================
+
+\begin{boxscenario}{Relire l'affaire MVOM à travers le Trilemme CRO formalisé}
+Reprenons l'Opération MVOM (Ch.~\ref{chap:for-sys},
+\ref{chap:for-res}, \ref{chap:for-cloud}) à la lumière de ce
+chapitre.
+
+\textbf{Le hash \texttt{\$UsnJrnl}} (Ch.~\ref{chap:for-sys})~:
+$\mathsf{Rel}$ proche de~1 (déterministe, vérifiable
+indépendamment)~; $\mathsf{Conf}$ non pertinent (le hash ne protège
+aucune confidentialité)~; $\mathsf{Opp}$ élevé \emph{si et seulement
+si} le tribunal dispose de la formation technique pour interpréter
+un horodatage de journal système, exactement la dépendance au
+contexte $H(C)$ formalisée par le Théorème~2.
+
+\textbf{Le chiffrement BitLocker du disque saisi}
+(Ch.~6~(UE~SEC4031))~: $\mathsf{Conf}$ élevé pour le suspect avant
+saisie~; après saisie légale et obtention de la clé, le système
+bascule vers un régime où $\mathsf{Rel}$ et $\mathsf{Opp}$
+deviennent les dimensions pertinentes pour l'analyse forensique,
+illustrant que le positionnement CRO d'un mécanisme \textbf{dépend
+du moment et du détenteur} de l'information, pas uniquement de
+l'algorithme.
+
+\textbf{La transaction Bitcoin tracée} (Ch.~\ref{chap:for-cloud})~:
+$\mathsf{Conf}$ faible (registre public)~; $\mathsf{Rel}$ maximal
+(immuabilité de la blockchain)~; $\mathsf{Opp}$ initialement faible
+(pseudonymat) mais \textbf{augmentable} par l'apport de contexte
+externe (identification KYC aux points d'échange), une
+illustration directe du Théorème~2~: l'opposabilité croît avec
+$H(C)$, ici obtenu par corrélation avec des sources tierces plutôt
+que par la primitive cryptographique elle-même.
+\end{boxscenario}
+
+\separateur
+
+\begin{boxresume}
+\textbf{Ce qu'il faut retenir de ce chapitre~:}
+\begin{itemize}
+    \item Le \textbf{Trilemme CRO} est désormais un résultat
+          \textbf{publié et évalué par les pairs}
+          (IEEE Access,~2026, IF~$\approx 3{,}6$)~: les
+          Théorèmes~1, 2 et~3 de ce chapitre correspondent à des
+          théorèmes prouvés dans~\cite{minka2026clo}
+          et~\cite{minka2026conditional}, pas à des conjectures.
+
+    \item \textbf{Outils de théorie de l'information mobilisés}~:
+          entropie de Shannon, information mutuelle, distance en
+          variation totale, inégalités de Pinsker et de Fano, fondements classiques appliqués à un problème nouveau.
+
+    \item \textbf{Définitions formelles}~: $\mathsf{Conf}$ (via TV
+          distance), $\mathsf{Rel}$ (probabilité de vérification
+          correcte), $\mathsf{Opp}$ (information mutuelle normalisée
+          entre preuve et verdict), cette dernière étant
+          l'innovation centrale du cadre.
+
+    \item \textbf{Théorème principal}~: $\mathsf{Conf} \cdot
+          \mathsf{Rel} \cdot \mathsf{Opp} \leq \Delta/\lambda +
+          O(\lambda^{-2})$, où $\Delta$ quantifie la capacité
+          d'extraction institutionnelle, enracinée dans les travaux
+          de Miller sur la mémoire de travail humaine.
+
+    \item \textbf{Trois études de cas documentées}~: Helios
+          ($\mathsf{Opp}\approx 0{,}50$), zk-SNARKs
+          ($\approx 0{,}67$), ECDSA ($\approx 0{,}90$),
+          chacune occupant un point distinct, cohérent avec la
+          théorie, sur la surface de compromis.
+
+    \item \textbf{Réponse pratique~: architecture en couches}
+          (Gold-Iron-Clay), prouvée optimale dans sa classe de
+          construction, dont ce cours a montré qu'elle correspond
+          structurellement à la pratique forensique enseignée
+          depuis le Ch.~8~(UE~SEC4031).
+
+    \item \textbf{Investir dans $H(C)$}, la formation des
+          magistrats et des OPJ camerounais, élève le plafond
+          d'opposabilité atteignable par \emph{tout} système de
+          preuve, une implication directement actionnable pour
+          la stratégie nationale évoquée au Ch.~\ref{chap:bench}.
+\end{itemize}
+\end{boxresume}
+
+\bigskip
+
+\begin{boxexo}[title={\ding{45}\quad Exercice~27.1. Maîtrise des outils de théorie de l'information \niveaubase}]
+\begin{enumerate}[(a)]
+    \item Calculez $H(X)$ pour une variable $X$ uniforme sur
+          $4$~valeurs. Interprétez le résultat en bits.
+    \item Si $I(X;Y) = H(X)$, que peut-on en conclure sur la
+          relation entre $X$ et $Y$~?
+    \item Expliquez, en une phrase, pourquoi l'inégalité de
+          Pinsker~\eqref{eq:pinsker} permet de relier une exigence
+          de fiabilité à une borne sur la confidentialité.
+    \item Pour chacun des trois mécanismes suivants rencontrés
+          dans ce cours, identifiez la dimension CRO structurellement
+          privilégiée et celle structurellement sacrifiée, en
+          justifiant par un argument technique~: le chiffrement
+          BitLocker (Ch.~6~(UE~SEC4031))~; une signature ECDSA
+          (Ch.~11~(UE~SEC4031))~; une preuve à divulgation
+          nulle de connaissance.
+\end{enumerate}
+\end{boxexo}
+
+\begin{boxexo}[title={\ding{45}\quad Exercice~27.2. Lecture critique du Théorème~3 \niveaumoyen}]
+\begin{enumerate}[(a)]
+    \item Le Théorème~3 s'applique sous l'hypothèse
+          $\lambda \geq 64$. Pourquoi cette condition est-elle
+          nécessaire (référez-vous au rôle du terme
+          $O(\lambda^{-2})$)~?
+    \item Le Tableau~27.2 estime $H(C) \approx 8$~bits pour un
+          tribunal de juridiction générale. En utilisant le
+          Théorème~2, et pour $\lambda = 128$, estimez l'opposabilité
+          maximale théoriquement atteignable dans ce contexte si
+          $H(V|C) \approx H(C)$. Commentez l'écart avec
+          l'opposabilité ECDSA observée empiriquement
+          ($\approx 0{,}90$), que cela révèle-t-il sur les
+          conditions d'application du théorème~?
+    \item Le chapitre mentionne que la forme additive de $\Delta$
+          (plutôt que multiplicative ou sous-linéaire) a été
+          choisie et justifiée par les auteurs. Pourquoi une
+          borne sous-linéaire serait-elle ``trop pessimiste'',
+          selon les termes de l'article~?
+\end{enumerate}
+\end{boxexo}
+
+\begin{boxexo}[title={\ding{45}\quad Exercice~27.3. Application intégrative à une affaire du cours \niveauexpert}]
+Reprenez l'affaire DIBAMBA (Ch.~\ref{chap:cas-int})~: fraude MoMo
+avec SIM~swap, communications chiffrées, et adresse Bitcoin tracée.
+\begin{enumerate}[(a)]
+    \item Pour chacun des trois éléments probatoires de cette
+          affaire (logs MTN, communications chiffrées, transactions
+          blockchain), estimez qualitativement (Faible/Modéré/Élevé,
+          en justifiant) les trois mesures $\mathsf{Conf}$,
+          $\mathsf{Rel}$, $\mathsf{Opp}$, en vous appuyant sur les
+          définitions formelles de la Section~\ref{sec:cadre-clo}.
+    \item En vous inspirant de l'architecture Gold-Iron-Clay
+          (Section~\ref{sec:implications-conception}), construisez
+          une architecture en couches pour cette affaire~: quel
+          mécanisme apporte la force $\mathsf{Rel}$~? Lequel apporte
+          $\mathsf{Opp}$~? Lequel gère $\mathsf{Conf}$~?
+    \item Le Théorème~2 implique que l'opposabilité de cette
+          affaire est plafonnée par $H(C)$ du tribunal saisi.
+          Proposez deux actions concrètes, dans l'esprit du
+          Tableau~27.1 (documentation, collaboration, spécialisation),
+          qui augmenteraient $H(C)$ pour ce dossier spécifique.
+    \item Rédigez un paragraphe de synthèse expliquant en quoi
+          cet exercice illustre que le Trilemme CRO formalisé
+          dans ce chapitre n'est pas une abstraction mathématique
+          déconnectée, mais la \textbf{systématisation rigoureuse},
+          désormais publiée et vérifiable, d'un raisonnement que
+          vous avez pratiqué tout au long de ce cours.
+\end{enumerate}
+\end{boxexo}
+
+\bigskip
+
+\begin{boxinfo}
+\textbf{Sur la place de ce chapitre dans le cours.} Ce chapitre
+referme la boucle conceptuelle ouverte au tout premier chapitre
+du cours~: le Trilemme CRO, présenté ici dans sa forme prouvée et
+publiée, est l'outil que vous avez appliqué intuitivement à chaque
+décision investigative rencontrée, du choix d'éteindre ou non
+un PC suspect (Ch.~8~(UE~SEC4031)) à la stratégie de coopération
+internationale (Ch.~10~(UE~SEC4031)), en passant par la
+conception d'une architecture de \textit{readiness} cloud-native
+(Ch.~\ref{chap:containers}).
+
+\textit{Que vous reteniez une seule chose de ce chapitre, que ce
+soit celle-ci~: tout système, toute décision, toute primitive
+implique un arbitrage entre confidentialité, fiabilité et
+opposabilité, et ce n'est plus une intuition pédagogique mais
+un théorème mathématique prouvé, publié et évalué par les pairs.
+La compétence de l'investigateur ne consiste pas à éliminer cet
+arbitrage, c'est désormais mathématiquement établi comme
+structurellement impossible. Elle consiste à le rendre
+\textbf{explicite, justifié et documenté}, et, quand l'institution
+le permet, à investir dans $H(C)$ pour repousser la limite elle-même.}
+\end{boxinfo}
+
+% ============================================================================
+% Références bibliographiques propres à ce chapitre
+% (à intégrer dans D_bibliographie.tex)
+% ============================================================================
+% @article{minka2026clo,
+%   author  = {Minka Mi Nguidjoï, Thierry Emmanuel and Mani Onana,
+%              Flavien Serge and Djotio Ndjé, Thomas},
+%   title   = {Cryptographic Legal Opposability (CLO) Framework:
+%              Confidentiality-Reliability-Opposability Trade-Offs
+%              in Institutional Cryptography},
+%   journal = {IEEE Access},
+%   volume  = {14},
+%   pages   = {20427--20445},
+%   year    = {2026},
+%   doi     = {10.1109/ACCESS.2026.3660105}
+% }
+% @article{minka2026conditional,
+%   author  = {Minka Mi Nguidjoï, Thierry Emmanuel and Mani Onana,
+%              Flavien Serge and Djotio Ndjé, Thomas},
+%   title   = {The Conditional CRO Trilemma: Impossibility Bounds
+%              on Confidentiality, Reliability, and Opposability
+%              Under Institutional Extraction Limits},
+%   journal = {IEEE Access},
+%   volume  = {14},
+%   pages   = {33263--33274},
+%   year    = {2026},
+%   doi     = {10.1109/ACCESS.2026.3669065}
+% }
+% @article{shannon1948,
+%   author  = {Shannon, Claude E.},
+%   title   = {A Mathematical Theory of Communication},
+%   journal = {Bell System Technical Journal},
+%   volume  = {27}, number = {3}, pages = {379--423}, year = {1948}
+% }
+% @article{miller1956,
+%   author  = {Miller, George A.},
+%   title   = {The Magical Number Seven, Plus or Minus Two},
+%   journal = {Psychological Review}, volume = {63}, pages = {81--97},
+%   year    = {1956}
+% }
+% @inproceedings{adida2009helios,
+%   author = {Adida, Ben}, title = {Helios: Web-based open-audit voting},
+%   booktitle = {Proc. 17th USENIX Security Symp.}, pages = {335--348},
+%   year = {2009}
+% }
+% @inproceedings{adida2009university,
+%   author = {Adida, Ben and de Marneffe, Olivier and Pereira, Olivier
+%             and Quisquater, Jean-Jacques},
+%   title  = {Electing a university president using open-audit voting:
+%             Analysis of real-world use of Helios},
+%   booktitle = {Proc. EVT/WOTE}, year = {2009}
+% }
+% @misc{iacr2025,
+%   author = {{International Association for Cryptologic Research}},
+%   title  = {2025 IACR Election Update}, year = {2025},
+%   note   = {Online; iacr.org/news/item/27138}
+% }
+% @article{johnson2001ecdsa,
+%   author  = {Johnson, Don and Menezes, Alfred and Vanstone, Scott},
+%   title   = {The Elliptic Curve Digital Signature Algorithm (ECDSA)},
+%   journal = {Int. J. Inf. Secur.}, volume = {1}, number = {1},
+%   pages   = {36--63}, year = {2001}
+% }

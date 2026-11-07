@@ -1,0 +1,233 @@
+NDAP SUKULU · INA · fiche FICHE-C26
+Chapitre 26 : Impact du quantique sur l'investigation numérique
+
+Version papier, à utiliser en attendant l'ouverture du portail NDAP SUKULU.
+La fiche complète compte 40 questions. Répondez sur la grille en fin de fiche.
+Durée indicative : 60 minutes. Seuil de réussite : 60 %.
+Les corrections figurent dans le livret de correction du cours.
+
+========================================================================
+Questions à choix multiple (une seule bonne réponse)
+========================================================================
+
+ 1. Que permet l'algorithme de Shor ?
+      a) Factoriser et résoudre le logarithme discret en temps polynomial
+      b) Accélérer quadratiquement toute recherche
+      c) Casser toutes les fonctions de hachage
+      d) Chiffrer sans clé
+
+ 2. Quel mécanisme du cours est directement menacé par Shor ?
+      a) Une signature électronique RSA ou ECDSA
+      b) Le chiffrement AES-256 d'un disque
+      c) L'empreinte SHA-256 d'une image E01
+      d) Le bloqueur d'écriture matériel
+
+ 3. Sur quel problème repose ECDSA ?
+      a) Le logarithme discret sur courbes elliptiques
+      b) La factorisation de grands entiers
+      c) La recherche non structurée
+      d) Les réseaux euclidiens
+
+ 4. Quelle est la position du chapitre sur le calendrier de la menace de Shor ?
+      a) Aucun consensus scientifique ferme sur une date précise n'existe
+      b) RSA sera cassé en 2035
+      c) La menace est déjà réalisée en 2026
+      d) La menace ne se réalisera jamais
+
+ 5. Les estimations publiées pour casser RSA-2048 parlent de milliers de qubits de quelle nature ?
+      a) Logiques
+      b) Physiques
+      c) Classiques
+      d) Virtuels
+
+ 6. Quelle accélération offre l'algorithme de Grover ?
+      a) Quadratique
+      b) Exponentielle
+      c) Linéaire
+      d) Nulle
+
+ 7. Face à Grover, à combien de bits classiques équivaut une clé AES-256 ?
+      a) Environ 128 bits
+      b) Environ 64 bits
+      c) Environ 32 bits
+      d) Environ 256 bits
+
+ 8. Pourquoi Grover est-il une menace bien moindre que Shor ?
+      a) Son accélération n'est que quadratique
+      b) Il ne fonctionne que sur RSA
+      c) Il exige une clé privée
+      d) Il ne s'applique qu'aux empreintes
+
+ 9. Que désigne « récolter maintenant, déchiffrer plus tard » ?
+      a) Stocker aujourd'hui des données chiffrées pour les déchiffrer quand un ordinateur quantique le permettra
+      b) Saisir un disque et l'analyser plus tard
+      c) Exporter des journaux avant leur rotation
+      d) Chiffrer une preuve pour la protéger
+
+10. Pour quelles données ce risque est-il le plus pertinent ?
+      a) Celles qui restent sensibles très longtemps (santé, défense, justice)
+      b) Les journaux d'un serveur web courant
+      c) Les fichiers temporaires
+      d) Les données déjà publiques
+
+11. Pourquoi l'empreinte SHA-256 n'est-elle pas menacée comme une signature ?
+      a) Elle ne repose pas sur la factorisation ni le logarithme discret
+      b) Elle est chiffrée par AES
+      c) Elle est quantique par nature
+      d) Elle n'est jamais utilisée en justice
+
+12. Que consiste à faire le re-horodatage périodique ?
+      a) Resceller les preuves sous un algorithme plus récent avant que l'ancien ne vieillisse
+      b) Recalculer l'empreinte chaque jour
+      c) Modifier les dates d'un fichier
+      d) Supprimer les anciennes signatures
+
+13. Quel standard normalise ML-KEM (Kyber) ?
+      a) FIPS 203
+      b) FIPS 204
+      c) FIPS 205
+      d) FIPS 140
+
+14. Quel standard normalise ML-DSA (Dilithium) ?
+      a) FIPS 204
+      b) FIPS 203
+      c) FIPS 205
+      d) FIPS 186
+
+15. Sur quoi repose SPHINCS+ (SLH-DSA, FIPS 205) ?
+      a) Sur les fonctions de hachage
+      b) Sur les courbes elliptiques
+      c) Sur la factorisation
+      d) Sur les couplages bilinéaires
+
+16. Quel est le statut de FALCON selon le chapitre ?
+      a) En cours de normalisation
+      b) Normalisé par FIPS 203
+      c) Abandonné
+      d) Interdit par le NIST
+
+17. Quelle migration le chapitre recommande-t-il ?
+      a) Hybride : classique et post-quantique ensemble
+      b) Le remplacement immédiat de tout l'existant
+      c) Attendre un ordinateur quantique
+      d) Abandonner la signature électronique
+
+18. « Scellement quantique propriétaire, protection absolue » : comment le traiter ?
+      a) Comme une affirmation commerciale à vérifier, sans référence de standard
+      b) Comme un standard NIST
+      c) Comme une preuve établie
+      d) Comme une obligation légale
+
+19. Quelle pratique reste appropriée aujourd'hui pour l'intégrité des preuves ?
+      a) SHA-256 ou SHA-512, avec documentation des algorithmes
+      b) MD5 seul
+      c) Aucune empreinte
+      d) Une signature RSA-512
+
+20. Quel texte fonde la proportionnalité des mesures de sécurité ?
+      a) La loi n° 2024/017, article 27
+      b) La loi n° 2010/012, article 88
+      c) La Convention de Budapest, article 29
+      d) Le Code pénal, article 318
+
+========================================================================
+Vrai ou faux
+========================================================================
+
+21. En 2026, un ordinateur quantique capable d'exécuter Shor sur des clés réelles existe.
+      Vrai / Faux
+
+22. AES-256 reste robuste face à l'algorithme de Grover.
+      Vrai / Faux
+
+23. Diffie-Hellman est vulnérable à l'algorithme de Shor.
+      Vrai / Faux
+
+24. La plupart des affaires courantes du cours relèvent d'une urgence quantique immédiate.
+      Vrai / Faux
+
+25. C'est surtout la signature de l'horodatage qui vieillit face à Shor.
+      Vrai / Faux
+
+26. Le NIST a publié des standards post-quantiques finalisés, et non de simples propositions.
+      Vrai / Faux
+
+27. FIPS 203 normalise une signature numérique.
+      Vrai / Faux
+
+28. La migration hybride consiste à remplacer brutalement les algorithmes classiques.
+      Vrai / Faux
+
+29. Une date exacte de rupture de RSA doit être présentée comme un fait établi dans un rapport.
+      Vrai / Faux
+
+30. Documenter les algorithmes utilisés dans chaque procès-verbal est recommandé.
+      Vrai / Faux
+
+========================================================================
+Textes à trous
+========================================================================
+
+31. L'algorithme quantique qui casse RSA et ECDSA porte le nom de ______.
+
+32. L'algorithme quantique à accélération quadratique porte le nom de ______.
+
+33. Face à Grover, une clé de n bits vaut environ n divisé par ______ bits.
+
+34. Kyber est normalisé sous le nom ML-______.
+
+35. Dilithium est normalisé par le standard FIPS ______.
+
+36. SPHINCS+ est normalisé par le standard FIPS ______.
+
+37. Les standards post-quantiques se vérifient sur le site csrc.______.gov.
+
+38. Resceller périodiquement une preuve sous un algorithme récent s'appelle le re-______.
+
+39. La migration recommandée, classique et post-quantique ensemble, est dite ______.
+
+40. Le chiffrement symétrique recommandé dans le chapitre est AES-______.
+
+========================================================================
+Grille de réponses   Nom : ............................  Matricule : ............
+========================================================================
+ 1. ............................................
+ 2. ............................................
+ 3. ............................................
+ 4. ............................................
+ 5. ............................................
+ 6. ............................................
+ 7. ............................................
+ 8. ............................................
+ 9. ............................................
+10. ............................................
+11. ............................................
+12. ............................................
+13. ............................................
+14. ............................................
+15. ............................................
+16. ............................................
+17. ............................................
+18. ............................................
+19. ............................................
+20. ............................................
+21. ............................................
+22. ............................................
+23. ............................................
+24. ............................................
+25. ............................................
+26. ............................................
+27. ............................................
+28. ............................................
+29. ............................................
+30. ............................................
+31. ............................................
+32. ............................................
+33. ............................................
+34. ............................................
+35. ............................................
+36. ............................................
+37. ............................................
+38. ............................................
+39. ............................................
+40. ............................................

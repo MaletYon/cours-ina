@@ -1,0 +1,550 @@
+% ============================================================================
+% Fichier  : partie6/P06_C32_cas_pratique_zknr.tex
+% Titre    : Cas Pratique -- Audit Formel d'un Protocole Multi-Couches
+% Auteur   : MINKA MI NGUIDJOÏ Thierry Emmanuel
+% Version  : 2.0 -- Juin 2026
+% ============================================================================
+
+\chapter{Cas Pratique. Audit Formel d'un Protocole Multi-Couches}
+\label{chap:cas-zknr}
+
+\epigraph{%
+    « In theory, theory and practice are the same. In practice, they are
+    not. The true test of any protocol is in its implementation. »%
+}{attribué à Albert Einstein, formulation populaire}
+
+\niveauChapitre{Recherche}{%
+    Maîtrise complète de la Partie~VI requise (Ch.~\ref{chap:CRO}
+    à~\ref{chap:form-meth}). Ce chapitre applique l'ensemble des
+    outils théoriques accumulés à un cas concret.%
+}
+
+\begin{boxobjectifs}
+\begin{itemize}
+    \item Appliquer intégralement la méthodologie d'audit en cinq
+          étapes (Ch.~\ref{chap:form-meth}) à un cas concret~:
+          l'analyse cryptanalytique de la signature BLS.
+    \item Comprendre la vulnérabilité spécifique de BLS face à
+          l'algorithme de Shor, et pourquoi cette vulnérabilité
+          motive son couplage architectural avec une primitive
+          post-quantique.
+    \item Maîtriser une checklist opérationnelle d'analyse face à
+          une preuve cryptographique multi-couches rencontrée en
+          investigation.
+    \item Conduire vous-même, à titre d'exercice guidé, les quatre
+          premières étapes de l'audit formel d'une architecture
+          multi-couches décrite publiquement, en respectant
+          scrupuleusement la distinction entre ce qui peut être
+          établi à partir d'une description architecturale et ce
+          qui nécessiterait un accès aux spécifications complètes.
+    \item Synthétiser, sur cet exemple, l'ensemble des outils de
+          la Partie~VI~: Trilemme CRO formalisé, méthodologie de
+          calcul des primitives, taxonomie cryptanalytique,
+          vérification formelle.
+\end{itemize}
+\end{boxobjectifs}
+
+\bigskip
+
+% ============================================================================
+\section*{De la théorie à la pratique~: ce que ce chapitre démontre}
+% ============================================================================
+
+Les Chapitres~\ref{chap:CRO} à~\ref{chap:form-meth} ont construit,
+brique par brique, l'ensemble des outils nécessaires à l'analyse
+rigoureuse d'un système cryptographique~: théorie de l'information,
+définitions formelles CLO, taxonomie cryptanalytique, méthodologie
+d'audit. Ce chapitre les met en \oe uvre sur un cas réel et entièrement
+vérifiable, la signature \textbf{BLS} (Boneh-Lynn-Shacham), une
+primitive cryptographique authentique, publiée, abondamment
+documentée dans la littérature scientifique, avant de vous guider
+dans l'application de cette même méthodologie à une architecture
+multi-couches plus ambitieuse, à titre d'exercice de synthèse.
+
+\separateur
+
+% ============================================================================
+\section{Étude de Cas Authentique~: la Signature BLS}
+\label{sec:etude-bls}
+% ============================================================================
+
+\subsection{Fonctionnement et propriétés}
+
+\begin{boxdef}
+\textbf{Signature BLS}\index{BLS, signature}~(Boneh, Lynn, Shacham,
+2001)~: schéma de signature numérique fondé sur les couplages
+bilinéaires (\textit{pairings}) sur courbes elliptiques, typiquement
+instancié sur la courbe \texttt{BLS12-381}. Sa propriété distinctive~:
+les signatures sont \textbf{courtes} et
+\textbf{agrégeables}, plusieurs signatures de plusieurs signataires
+sur plusieurs messages peuvent être combinées en une seule signature
+compacte, vérifiable efficacement.
+\end{boxdef}
+
+Cette propriété d'agrégation rend BLS particulièrement adapté aux
+\textbf{systèmes à seuil} (\textit{threshold signatures})~: un
+ensemble de signataires peut produire collectivement une signature
+unique, sans qu'aucun signataire individuel ne puisse signer seul, pertinent pour des contextes institutionnels où une décision
+doit recueillir l'accord de plusieurs parties avant de produire
+une attestation juridiquement valable (par exemple, une décision
+collégiale en investigation, Ch.~6~(UE~SEC4031), Quality Gates).
+
+\subsection{Cryptanalyse classique et quantique}
+
+\begin{tableaucours}{p{2.5cm}p{4.0cm}p{4.5cm}}{%
+    \tableauHeader{Horizon} &
+    \tableauHeader{Fondement de sécurité} &
+    \tableauHeader{État de la cryptanalyse}
+}
+\textbf{Classique} & Difficulté du problème calculatoire de
+    Diffie-Hellman (CDH) sur courbes appariées &
+    Aucune attaque efficace connue sur BLS12-381 à la date de
+    rédaction de ce cours, sécurité considérée comme solide
+    face aux capacités de calcul classiques actuelles \\
+\textbf{Quantique} & \textit{Le même problème CDH, mais résoluble
+    par Shor} & \textbf{Extrêmement vulnérable}~: l'algorithme de
+    Shor (Ch.~\ref{chap:quantique}) résout le problème CDH en
+    temps polynomial sur un ordinateur quantique suffisamment
+    puissant, réduisant la sécurité de la signature
+    \textbf{à néant}, pas une dégradation progressive, une
+    rupture complète \\
+\end{tableaucours}
+\vspace{-0.8em}
+\begin{center}{\small\itshape Tableau~32.1. Cryptanalyse de BLS,
+horizons classique et quantique}\end{center}
+
+\begin{boxalert}
+\textbf{BLS et le Théorème 1 du Chapitre~\ref{chap:quantique}~:
+une application directe}
+
+Cette vulnérabilité de BLS face à Shor n'est pas une particularité
+isolée~: elle illustre exactement le Tableau~26.1 du
+Ch.~\ref{chap:quantique}, qui classe \textbf{toute} signature fondée
+sur le logarithme discret (dont BLS, comme ECDSA) parmi les
+primitives vulnérables à Shor. La distinction
+hash~\textit{vs.}~signature, déjà établie au Ch.~\ref{chap:quantique},
+s'applique ici sans modification~: BLS n'a aucune protection
+structurelle particulière contre cette menace, c'est une
+signature asymétrique classique, avec les mêmes faiblesses que
+toute primitive de sa catégorie.
+\end{boxalert}
+
+\subsection{Positionnement qualitatif dans le cadre CRO}
+
+\begin{boiteRemarque}{Rigueur méthodologique~: positionnement
+qualitatif, pas un calcul publié}
+Conformément à la discipline déjà établie au
+Ch.~\ref{chap:prim-crypt} (Section~6, Tableau~28.6), BLS \textbf{ne
+dispose pas d'un calcul CLO publié} avec décomposition bit par bit
+vérifiable. Le positionnement qui suit est donc qualitatif,
+raisonné par analogie avec ECDSA (calcul publié,
+Ch.~\ref{chap:prim-crypt}, Section~4), une primitive de
+structure comparable (signature asymétrique, transparente par
+construction).
+\end{boiteRemarque}
+
+\begin{tableaucours}{p{2.5cm}p{3.0cm}p{5.0cm}}{%
+    \tableauHeader{Dimension} &
+    \tableauHeader{Positionnement attendu} &
+    \tableauHeader{Raisonnement par analogie}
+}
+$\mathsf{Conf}$ & Faible &
+    Comme ECDSA (Ch.~\ref{chap:prim-crypt}, $\mathsf{Conf}\approx 0{,}31$)~:
+    une signature, par construction, ne masque pas le message
+    signé, seule la clé privée reste secrète \\
+$\mathsf{Rel}$ & Élevé, \textbf{aujourd'hui} &
+    Vérification déterministe~; la falsification exige de
+    résoudre le problème CDH, considéré difficile classiquement
+    (analogue à la difficulté du logarithme discret elliptique
+    pour ECDSA, $\mathsf{Rel}\approx 0{,}98$) \\
+$\mathsf{Opp}$ & Probablement élevé, \textbf{aujourd'hui} &
+    Jurisprudence émergente autour des signatures à courbes
+    elliptiques en général~; cependant moins établie que celle
+    d'ECDSA, plus ancien et plus largement déployé dans les
+    infrastructures PKI (Ch.~11~(UE~SEC4031)) \\
+\textbf{Horizon post-quantique} & \textbf{Effondrement de
+    $\mathsf{Rel}$} & Une fois Shor opérationnel à l'échelle requise,
+    $\mathsf{Rel}(\text{BLS})$ s'effondre, une signature falsifiable
+    n'offre plus aucune fiabilité, indépendamment de son
+    opposabilité historique \\
+\end{tableaucours}
+\vspace{-0.8em}
+\begin{center}{\small\itshape Tableau~32.2. Positionnement CRO
+qualitatif de BLS (raisonnement par analogie, non calculé)}\end{center}
+
+Ce déséquilibre temporel, solide aujourd'hui, structurellement
+condamné demain, justifie, sur le plan architectural, le principe
+de \textbf{défense en profondeur} déjà établi au
+Ch.~\ref{chap:cryptanal}~: coupler une primitive performante mais
+vulnérable au quantique (BLS) avec une primitive post-quantique
+plus lourde mais résistante (par exemple, Dilithium/ML-DSA, FIPS~204,
+Ch.~\ref{chap:quantique}), de sorte que la sécurité globale du
+système hérite de la résistance du \textbf{plus robuste} des deux
+mécanismes face à chaque horizon temporel.
+
+% ============================================================================
+\section{Recommandations Opérationnelles pour l'Investigateur}
+\label{sec:recommandations-investigateur}
+% ============================================================================
+
+\subsection{Face à une signature BLS isolée}
+
+\begin{boxPNC}
+\textbf{Protocole d'évaluation d'une signature BLS rencontrée en
+investigation}
+
+\textbf{Aujourd'hui}~: une signature BLS valide constitue une preuve
+forte d'authenticité et d'intégrité, vérifiable selon les méthodes
+standard (Ch.~\ref{chap:rapport}, distinction constatation~:
+``la signature BLS vérifie correctement selon l'équation de
+vérification publiée'', un fait, indépendant de toute
+interprétation).
+
+\textbf{Pour des preuves destinées à un archivage de longue durée}~:
+dans une logique \textit{Harvest Now, Decrypt Later}
+(Ch.~\ref{chap:quantique}), considérer explicitement qu'une
+signature BLS isolée pourrait devenir forgeable dans le futur.
+\textbf{Recommandation~:} rechercher systématiquement si une
+signature post-quantique complémentaire (Dilithium ou équivalent
+FIPS~204) a été archivée en parallèle pour la même pièce, et
+documenter son absence le cas échéant comme une limitation du
+dossier (sur le modèle des réserves explicites du
+Ch.~\ref{chap:rapport}).
+\end{boxPNC}
+
+\subsection{Checklist générale d'analyse d'un protocole}
+
+Cette checklist, synthèse opérationnelle de l'ensemble de la
+Partie~VI, s'applique à \textbf{tout} protocole cryptographique
+rencontré en investigation, qu'il soit simple (une seule primitive)
+ou complexe (architecture multi-couches)~:
+
+\begin{enumerate}
+    \item[$\square$] Identifier \textbf{toutes} les primitives
+          cryptographiques employées (Ch.~\ref{chap:prim-crypt}).
+    \item[$\square$] Évaluer leur résistance classique \textbf{et}
+          post-quantique pour chacune (Ch.~\ref{chap:quantique},
+          Tableau~26.1).
+    \item[$\square$] Cartographier les flux de messages et les
+          états persistants (Ch.~\ref{chap:form-meth},
+          Étape~1~: Compréhension).
+    \item[$\square$] Rechercher les vulnérabilités de composition
+          et de rejeu entre primitives (Ch.~\ref{chap:cryptanal},
+          taxonomie ``contre le protocole''~; Ch.~\ref{chap:form-meth},
+          Étape~3).
+    \item[$\square$] Vérifier la présence de mécanismes explicites
+          de gestion de clés (rotation, révocation), un défaut
+          fréquent et souvent sous-estimé dans les architectures
+          multi-couches (cf.~Section~\ref{sec:exercice-guide}).
+    \item[$\square$] Consulter les preuves formelles disponibles,
+          ou, à défaut, modéliser le protocole dans Tamarin ou
+          ProVerif (Ch.~\ref{chap:form-meth}).
+    \item[$\square$] Distinguer systématiquement, dans toute
+          conclusion, ce qui est \textbf{établi et vérifiable}
+          de ce qui relève d'une \textbf{hypothèse} ou d'une
+          \textbf{question ouverte} (principe transversal de
+          la Partie~VI, rappelé à chaque chapitre).
+\end{enumerate}
+
+% ============================================================================
+\section{Exercice Guidé~: Audit d'une Architecture Multi-Couches}
+\label{sec:exercice-guide}
+% ============================================================================
+
+\subsection{Contexte de l'exercice}
+
+Le Ch.~\ref{chap:cryptanal} a mentionné, avec la prudence
+méthodologique requise, le projet de recherche \textbf{ZK-NR}
+(\textit{Zero-Knowledge Non-Repudiation}) de l'auteur de ce cours~:
+une architecture combinant quatre couches, engagements de
+Merkle, preuves STARK, signatures à seuil BLS, signatures
+post-quantiques Dilithium, pour des scénarios de non-répudiation
+à forte criticité.
+
+\begin{boxalert}
+\textbf{Ce que cet exercice est, et ce qu'il n'est pas}
+
+Cet exercice \textbf{n'est pas} la présentation de résultats d'audit
+établis~: ZK-NR n'existe qu'en prépublication~\cite{minka2025zknr},
+sans évaluation par les pairs ni audit indépendant, et ce serait contraire à la rigueur
+méthodologique pratiquée depuis le Ch.~\ref{chap:rapport}. Cet
+exercice \textbf{est} une mise en situation~: à partir de la seule
+description architecturale publique (les quatre couches mentionnées
+ci-dessus), vous allez appliquer vous-même les quatre premières
+étapes de la méthodologie d'audit (Ch.~\ref{chap:form-meth},
+Tableau~31.3), en vous limitant strictement à ce qui peut être
+raisonné à partir des propriétés \textbf{publiquement connues} de
+chaque primitive composante (Merkle~: Ch.~\ref{chap:for-sys},
+intégrité de structures de données~; STARK~: transparent, pas de
+\textit{trusted setup}, mentionné au Ch.~\ref{chap:quantique}~;
+BLS~: ce chapitre, Section~\ref{sec:etude-bls}~; Dilithium~:
+FIPS~204, Ch.~\ref{chap:quantique}).
+\end{boxalert}
+
+\subsection{Étape~1. Compréhension (à compléter par vous)}
+
+À partir des quatre couches annoncées, formulez~:
+\begin{itemize}
+    \item l'objectif de sécurité visé par la combinaison de ces
+          quatre primitives (indice~: que permet une preuve à
+          divulgation nulle que ne permet pas une simple signature~? Que
+          permet une primitive post-quantique que ne permet pas une
+          primitive classique~?)~;
+    \item le rôle probable de chaque couche selon ses propriétés
+          connues (Merkle~: structure d'engagement immuable~;
+          STARK~: preuve sans divulgation~; BLS~: signature
+          agrégeable à seuil~; Dilithium~: authentification résistante
+          au quantique).
+\end{itemize}
+
+\subsection{Étape~2. Modélisation (à compléter par vous)}
+
+En vous appuyant sur le Tableau~31.1 (Ch.~\ref{chap:form-meth}),
+formulez, en langage naturel d'abord, les lemmes de sécurité que
+vous attendriez d'une telle architecture, par exemple~:
+``une attestation produite par ce protocole ne peut être reniée
+par son émetteur'' (non-répudiation), ``le contenu sous-jacent à
+une attestation reste confidentiel sauf divulgation volontaire''
+(confidentialité).
+
+\subsection{Étape~3. Analyse manuelle guidée}
+
+Cette étape peut être conduite, en toute rigueur, à partir des
+\textbf{seules propriétés publiques} des quatre primitives. Voici
+une amorce structurée, à vous de la compléter et de
+l'approfondir~:
+
+\begin{tableaucours}{p{3.0cm}p{3.5cm}p{4.0cm}}{%
+    \tableauHeader{Aspect} &
+    \tableauHeader{Ce que les propriétés publiques
+    permettent d'affirmer} &
+    \tableauHeader{Ce qui resterait à vérifier}
+}
+Modularité & Une architecture en couches indépendantes limite,
+    en principe, la propagation d'une défaillance d'une couche
+    aux autres (principe général de défense en profondeur,
+    Ch.~\ref{chap:cryptanal}) & Le degré d'indépendance \textbf{réel}
+    entre les couches dans l'implémentation spécifique~;
+    une dépendance cachée romprait cette garantie \\
+Vulnérabilité BLS & Section~\ref{sec:etude-bls} de ce chapitre
+    établit, sur la base de la littérature publique, la
+    vulnérabilité de BLS à Shor & Si et comment la couche
+    Dilithium compense spécifiquement et complètement cette
+    vulnérabilité dans l'architecture précise de ce protocole \\
+Transparence STARK & Les STARKs, par construction publique
+    documentée, ne requièrent pas de \textit{trusted setup}
+    (contrairement aux zk-SNARKs, Ch.~\ref{chap:prim-crypt})
+    & La taille effective des preuves générées et leur impact
+    sur la performance opérationnelle du protocole \\
+Gestion des clés & La checklist générale
+    (Section~\ref{sec:recommandations-investigateur}) identifie
+    la gestion des clés comme un point de vigilance \textbf{générique}
+    pour toute architecture multi-couches & Si des règles formelles
+    de rotation et de révocation existent spécifiquement pour ce
+    protocole, information non vérifiable sans accès aux
+    spécifications complètes \\
+\end{tableaucours}
+\vspace{-0.8em}
+\begin{center}{\small\itshape Tableau~32.3. Amorce d'analyse manuelle,
+fondée uniquement sur les propriétés publiques des primitives composantes}\end{center}
+
+\subsection{Étape~4. Vers l'analyse automatisée}
+
+Sur la base de ce que vous avez établi aux étapes précédentes,
+esquissez (sans nécessairement l'exécuter) la structure d'un modèle
+Tamarin pour une telle architecture~: combien de règles de
+réécriture anticipez-vous au minimum (une par couche~? davantage
+pour modéliser leurs interactions~?), et quels lemmes prioriseriez-vous
+en premier compte tenu des points de vigilance identifiés à
+l'Étape~3~?
+
+\begin{boiteRemarque}{La valeur pédagogique de cet exercice}
+Que vous ayez accès, un jour, aux spécifications complètes d'un
+protocole tel que ZK-NR ou à tout autre protocole multi-couches
+rencontré dans votre pratique professionnelle, la démarche que
+vous venez de mettre en \oe uvre dans cette section
+\textbf{constitue exactement la méthode à appliquer}~:
+raisonner à partir de ce qui est publiquement établi, identifier
+explicitement les questions qui resteraient ouvertes sans
+information supplémentaire, et ne jamais combler ces lacunes par
+des affirmations non vérifiables, la compétence centrale de
+toute la Partie~VI de ce cours.
+\end{boiteRemarque}
+
+\separateur
+
+\begin{boxresume}
+\textbf{Ce qu'il faut retenir de ce chapitre~:}
+\begin{itemize}
+    \item \textbf{BLS}~: signatures courtes et agrégeables, fondées
+          sur la difficulté du problème CDH sur courbes appariées~;
+          \textbf{solides classiquement, mais structurellement
+          condamnées par l'algorithme de Shor}, aucune
+          dégradation progressive, une rupture complète.
+
+    \item Le déséquilibre temporel de BLS (robuste aujourd'hui,
+          vulnérable demain) \textbf{justifie architecturalement}
+          son couplage avec une primitive post-quantique
+          (Dilithium/FIPS~204), application directe du principe
+          de défense en profondeur (Ch.~\ref{chap:cryptanal}).
+
+    \item \textbf{Recommandation opérationnelle clé}~: pour toute
+          signature BLS isolée destinée à un archivage de longue
+          durée, vérifier systématiquement l'existence d'une
+          signature post-quantique complémentaire archivée en
+          parallèle, sinon, documenter cette absence comme
+          limitation du dossier.
+
+    \item La \textbf{checklist générale en sept points}
+          (Section~\ref{sec:recommandations-investigateur}) est
+          directement applicable à tout protocole cryptographique
+          rencontré en investigation, simple ou complexe.
+
+    \item Face à une architecture multi-couches \textbf{non
+          entièrement documentée} (comme un protocole de recherche
+          en cours), la méthode rigoureuse consiste à
+          \textbf{raisonner à partir des seules propriétés
+          publiques} des primitives composantes, et à
+          \textbf{identifier explicitement} ce qui resterait à
+          vérifier, jamais à combler les lacunes par des
+          affirmations non sourcées.
+
+    \item Cette discipline, distinguer constamment l'établi de
+          l'hypothétique, est la compétence unificatrice de
+          toute la Partie~VI de ce cours, qu'il s'agisse d'un
+          théorème mathématique prouvé (Ch.~\ref{chap:CRO}), d'un
+          calcul publié (Ch.~\ref{chap:prim-crypt}), d'un résultat
+          de vérification formelle (Ch.~\ref{chap:form-meth}), ou
+          d'un protocole en cours de développement (ce chapitre).
+\end{itemize}
+\end{boxresume}
+
+\bigskip
+
+\begin{boxexo}[title={\ding{45}\quad Exercice~32.1. Cryptanalyse appliquée \niveaubase}]
+\begin{enumerate}[(a)]
+    \item Expliquez, en vous appuyant sur le Tableau~32.1, pourquoi
+          la vulnérabilité de BLS à Shor est qualifiée
+          d'``effondrement'' plutôt que de simple
+          ``dégradation'', en quoi cela diffère-t-il de l'effet
+          de Grover sur AES-256 (Ch.~\ref{chap:quantique})~?
+    \item Une institution utilise exclusivement BLS pour signer ses
+          archives judiciaires destinées à une conservation de
+          50~ans. Identifiez le risque principal et la recommandation
+          de ce chapitre pour y répondre.
+    \item Pourquoi le positionnement CRO de BLS présenté dans ce
+          chapitre (Tableau~32.2) est-il qualifié de ``raisonnement
+          par analogie'' plutôt que de ``calcul''~? Quelle est la
+          différence méthodologique précise~?
+\end{enumerate}
+\end{boxexo}
+
+\begin{boxexo}[title={\ding{45}\quad Exercice~32.2. Checklist appliquée à un cas du cours \niveaumoyen}]
+Reprenez le mécanisme de ``scellement numérique'' pour les pièces à
+conviction électroniques conçu à l'Exercice~31.3
+(Ch.~\ref{chap:form-meth})~: hachage SHA-256, signature ECDSA de
+l'OPJ, horodatage par autorité tierce.
+\begin{enumerate}[(a)]
+    \item Appliquez les sept points de la checklist générale
+          (Section~\ref{sec:recommandations-investigateur}) à ce
+          mécanisme. Pour chaque point, indiquez si votre analyse
+          antérieure (Ch.~\ref{chap:form-meth}) l'a déjà couvert,
+          ou s'il reste à traiter.
+    \item Ce mécanisme combine-t-il une primitive vulnérable au
+          quantique (ECDSA) avec une protection post-quantique~?
+          Si non, appliquez la recommandation de ce chapitre~:
+          que proposeriez-vous pour sécuriser ce mécanisme à long
+          terme~?
+\end{enumerate}
+\end{boxexo}
+
+\begin{boxexo}[title={\ding{45}\quad Exercice~32.3. Synthèse intégrale de la Partie~VI \niveauexpert}]
+Ce dernier exercice de la Partie~VI vous demande de mobiliser
+\textbf{l'ensemble} des chapitres~26 à~31.
+
+Une entreprise camerounaise de cybersécurité vous présente un
+nouveau protocole, baptisé ``CamSeal'', destiné au scellement de
+preuves numériques pour les tribunaux camerounais. La présentation
+affirme~: \textit{``CamSeal combine un engagement de Merkle, une
+preuve zk-SNARK et une signature à seuil BLS, atteignant un score
+CRO de~$\mathsf{Conf}\cdot\mathsf{Rel}\cdot\mathsf{Opp} = 0{,}81$,
+supérieur à tous les protocoles publiés dans la littérature.''}
+
+\begin{enumerate}[(a)]
+    \item \textbf{(Ch.~\ref{chap:CRO}-\ref{chap:prim-crypt})}~:
+          évaluez la plausibilité du score annoncé en le comparant
+          aux valeurs réellement publiées (Tableau~28.3,
+          plage~$0{,}27$--$0{,}57$). Quelles questions précises
+          poseriez-vous pour vérifier ce chiffre~?
+    \item \textbf{(Ch.~\ref{chap:cryptanal})}~: appliquez la
+          taxonomie des failles (Tableau~30.1) pour identifier au
+          moins deux catégories de vulnérabilités à examiner en
+          priorité pour cette architecture à trois couches.
+    \item \textbf{(Ch.~\ref{chap:quantique}, ce chapitre)}~: la
+          présentation ne mentionne aucune protection
+          post-quantique. Quelle est l'implication, en particulier
+          pour la couche BLS, à la lumière de la
+          Section~\ref{sec:etude-bls} de ce chapitre~? Que
+          recommanderiez-vous~?
+    \item \textbf{(Ch.~\ref{chap:form-meth})}~: l'entreprise
+          affirme avoir ``prouvé formellement'' la sécurité de
+          CamSeal avec Tamarin, sans préciser si certains lemmes
+          restent à l'état ``non prouvé''. Quelle question
+          poseriez-vous pour clarifier ce point, et pourquoi
+          est-elle essentielle avant tout déploiement judiciaire~?
+    \item \textbf{(Synthèse, ce chapitre)}~: appliquez la checklist
+          complète (Section~\ref{sec:recommandations-investigateur})
+          à CamSeal, en indiquant pour chaque point ce que la
+          présentation a déjà établi, et ce qui resterait à
+          vérifier avant que vous, en tant qu'expert judiciaire
+          camerounais (Ch.~12~(UE~SEC4031)), puissiez
+          recommander l'adoption de ce protocole pour un usage
+          judiciaire.
+    \item Rédigez un court avis technique de synthèse (une demi-page),
+          destiné à l'autorité qui vous a mandaté, résumant votre
+          niveau de confiance actuel dans CamSeal et les conditions
+          nécessaires avant tout déploiement opérationnel.
+\end{enumerate}
+\end{boxexo}
+
+\bigskip
+
+\begin{boxinfo}
+\textbf{Conclusion de la Partie~VI.} Ce chapitre clôt la Partie~VI
+de ce cours, consacrée aux fondements théoriques avancés~: l'impact
+du quantique sur la preuve (Ch.~\ref{chap:quantique}), le Trilemme
+CRO formalisé et publié (Ch.~\ref{chap:CRO}), son application
+méthodique à des primitives réelles (Ch.~\ref{chap:prim-crypt}),
+la lecture critique d'un protocole en prépublication
+(Ch.~\ref{chap:ZKNR}), les principes de conception et de
+cryptanalyse (Ch.~\ref{chap:cryptanal}), l'outillage de la preuve
+formelle (Ch.~\ref{chap:form-meth}), et enfin cette mise en pratique
+intégrative.
+
+Le fil conducteur de ces sept chapitres a été, au-delà de leur
+contenu technique propre, une \textbf{discipline méthodologique
+constante}~: distinguer rigoureusement ce qui est établi, publié et
+vérifiable, de ce qui demeure une hypothèse de travail ou une
+question ouverte. Cette discipline n'est pas spécifique à la
+cryptographie théorique, c'est exactement celle exigée de tout
+rapport forensique depuis le Ch.~\ref{chap:rapport} de ce cours.
+
+\medskip
+\textbf{Conclusion du cours.} Ce chapitre clôt aussi le parcours
+entamé au Prologue~: de l'affaire MBONGO, où une simple erreur
+procédurale a anéanti un dossier judiciaire, à la question de la
+pérennité cryptographique des preuves face à une rupture
+technologique encore incertaine. Entre ces deux extrêmes, vous
+avez acquis la rigueur méthodologique du PIU, la maîtrise
+technique de l'acquisition et de l'analyse multi-supports, la
+compréhension du cadre juridique camerounais et international,
+et la posture éthique et critique indispensable à la pratique
+de l'investigation numérique.
+
+\textit{Cette dernière compétence, l'esprit critique face aux
+affirmations non vérifiées, qu'elles proviennent d'un suspect,
+d'un outil automatisé, ou d'un discours commercial sur une
+technologie émergente, est sans doute la plus durable de
+toutes celles enseignées dans ce cours. Les outils changeront.
+Les lois évolueront. La rigueur intellectuelle, elle, reste.}
+\end{boxinfo}

@@ -1,0 +1,700 @@
+% ============================================================================
+% Fichier  : partie4/P04_C17_forensique_cloud.tex
+% Titre    : Forensique Cloud
+% Auteur   : MINKA MI NGUIDJOÏ Thierry Emmanuel
+% Version  : 1.0 -- Juin 2026
+% ============================================================================
+
+\chapter{Forensique Cloud}
+\label{chap:for-cloud}
+
+\epigraph{%
+    « The cloud is just someone else's computer. »%
+}{Adage des administrateurs système}
+
+\niveauChapitre{Expert}{%
+    Chapitres~10~(UE~SEC4031) (portails LEA, Budapest),
+    11~(UE~SEC4031) (CLOUD Act~\cite{cloudact2018}, SCA, RGPD~\cite{rgpd2016}) et
+    \ref{chap:for-res} (logs, corrélation) indispensables.%
+}
+
+\begin{boxobjectifs}
+\begin{itemize}
+    \item Comprendre les modèles de service cloud (SaaS, PaaS, IaaS)
+          et leur impact sur la disponibilité des preuves forensiques.
+    \item Identifier les logs disponibles sur les trois grandes
+          plateformes (AWS, Azure, Google Cloud) et leur contenu
+          forensique.
+    \item Formuler des demandes structurées aux portails LEA des
+          grands fournisseurs~; obtenir et analyser les réponses.
+    \item Analyser les journaux AWS CloudTrail et Azure Activity Log
+          pour reconstituer une chronologie d'attaque cloud.
+    \item Gérer la tension entre éphéméralité des données cloud
+          et exigences probatoires de persistance.
+    \item Coordonner une investigation cloud impliquant plusieurs
+          juridictions et fournisseurs.
+\end{itemize}
+\end{boxobjectifs}
+
+\bigskip
+
+% ============================================================================
+\section*{Le problème central de la forensique cloud}
+% ============================================================================
+
+La forensique cloud pose trois défis que les investigations classiques
+ne posent pas~:
+
+\begin{enumerate}
+    \item \textbf{Souveraineté diffuse}~: les données sont stockées dans
+          des datacenters dont la localisation peut changer dynamiquement
+          et dépend du fournisseur, pas de l'enquêteur. Qui a juridiction~?
+    \item \textbf{Éphéméralité}~: les instances cloud peuvent être
+          détruites en secondes, emportant toutes leurs données. La fenêtre
+          d'acquisition est souvent de minutes, pas d'heures.
+    \item \textbf{Multi-tenancy}~: les données de plusieurs clients
+          coexistent sur la même infrastructure physique~; l'isolement
+          est logique, pas physique.
+\end{enumerate}
+
+\separateur
+
+% ============================================================================
+\section{Modèles de Service et Disponibilité des Preuves}
+\label{sec:modeles-cloud}
+% ============================================================================
+
+Le modèle de service détermine qui contrôle quoi et donc qui peut
+fournir quelles preuves à la demande de l'investigateur.
+
+\begin{tableaucours}{p{2.5cm}p{3.0cm}p{3.0cm}p{3.5cm}}{%
+    \tableauHeader{Modèle} &
+    \tableauHeader{Ce que gère le client} &
+    \tableauHeader{Ce que gère le fournisseur} &
+    \tableauHeader{Preuves disponibles via LEA}
+}
+\textbf{SaaS} (Gmail, Office~365, Dropbox) &
+    Ses données uniquement &
+    Tout (infra, OS, appli, logs) &
+    Logs de connexion, métadonnées, contenu (MLAT/warrant) \\
+\textbf{PaaS} (Heroku, Google App Engine) &
+    Code applicatif, données &
+    Infra, OS, runtime &
+    Logs plateforme + logs applicatifs si conservés \\
+\textbf{IaaS} (AWS EC2, Azure VM, GCP Compute) &
+    OS, appli, données, logs &
+    Physique, hyperviseur &
+    Logs de la couche cloud uniquement~; logs OS~= réquisition
+    au client (ou saisie du compte) \\
+\end{tableaucours}
+\vspace{-0.8em}
+\begin{center}{\small\itshape Tableau~17.1. Modèles cloud et disponibilité des preuves}\end{center}
+
+\begin{boiteRemarque}{Implication pratique~: SaaS est plus simple que IaaS}
+Paradoxalement, l'investigation d'un compte Gmail (SaaS) est plus
+directe qu'une instance AWS compromise (IaaS). Pour Gmail, une demande
+au portail LEA Google suffit pour les métadonnées~; pour une instance
+EC2, le fournisseur ne voit pas le contenu des VMs il faut soit
+accéder au compte AWS compromis, soit saisir légalement l'instance.
+\end{boiteRemarque}
+
+% ============================================================================
+\section{Logs Cloud~: ce qui Existe et où le Trouver}
+\label{sec:logs-cloud}
+% ============================================================================
+
+\subsection{AWS CloudTrail~: l'audit complet des API}
+
+\termecle{AWS CloudTrail}\index{CloudTrail} enregistre chaque appel API
+effectué sur un compte AWS~: qui a fait quoi, quand, depuis quelle IP.
+C'est le journal d'audit le plus complet du cloud AWS.
+
+\begin{boxoutils}{Analyse AWS CloudTrail}
+\begin{lstlisting}[language=bash_forensique]
+# CloudTrail stocke ses logs dans S3 au format JSON (gzip)
+# Structure d'un log CloudTrail type :
+# {
+#   "eventTime": "2026-03-13T02:15:33Z",
+#   "eventSource": "ec2.amazonaws.com",
+#   "eventName": "DescribeInstances",
+#   "userIdentity": {
+#     "type": "IAMUser",
+#     "userName": "admin",
+#     "arn": "arn:aws:iam::123456789:user/admin"
+#   },
+#   "sourceIPAddress": "185.220.XX.XX",
+#   "userAgent": "aws-cli/2.11.0 Python/3.11.0"
+# }
+
+# Telecharger et analyser les logs CloudTrail avec AWS CLI
+aws s3 ls s3://mon-bucket-cloudtrail/AWSLogs/123456789/
+aws s3 sync s3://mon-bucket-cloudtrail/ /output/cloudtrail/
+
+# Analyser avec jq (JSON query)
+# Toutes les actions depuis une IP suspecte
+cat /output/cloudtrail/*.json.gz | gunzip | \
+    jq -r 'select(.sourceIPAddress == "185.220.XX.XX") |
+    [.eventTime, .eventName, .userIdentity.userName,
+     .sourceIPAddress] | @csv'
+
+# Actions de creation/suppression d'instances (indicateurs)
+cat /output/cloudtrail/*.json.gz | gunzip | \
+    jq -r 'select(.eventName | test("RunInstances|TerminateInstances|
+        CreateUser|DeleteUser|AttachUserPolicy")) |
+    [.eventTime, .eventName, .userIdentity.userName,
+     .sourceIPAddress] | @csv'
+
+# Verifier si CloudTrail a ete desactive (anti-forensique cloud)
+cat /output/cloudtrail/*.json.gz | gunzip | \
+    jq -r 'select(.eventName ==
+        "StopLogging" or .eventName == "DeleteTrail") |
+    [.eventTime, .eventName, .userIdentity.userName] | @csv'
+# Trouver "StopLogging" dans les logs -> tentative d'anti-forensique
+\end{lstlisting}
+\end{boxoutils}
+
+\begin{boxscenario}{CloudTrail, reconstitution d'une compromission AWS MVOM}
+L'analyse des logs CloudTrail du compte AWS de TRANSBOIS~SA révèle
+la séquence suivante~:
+
+\begin{lstlisting}[language=bash_forensique]
+# Timeline CloudTrail filtree sur 13/03/2026 02h00-03h00
+02:13:45  AssumeRole       IP:185.220.XX.XX  Role:EC2-Admin
+02:14:03  DescribeInstances IP:185.220.XX.XX  User:admin
+02:14:11  GetConsoleOutput  IP:185.220.XX.XX  Instance:i-0a1b2c3d4e
+02:16:02  RunInstances      IP:185.220.XX.XX  Type:t2.xlarge
+          # Lancement d'une instance suspecte
+02:17:55  PutObject         IP:185.220.XX.XX  Bucket:transbois-backup
+          # Exfiltration vers S3 (45 Mo)
+02:19:48  StopLogging       IP:185.220.XX.XX
+          # TENTATIVE SUPPRESSION DES LOGS CloudTrail
+02:19:49  [CloudTrail arrêté -- fenêtre aveugle]
+02:23:11  TerminateInstances  # Instance suspecte detruite
+\end{lstlisting}
+
+\textbf{Constatation~:} L'action \texttt{StopLogging} à 02h19:49 a
+interrompu la journalisation CloudTrail. Cependant, les logs antérieurs
+(02h13--02h19) sont déjà enregistrés dans S3 et ne peuvent pas être
+rétroactivement effacés si le bucket S3 est protégé
+(\textit{Object Lock / WORM}), ce qui est le cas ici.
+\textbf{L'anti-forensique cloud a échoué car les logs étaient
+en écriture unique.}
+\end{boxscenario}
+
+\subsection{Azure Activity Log et Azure AD Sign-In Logs}
+
+\begin{boxoutils}{Analyse Azure Activity Log et Sign-In}
+\begin{lstlisting}[language=bash_forensique]
+# Azure CLI -- extraire les logs d'activite
+az monitor activity-log list \
+    --start-time "2026-03-13T02:00:00Z" \
+    --end-time "2026-03-13T03:00:00Z" \
+    --output json > /output/azure_activity.json
+
+# Analyser avec jq
+cat /output/azure_activity.json | jq -r \
+    '.[] | [.eventTimestamp, .operationName.value,
+    .caller, .properties.statusCode] | @csv'
+
+# Azure AD Sign-In Logs (tentatives de connexion)
+# Via Azure Portal -> Azure Active Directory -> Sign-ins
+# Ou via Microsoft Graph API :
+curl -H "Authorization: Bearer $TOKEN" \
+    "https://graph.microsoft.com/v1.0/auditLogs/signIns?\
+    \$filter=createdDateTime ge 2026-03-13T02:00:00Z and
+    createdDateTime le 2026-03-13T03:00:00Z" \
+    > /output/azure_signins.json
+
+cat /output/azure_signins.json | jq -r \
+    '.value[] | [.createdDateTime, .userDisplayName,
+    .ipAddress, .status.errorCode, .location.city] | @csv'
+# errorCode 0 = succes, 50126 = mot de passe incorrect, etc.
+\end{lstlisting}
+\end{boxoutils}
+
+\subsection{Google Cloud Logging~: Cloud Audit Logs}
+
+\begin{lstlisting}[language=bash_forensique,
+    caption={Google Cloud Audit Logs, analyse forensique}]
+# Google Cloud Logging via gcloud CLI
+gcloud logging read \
+    "timestamp >= \"2026-03-13T02:00:00Z\"
+     AND timestamp <= \"2026-03-13T03:00:00Z\"
+     AND protoPayload.methodName:(
+        \"compute.instances.insert\"
+        OR \"compute.instances.delete\"
+        OR \"storage.buckets.create\")
+     AND protoPayload.authenticationInfo.principalEmail != \"\"" \
+    --project=mon-projet \
+    --format=json > /output/gcp_audit.json
+
+# Extraire les createurs de ressources (qui a lance quoi)
+cat /output/gcp_audit.json | python3 -c "
+import json, sys
+for entry in json.load(sys.stdin):
+    pp = entry.get('protoPayload', {})
+    print(
+        entry.get('timestamp',''),
+        pp.get('methodName',''),
+        pp.get('authenticationInfo',{}).get('principalEmail',''),
+        pp.get('requestMetadata',{}).get('callerIp','')
+    )
+"
+\end{lstlisting}
+
+% ============================================================================
+\section{Obtenir des Preuves Auprès des Fournisseurs SaaS}
+\label{sec:preuve-saas}
+% ============================================================================
+
+\subsection{Structurer une demande au portail LEA}
+
+Le Chapitre~10~(UE~SEC4031) (Section~10.5~(UE~SEC4031)) a
+présenté les portails LEA. Ce chapitre approfondit la \emph{structure}
+de la demande elle-même, les éléments sans lesquels elle sera
+systématiquement rejetée.
+
+\begin{tableaucours}{p{3.5cm}p{8.0cm}}{%
+    \tableauHeader{Champ obligatoire} &
+    \tableauHeader{Contenu requis et formulation recommandée}
+}
+\textbf{Type de demande} &
+    Preservation Request (urgence)~; Production Request (standard)~;
+    Emergency Request (menace imminente). Choisir le bon type~:
+    une Production sans Preservation préalable arrive souvent après
+    que les données ont été effacées. \\
+\textbf{Identifiants du compte} &
+    Adresse email, numéro de téléphone, URL du profil, IMEI associé.
+    Toujours donner au moins deux identifiants croisés pour lever
+    l'ambiguïté. \\
+\textbf{Base légale} &
+    Citer explicitement~: art.~52 et~57 \loicam{2010/012}~\cite{cameroun2010a}~;
+    Budapest art.~16--17 si l'État requis est partie~;
+    SCA 18~U.S.C.~\S~2703 pour fournisseurs US. \\
+\textbf{Qualification de l'infraction} &
+    Description factuelle + qualification juridique des deux pays
+    (double incrimination). Pour un fournisseur US~: citer le CFAA. \\
+\textbf{Période visée} &
+    Date de début et de fin précises. Éviter les demandes ouvertes
+    (``toute la vie du compte'')~: systématiquement rejetées. \\
+\textbf{Données demandées} &
+    Distinguer métadonnées (abonné, connexion) et contenu~:
+    les métadonnées s'obtiennent sans warrant~; le contenu nécessite
+    un MLAT ou équivalent. \\
+\textbf{Coordonnées de contact} &
+    Nom, titre, email officiel, numéro de téléphone direct.
+    Les réponses urgentes vont directement à ce contact. \\
+\end{tableaucours}
+\vspace{-0.8em}
+\begin{center}{\small\itshape Tableau~17.2. Éléments obligatoires d'une demande LEA}\end{center}
+
+\subsection{Analyser la réponse d'un fournisseur}
+
+\begin{boxoutils}{Traitement d'une réponse Google (métadonnées Gmail)}
+\begin{lstlisting}[language=bash_forensique]
+# Structure typique d'une reponse Google aux autorites
+# (format JSON ou fichier texte structure)
+# Exemple : reponse pour un compte Gmail suspect
+
+# 1. Informations d'abonne (disponibles sans warrant)
+{
+  "accountEmail": "suspect.wouri@gmail.com",
+  "googleId": "123456789012345678901",
+  "accountCreated": "2025-12-28T10:15:22Z",
+  "lastLoginDate": "2026-01-15T14:35:11Z",
+  "recoveryEmail": "autre.compte@yahoo.fr",
+  "recoveryPhone": "+23365XXXXXXX",
+  "services": ["Gmail", "Google Drive", "Google Photos"]
+}
+
+# 2. Logs de connexion (disponibles sans warrant)
+[
+  {"loginTime": "2026-01-15T14:28:01Z",
+   "ipAddress": "41.82.XXX.XXX",       # IP senegale (Sonatel)
+   "loginType": "GOOGLE_LOGIN",
+   "success": true},
+  {"loginTime": "2026-01-15T14:35:09Z",
+   "ipAddress": "41.82.XXX.XXX",
+   "loginType": "GMAIL_SMTP_AUTH",
+   "success": true}
+]
+
+# Croiser avec la capture reseau WOURI (Ch. 15) :
+# Email SMTP envoye depuis contact@medequip-portugal.com a 14h28:03
+# Connexion Gmail depuis IP senegalaise a 14h28:01
+# -> le compte suspect s'est connecte 2 secondes avant l'envoi
+\end{lstlisting}
+\end{boxoutils}
+
+\begin{boxjuris}
+\textbf{Valeur probatoire d'une réponse de fournisseur}
+
+Une réponse d'un fournisseur US (Google, Meta, Microsoft) à une
+demande LEA constitue un \textit{business record} au sens de la
+FRE~Rule~803(6) (Chapitre~11~(UE~SEC4031)). Elle est directement
+admissible en droit américain. En droit camerounais~:
+\begin{itemize}
+    \item Considérée comme un document étranger authentifié~;
+    \item Nécessite l'attestation d'un expert judiciaire expliquant
+          le processus de génération et la fiabilité du système~;
+    \item Hash SHA-256 du fichier reçu à calculer et documenter
+          immédiatement (custody numérique des réponses LEA,
+          cf. Ch.~8~(UE~SEC4031)).
+\end{itemize}
+\end{boxjuris}
+
+% ============================================================================
+\section{Gérer l'Éphéméralité~: Conservation d'Urgence}
+\label{sec:ephemerality}
+% ============================================================================
+
+\subsection{Le problème de la rétention limitée}
+
+Les données cloud ont des durées de vie variables selon les fournisseurs~:
+
+\begin{tableaucours}{p{3.5cm}p{3.5cm}p{4.5cm}}{%
+    \tableauHeader{Type de donnée} &
+    \tableauHeader{Durée de rétention typique} &
+    \tableauHeader{Action à entreprendre}
+}
+Logs de connexion IP & 30--90~jours selon fournisseur &
+    Demande de conservation \textbf{immédiate} via art.~29 Budapest
+    ou portail LEA \\
+Contenu emails supprimés & 30~jours (corbeille) puis effacé &
+    Preservation Request \textbf{avant} la fin des 30~jours \\
+Instances cloud éteintes & Selon configuration (souvent~: 7~jours) &
+    Saisie immédiate ou snapshot forensique \\
+Données Snap/Telegram & Heures à jours &
+    Urgence absolue~; canal INTERPOL 24/7 \\
+Transactions financières & Souvent 5--10~ans (réglementation AML) &
+    Standard MLAT acceptable \\
+\end{tableaucours}
+\vspace{-0.8em}
+\begin{center}{\small\itshape Tableau~17.3. Durées de rétention et urgence d'action}\end{center}
+
+\subsection{Snapshot forensique d'une instance cloud}
+
+Quand l'investigateur a accès au compte cloud compromis (ou que le
+suspect est le propriétaire du compte et coopère), le snapshot est
+l'équivalent cloud de l'image E01~:
+
+\begin{boxoutils}{Snapshot forensique AWS / GCP}
+\begin{lstlisting}[language=bash_forensique]
+# AWS -- snapshot d'un volume EBS (disque de VM)
+# PREREQUIS : acces au compte AWS (credentials)
+
+# 1. Identifier le volume de l'instance
+aws ec2 describe-instances --instance-ids i-0a1b2c3d4e \
+    --query 'Reservations[].Instances[].BlockDeviceMappings[].Ebs.VolumeId'
+# Resultat : vol-0xyz789abc
+
+# 2. Creer un snapshot (image read-only du volume)
+aws ec2 create-snapshot --volume-id vol-0xyz789abc \
+    --description "Forensic snapshot MVOM 2026-03-13 OPJ NKENG"
+# Resultat : snap-0forensic123
+
+# 3. Copier le snapshot dans un compte forensique isole
+aws ec2 copy-snapshot --source-region eu-west-1 \
+    --source-snapshot-id snap-0forensic123 \
+    --region eu-west-1 \
+    --description "Forensic copy - case DOS-2026-034"
+
+# 4. Calculer et documenter le hash du snapshot
+# (via AWS S3 Export puis hash local)
+aws ec2 export-image --snapshot-ids snap-0forensic123 \
+    --s3-export-location S3Bucket=forensic-exports,S3Prefix=case-034/
+# Apres export :
+aws s3 cp s3://forensic-exports/case-034/snapshot.vmdk /output/
+sha256sum /output/snapshot.vmdk > /output/snapshot_hash.txt
+
+# GCP -- snapshot d'un disque Persistent Disk
+gcloud compute disks snapshot DISK_NAME \
+    --snapshot-names=forensic-snap-20260313 \
+    --zone=europe-west1-b \
+    --description="Forensic snapshot MVOM DOS-2026-034"
+\end{lstlisting}
+\end{boxoutils}
+
+\begin{boiteRemarque}{Le snapshot n'est pas l'image E01}
+Un snapshot cloud est une copie logique cohérente du volume à un instant t.
+Il préserve le contenu mais \textbf{pas exactement les mêmes garanties
+qu'un write blocker physique}~: la création du snapshot est elle-même
+une opération enregistrée dans CloudTrail. Documenter obligatoirement~:
+\begin{enumerate}
+    \item Horodatage exact de la création du snapshot~;
+    \item ID du snapshot~;
+    \item Compte AWS/GCP utilisé pour le créer~;
+    \item Hash SHA-256 du fichier exporté.
+\end{enumerate}
+\end{boiteRemarque}
+
+% ============================================================================
+\section{Investigation Multi-Fournisseurs~: Corrélation Cloud}
+\label{sec:correlation-cloud}
+% ============================================================================
+
+Les affaires complexes impliquent souvent plusieurs fournisseurs cloud
+simultanément. La corrélation entre leurs données est la clé pour
+reconstituer l'image complète.
+
+\begin{boxscenario}{Affaire BAOBAB, corrélation multi-cloud}
+L'Opération BAOBAB (fraudes MoMo, Chapitre~10~(UE~SEC4031)) implique~:
+\begin{itemize}
+    \item Un compte Binance (exchange crypto) via lequel les fonds
+          ont été convertis~;
+    \item Une adresse email Yahoo utilisée pour créer le compte Binance~;
+    \item Un VPN hébergé sur AWS EC2 (masquage de l'IP réelle)~;
+    \item Un wallet Bitcoin avec transactions sur la blockchain.
+\end{itemize}
+
+\textbf{Séquence de demandes parallèles~:}
+
+\begin{enumerate}
+    \item \textbf{Preservation simultanée~:} portail LEA Binance +
+          portail LEA Yahoo + AWS CloudTrail. \textbf{Simultané,
+          pas séquentiel}~: les données se recoupent et les effacer
+          l'une révèlerait l'enquête à l'autre.
+
+    \item \textbf{Analyse blockchain (immédiate, sans demande)~:}\\
+          \texttt{https://www.blockchain.com/btc/address/1BaobabXXX}\\
+          L'adresse Bitcoin et toutes ses transactions sont publiques.
+          Identifier les échanges de destination (exchanges~: ont des
+          obligations KYC) et les wallets liés.
+
+    \item \textbf{Corrélation temporelle~:}
+\begin{lstlisting}[language=bash_forensique]
+# Chronologie fusionnee des 3 fournisseurs :
+# [MoMo SMS]   2026-01-15 14:22:45  Transaction 250000 FCFA
+# [Yahoo LEA]  2026-01-15 14:23:12  Login compte Yahoo IP:41.82.XXX.XXX
+# [Binance LEA] 2026-01-15 14:23:45 Login Binance IP:41.82.XXX.XXX
+# [Binance LEA] 2026-01-15 14:24:02 Conversion XAF -> USDT (240000 FCFA)
+# [AWS CT]     2026-01-15 14:25:11  Connection SSH to EC2 VPN
+# [Blockchain] 2026-01-15 14:31:05  Transfer 185 USDT -> Bitcoin wallet
+\end{lstlisting}
+          La même IP sénégalaise (\texttt{41.82.XXX.XXX}) apparaît
+          dans les logs Yahoo et Binance à 78~secondes d'intervalle
+          cohérence forte.
+    \end{enumerate}
+\end{boxscenario}
+
+\begin{boxCRO}
+\textbf{Analyse CRO. Blockchain comme preuve forensique}
+
+$\mathcal{R}$ (Fiabilité)~: la blockchain Bitcoin est immuable par
+conception. Une transaction enregistrée est permanente et vérifiable
+indépendamment par tout analyste avec les mêmes outils. La fiabilité
+est maximale, bien supérieure à un log de serveur qu'un administrateur
+pourrait modifier.
+
+$\mathcal{O}$ (Opposabilité)~: l'immuabilité de la blockchain constitue
+une preuve d'une opposabilité exceptionnelle~; elle ne peut pas être
+contestée sur le fond (la transaction a eu lieu). Elle peut être
+contestée sur l'attribution (``prouvez que je contrôlais ce wallet'').
+
+$\mathcal{C}$ (Confidentialité)~: paradoxalement, la blockchain est
+\textbf{publique et pseudonyme}. L'anonymat peut être levé en
+identifiant les échanges KYC aux deux extrémités de la chaîne.
+
+\cro{$\uparrow$ pseudonyme mais levable}{$\uparrow\uparrow\uparrow$ immuabilité maximale}{$\uparrow\uparrow\uparrow$ incontestable}
+\end{boxCRO}
+
+% ============================================================================
+\section{Défis Spécifiques~: Chiffrement et Résidualité}
+\label{sec:defis-cloud}
+% ============================================================================
+
+\subsection{Données chiffrées côté client}
+
+Certains services (Proton Mail, iCloud avec E2E, Signal) chiffrent les
+données \textbf{côté client} avant de les envoyer au serveur~: même
+avec un warrant, le fournisseur ne peut pas déchiffrer.
+
+\begin{tableaucours}{p{3.5cm}p{3.0cm}p{5.0cm}}{%
+    \tableauHeader{Service} &
+    \tableauHeader{Chiffrement} &
+    \tableauHeader{Ce que le fournisseur peut fournir}
+}
+Gmail (standard) & Serveur (Google déchiffre) &
+    Contenu des emails (avec warrant), logs de connexion \\
+Proton Mail & Bout en bout (E2E) &
+    Métadonnées uniquement~; contenu inaccessible même avec warrant \\
+iCloud (sans E2E) & Serveur (Apple déchiffre) &
+    Contenu~: iCloud Backup, Photos, Notes (avec warrant) \\
+iCloud (avec E2E actif) & Bout en bout (depuis iOS~16.3) &
+    Métadonnées uniquement~; Apple ne peut plus déchiffrer \\
+Signal & Bout en bout &
+    Numéro de téléphone + date d'inscription + date dernière connexion.
+    Rien d'autre~: Signal ne stocke rien. \\
+\end{tableaucours}
+\vspace{-0.8em}
+\begin{center}{\small\itshape Tableau~17.4. Chiffrement E2E et disponibilité des données}\end{center}
+
+\subsection{Résidualité des données cloud~: la mémoire longue}
+
+À l'inverse de l'éphéméralité, certaines données cloud persistent
+très longtemps dans des emplacements non évidents~:
+
+\begin{itemize}
+    \item \textbf{Sauvegardes automatiques}~: Google conserve les données
+          supprimées dans ses systèmes de backup pendant 60~jours minimum
+          (selon la politique de 2024), non accessible à l'utilisateur,
+          mais accessible via warrant.
+    \item \textbf{Journaux de livraison email}~: même si un email est
+          supprimé, les journaux de routage SMTP restent chez les
+          intermédiaires (Google, Microsoft) pendant 30--90~jours.
+    \item \textbf{Snapshots EBS abandonnés}~: des snapshots AWS créés
+          par des processus de backup et non supprimés peuvent révéler
+          l'état d'une instance à une date précise, souvent des mois
+          après un incident.
+    \item \textbf{CDN edge logs}~: CloudFront (AWS), Cloudflare, Akamai
+          conservent leurs logs d'accès 30--90~jours, révélant
+          des connexions à des sites même si le site lui-même a été
+          supprimé.
+\end{itemize}
+
+\separateur
+
+% --- Encadré lab NDAP SUKULU ---
+\begin{boiteRemarque}{Notions mobilisées par le laboratoire INA-LAB-05}
+\begin{itemize}
+    \item \textbf{Lire un événement CloudTrail}~: \texttt{eventName} (l'appel
+          d'API), \texttt{eventTime} (en UTC), \texttt{sourceIPAddress},
+          \texttt{userIdentity} (qui agit, par exemple un rôle obtenu par
+          \texttt{AssumeRole}), \texttt{requestParameters} (ce qui est
+          demandé) et \texttt{responseElements} (ce qui est créé, par exemple
+          l'identifiant d'une instance lancée par \texttt{RunInstances}).
+    \item \textbf{Événements de données S3}~: \texttt{PutObject} donne le
+          compartiment (\emph{bucket}) et le volume transféré
+          (\texttt{bytesTransferredIn}, en octets, placé selon l'export dans
+          \texttt{additionalEventData} ou \texttt{responseElements}~;
+          diviser par 1\,048\,576 pour des Mio).
+    \item \textbf{Fenêtre aveugle}~: \texttt{StopLogging} arrête la
+          journalisation, \texttt{StartLogging} la reprend~; la durée entre
+          les deux est la fenêtre aveugle. Pendant ce trou, d'autres sources
+          continuent d'enregistrer (journaux de flux VPC, historique d'état
+          des instances, facturation)~: une instance créée puis détruite dans
+          la fenêtre s'y retrouve.
+\end{itemize}
+\end{boiteRemarque}
+
+\begin{boxresume}
+\textbf{Ce qu'il faut retenir de ce chapitre~:}
+\begin{itemize}
+    \item \textbf{Modèle~$\to$ preuve disponible~:} SaaS (Gmail,
+          Office~365)~= logs + contenu via MLAT. IaaS (AWS EC2)~=
+          logs CloudTrail uniquement~; contenu OS~= accès au compte
+          client.
+
+    \item \textbf{CloudTrail / Azure Activity Log / GCP Audit}~:
+          les trois grandes plateformes IaaS logguent chaque appel API.
+          Ces logs sont la source primaire de toute investigation IaaS.
+          Chercher~: \texttt{StopLogging} (anti-forensique),
+          \texttt{CreateUser}, \texttt{RunInstances}, \texttt{PutObject}.
+
+    \item \textbf{Demande LEA~: 7~champs obligatoires}~: type, identifiants
+          croisés, base légale (art.~52/57 Loi~2010 + Budapest/CLOUD Act),
+          qualification avec double incrimination, période précise,
+          distinction métadonnées/contenu, coordonnées directes.
+
+    \item \textbf{Conservation d'abord}~: les logs de connexion
+          disparaissent en 30--90~jours. Demande de conservation
+          \emph{immédiate} puis MLAT dans les 60~jours.
+
+    \item \textbf{Snapshot forensique}~: équivalent cloud de l'image
+          E01. Documenter~: horodatage, ID snapshot, hash SHA-256 du
+          fichier exporté, compte utilisé.
+
+    \item \textbf{Blockchain}~: immuable, publique, pseudonyme.
+          L'attribution nécessite d'identifier les exchanges KYC
+          aux deux extrémités. Analyse gratuite sur blockchain.com
+          ou Blockchair.
+
+    \item \textbf{Chiffrement E2E}~: Signal/Proton~= métadonnées
+          uniquement. iCloud avec E2E (iOS~16.3+)~= même Apple ne
+          peut plus déchiffrer. Anticiper cette limite dans le plan
+          d'investigation.
+
+    \item \textbf{Anti-forensique cloud}~: \texttt{StopLogging} dans
+          CloudTrail est lui-même loggué (s'il survient après la
+          création du log)~; les logs S3 protégés par \textit{Object Lock}
+          sont inviolables même par le propriétaire du compte.
+\end{itemize}
+\end{boxresume}
+
+\bigskip
+
+\begin{boxexo}[title={\ding{45}\quad Exercice~17.1. Modèle et preuves \niveaubase}]
+Pour chacune des situations suivantes, identifiez le modèle de service
+cloud impliqué, ce que le fournisseur peut fournir, et quel instrument
+juridique est nécessaire~:
+\begin{enumerate}[(a)]
+    \item Un suspect utilise une adresse Gmail pour envoyer des emails
+          de phishing. Vous voulez le contenu des emails et les IPs
+          de connexion.
+    \item Un ransomware a été déployé depuis une instance AWS EC2.
+          Vous voulez savoir qui a lancé cette instance et depuis quelle IP.
+    \item Des données de paiement volées sont stockées sur un bucket
+          Dropbox. Vous voulez les métadonnées du compte et les fichiers.
+    \item Un groupe WhatsApp a coordonné une fraude. WhatsApp utilise
+          le chiffrement E2E. Que peut fournir Meta~?
+\end{enumerate}
+\end{boxexo}
+
+\begin{boxexo}[title={\ding{45}\quad Exercice~17.2. Analyse CloudTrail \niveaumoyen}]
+Les logs CloudTrail du compte AWS de TRANSBOIS~SA (extrait)~:
+\begin{lstlisting}[language=bash_forensique]
+02:10:45  GetPasswordData      IP:10.0.0.15      User:admin
+02:13:45  AssumeRole           IP:185.220.XX.XX  User:admin
+02:14:03  DescribeInstances    IP:185.220.XX.XX  User:admin
+02:16:02  RunInstances         IP:185.220.XX.XX  User:admin
+02:17:55  PutObject            IP:185.220.XX.XX  Bucket:transbois-backup
+02:19:48  StopLogging          IP:185.220.XX.XX  User:admin
+02:23:11  TerminateInstances   IP:185.220.XX.XX  User:admin
+\end{lstlisting}
+\begin{enumerate}[(a)]
+    \item Identifiez les indicateurs de compromission dans cette séquence.
+    \item L'action à 02h10:45 (\texttt{GetPasswordData}) précède
+          la connexion suspecte à 02h13:45. Que pourrait-elle indiquer~?
+    \item L'attaquant a tenté de stopper CloudTrail à 02h19:48.
+          Pourquoi a-t-il échoué (hypothèse la plus probable)~?
+    \item Rédigez les constatations forensiques CloudTrail et
+          l'analyse correspondante avec niveau de confiance.
+\end{enumerate}
+\end{boxexo}
+
+\begin{boxexo}[title={\ding{45}\quad Exercice~17.3. Plan d'investigation multi-cloud \niveauexpert}]
+L'affaire BAOBAB implique~: fraudes MoMo vers un compte Binance~;
+un compte Yahoo utilisé pour Binance~; des logs AWS suggèrent un VPN
+EC2~; 3~adresses Bitcoin identifiées par analyse blockchain.
+L'IP sénégalaise \texttt{41.82.XXX.XXX} apparaît dans les logs.
+\begin{enumerate}[(a)]
+    \item Construisez le plan d'investigation multi-cloud~: dans quel
+          ordre activer quels canaux (conservation, portails LEA, MLAT,
+          INTERPOL, AFRIPOL)~? Justifiez l'ordre par les durées de
+          rétention.
+    \item Pour chaque fournisseur (Binance, Yahoo, AWS), identifiez~:
+          (i)~la base légale applicable, (ii)~le type de données
+          accessible sans MLAT, (iii)~ce qui nécessite un MLAT.
+    \item L'analyse blockchain révèle que les 3~adresses Bitcoin
+          envoient vers un exchange turc (Paribu). La Turquie est
+          partie à Budapest depuis 2014. Rédigez la demande de
+          conservation urgente à envoyer via le BCN INTERPOL, en
+          citant les articles applicables.
+    \item Appliquez la grille CRO à la décision d'analyser publiquement
+          les adresses Bitcoin (données publiques mais pseudonymes)~:
+          quelles implications pour $\mathcal{C}$ si vous publiez
+          l'analyse dans votre rapport judiciaire~?
+\end{enumerate}
+\end{boxexo}
+
+\bigskip
+
+\begin{boxinfo}
+\textbf{Transition.} Le chapitre suivant aborde la dernière famille
+de supports de la Partie~IV~: les objets connectés et systèmes
+embarqués (caméras, routeurs, équipements industriels), dont les
+journaux sont rares et le micrologiciel devient lui-même une pièce.
+Le Chapitre~\ref{chap:anti-for} (Partie~V) examinera ensuite les
+techniques utilisées pour effacer les traces dans les systèmes,
+les réseaux et le cloud, et comment les détecter malgré tout.
+\end{boxinfo}

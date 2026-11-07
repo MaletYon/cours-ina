@@ -1,0 +1,749 @@
+% ============================================================================
+% Fichier  : partie6/P06_C28_analyse_primitives.tex
+% Titre    : Analyse des Primitives Cryptographiques selon le Cadre CLO
+% Auteur   : MINKA MI NGUIDJOÏ Thierry Emmanuel
+% Version  : 2.0 -- Juin 2026 
+% ============================================================================
+
+\chapter{Analyse des Primitives Cryptographiques selon le Cadre CLO}
+\label{chap:prim-crypt}
+
+\epigraph{%
+    « Cryptographic primitives are the building blocks of trust in
+    digital systems. Each must be evaluated against its resilience to
+    emerging threats. »%
+}{Adi Shamir}
+
+\niveauChapitre{Recherche}{%
+    Chapitre~\ref{chap:CRO} (formalisation du Trilemme CRO)
+    indispensable~: ce chapitre applique méthodiquement les outils
+    qui y sont définis. Notions de cryptographie avancée recommandées.%
+}
+
+\begin{boxobjectifs}
+\begin{itemize}
+    \item Reproduire, étape par étape, la méthodologie de calcul du
+          cadre CLO sur les trois protocoles effectivement analysés
+          dans la littérature publiée~: Helios, zk-SNARKs, ECDSA.
+    \item Comprendre les trois méthodes d'estimation de l'entropie
+          contextuelle $H(C)$~: bornes structurelles, littérature
+          d'expertise, modélisation information-théorique.
+    \item Décomposer le calcul de $I(V;\Sigma\mid C)$ dimension par
+          dimension pour un protocole donné.
+    \item Situer chaque primitive dans son \textbf{régime de capacité
+          institutionnelle} (faible/moyen/élevé) et en déduire des
+          recommandations de conception.
+    \item Distinguer rigoureusement ce qui est \textbf{publié et
+          calculé} de ce qui reste, en l'état de la recherche,
+          \textbf{une question ouverte} pour d'autres primitives.
+    \item Appliquer cette méthodologie à une primitive non encore
+          analysée dans la littérature, comme exercice de recherche.
+\end{itemize}
+\end{boxobjectifs}
+
+\bigskip
+
+% ============================================================================
+\section*{De la théorie générale à l'analyse de cas reproductible}
+% ============================================================================
+
+Le Chapitre~\ref{chap:CRO} a établi le cadre théorique~: définitions
+formelles, théorèmes de bornes, démonstration du Trilemme conditionnel.
+Ce chapitre descend d'un niveau d'abstraction~: il \textbf{reproduit
+intégralement} la méthodologie de calcul appliquée par les auteurs
+à trois protocoles réels, avec une transparence totale sur chaque
+étape, l'objectif pédagogique étant de vous rendre capable de
+mener vous-même ce type d'analyse sur une primitive de votre choix.
+
+\begin{boxalert}
+\textbf{Avertissement méthodologique, conforme à celui des auteurs}
+
+Les calculs présentés dans ce chapitre sont qualifiés, dans
+l'article source~\cite{minka2026clo}, d'\textbf{estimations
+théoriques} (\textit{theoretical estimates}), pas de mesures
+empiriques. La note méthodologique de l'article le précise
+explicitement~: \textit{``ces estimations démontrent une capacité
+analytique et identifient des motifs de compromis~; la validation
+empirique auprès de décideurs institutionnels reste un travail
+futur''}. Ce chapitre conserve scrupuleusement cette honnêteté
+méthodologique, exactement la posture de la distinction
+constatation/analyse pratiquée depuis le Ch.~\ref{chap:rapport}
+de ce cours.
+\end{boxalert}
+
+\separateur
+
+% ============================================================================
+\section{Méthodologie de Calcul~: les Quatre Étapes}
+\label{sec:methodologie}
+% ============================================================================
+
+Pour chaque protocole analysé, la méthodologie publiée
+dans~\cite{minka2026clo} procède en quatre étapes systématiques.
+
+\begin{tableaucours}{p{2.5cm}p{8.5cm}}{%
+    \tableauHeader{Étape} &
+    \tableauHeader{Contenu}
+}
+\textbf{1. Formalisation} & Définir $\mathcal{M}, \Sigma, \mathcal{C},
+    \mathcal{V}$ à partir des spécifications publiées du protocole. \\
+\textbf{2. Estimation de $H(C)$} & Estimer l'entropie contextuelle par
+    triangulation de trois méthodes complémentaires
+    (Section~\ref{sec:trois-methodes}). \\
+\textbf{3. Calcul ou bornage de $\mathsf{Conf}$, $\mathsf{Rel}$,
+    $\mathsf{Opp}$} & Dériver les trois mesures à partir des propriétés
+    cryptographiques publiées et de l'estimation de $H(C)$. \\
+\textbf{4. Implications institutionnelles} & Interpréter le produit
+    $\mathsf{Conf}\cdot\mathsf{Rel}\cdot\mathsf{Opp}$ et le situer
+    dans un régime de capacité (Section~\ref{sec:regimes}). \\
+\end{tableaucours}
+\vspace{-0.8em}
+\begin{center}{\small\itshape Tableau~28.1. Les quatre étapes de la
+méthodologie CLO}\end{center}
+
+\subsection{Les trois méthodes d'estimation de $H(C)$}
+\label{sec:trois-methodes}
+
+\begin{boxdef}
+\textbf{Méthode~1. Bornes structurelles}~: compter les
+caractéristiques contextuelles distinguables à partir des textes
+légaux et réglementaires. \textit{Exemple~:} une juridiction
+générale distingue $\approx 16$~types de preuves et $\approx 16$
+contextes procéduraux, donnant
+$H(C) \geq \log_2(16 \times 16) = 8$~bits.
+
+\textbf{Méthode~2. Littérature d'expertise}~: s'appuyer sur les
+résultats des sciences cognitives concernant la capacité de mémoire
+de travail à long terme des experts (typiquement
+$2^{12}$--$2^{15}$~``chunks'', cf.~Ericsson, cité
+dans~\cite{minka2026clo}), suggérant une entropie contextuelle
+d'expert de l'ordre de~$12$ à~$15$~bits.
+
+\textbf{Méthode~3. Modélisation information-théorique}~: modéliser
+la prise de décision institutionnelle comme une application
+probabiliste de l'evidence vers les verdicts, et estimer les bornes
+d'information mutuelle correspondantes.
+\end{boxdef}
+
+Ces trois méthodes convergent, selon~\cite{minka2026clo}, vers les
+plages suivantes~: tribunaux généraux $H(C) \approx 8$--$16$~bits~;
+régulateurs spécialisés $\approx 10$--$32$~bits~; experts de
+domaine $\approx 20$--$64$~bits.
+
+% ============================================================================
+\section{Étude de Cas~1~: Helios. Vote Électronique}
+\label{sec:cas-helios}
+% ============================================================================
+
+\subsection{Formalisation du protocole}
+
+Helios~\cite{adida2009helios} utilise le chiffrement ElGamal et des
+preuves à divulgation nulle de connaissance Fiat-Shamir sur des
+groupes de logarithme discret~$2048$~bits.
+
+\begin{itemize}
+    \item \textbf{Messages}~: votes individuels $v \in \{1,\ldots,K\}$~;
+    \item \textbf{Preuves}~: $\sigma = (\mathrm{Enc}(v), \pi_{\mathrm{valid}},
+          \pi_{\mathrm{tally}})$, où $\mathrm{Enc}$ est le
+          chiffrement ElGamal et $\pi$ les preuves Fiat-Shamir~;
+    \item \textbf{Contexte}~: litige électoral devant un tribunal de
+          juridiction générale, $H(C) \approx 8$~bits (Méthode~1~:
+          $\approx 16$~types de preuves distinguables, $\approx
+          16$~contextes procéduraux)~;
+    \item \textbf{Verdicts}~: $\mathcal{V} = \{$élection valide,
+          élection invalide, recomptage, demande d'investigation$\}$,
+          soit $H(V \mid C) = 2$~bits.
+\end{itemize}
+
+\subsection{Calcul détaillé, étape par étape}
+
+\begin{boxoutils}{Helios, calcul publié, reproduit intégralement}
+\textbf{Confidentialité}. sécurité sémantique ElGamal sous
+l'hypothèse DDH (\textit{Decisional Diffie-Hellman})~:
+\[
+\mathsf{Conf}(\text{Helios}) \approx 0{,}92
+\]
+
+\textbf{Fiabilité}. solidité des preuves à divulgation nulle,
+erreur $< 2^{-80}$~:
+\[
+\mathsf{Rel}(\text{Helios}) \approx 0{,}95
+\]
+
+\textbf{Opposabilité}. décomposition explicite~:
+les tribunaux peuvent extraire un \textbf{signal d'expert binaire}
+depuis les preuves cryptographiques~: ``valide'' ou ``invalide''.
+Cela représente
+\[
+I(V;\Sigma\mid C) \approx 1~\text{bit}
+\]
+sur les $H(V\mid C) = 2$~bits d'incertitude totale du verdict. D'où~:
+\[
+\mathsf{Opp}(\text{Helios}, C_{\text{tribunal}}) =
+\frac{I(V;\Sigma\mid C)}{H(V\mid C)} \approx \frac{1}{2} = 0{,}50
+\]
+
+\textbf{Produit}~:
+\[
+\mathsf{Conf}\cdot\mathsf{Rel}\cdot\mathsf{Opp} \approx
+0{,}92 \times 0{,}95 \times 0{,}50 \approx \mathbf{0{,}437}
+\]
+\end{boxoutils}
+
+\textbf{Interprétation publiée}~: cette opposabilité de~$50\%$
+signifie que les preuves cryptographiques résolvent la \emph{moitié}
+de l'incertitude institutionnelle~; l'autre moitié requiert un
+raisonnement juridique sur la conformité procédurale, l'intention
+de l'électeur et le droit électoral spécifique à la
+juridiction, des dimensions \textbf{inaccessibles à la seule
+vérification cryptographique}.
+
+% ============================================================================
+\section{Étude de Cas~2~: zk-SNARKs. Conformité Financière}
+\label{sec:cas-zksnark}
+% ============================================================================
+
+\subsection{Formalisation du protocole}
+
+Référence~\cite{groth2016zksnark}~: preuves à divulgation nulle
+succinctes (construction Groth16 sur courbe BN254) permettant à une
+institution financière de prouver ``toutes les transactions
+respectent les règles de conformité'' via une preuve de~200~octets,
+sans révéler le détail des transactions.
+
+\begin{itemize}
+    \item \textbf{Contexte}~: audit réglementaire par une autorité
+          financière, $H(C) \approx 11$~bits (expertise réglementaire~:
+          $\approx 64$~catégories de preuves à travers
+          $\approx 32$~cadres procéduraux,
+          $\log_2(64\times 32) \approx 11$)~;
+    \item \textbf{Verdicts}~: $\mathcal{V} = \{$conforme, non conforme,
+          investigation requise, sanction, action corrective,
+          escalade, approbation conditionnelle, audit forensique
+          complet$\}$, soit $H(V\mid C) = \log_2(8) = 3$~bits.
+\end{itemize}
+
+\subsection{Calcul détaillé, étape par étape}
+
+\begin{boxoutils}{zk-SNARK. calcul publié, reproduit intégralement}
+\textbf{Confidentialité}. divulgation nulle calculatoire sous
+hypothèses d'accouplement (\textit{pairing})~:
+\[
+\mathsf{Conf}(\text{zk-SNARK}) \approx 0{,}89
+\]
+
+\textbf{Fiabilité}. solidité de connaissance, en tenant compte
+du \textit{trusted setup}~:
+\[
+\mathsf{Rel}(\text{zk-SNARK}) \approx 0{,}96
+\]
+
+\textbf{Opposabilité}. décomposition explicite en \textbf{deux}
+bits d'information extractible~:
+\begin{enumerate}
+    \item \textit{Vérification calculatoire} ($1$~bit)~: la preuve
+          vérifie ou non sous les contraintes d'accouplement~;
+    \item \textit{Catégorisation de conformité} ($1$~bit)~:
+          classification approximative visible dans la structure
+          de la preuve (``passe toutes les contraintes'' vs.
+          ``proche de la limite'' vs.\ ``signal de violation clair'').
+\end{enumerate}
+\[
+I(V;\Sigma\mid C) \approx 2~\text{bits}, \qquad
+\mathsf{Opp}(\text{zk-SNARK}, C_{\text{régulateur}}) =
+\frac{2}{3} \approx 0{,}67
+\]
+
+\textbf{Produit}~:
+\[
+\mathsf{Conf}\cdot\mathsf{Rel}\cdot\mathsf{Opp} \approx
+0{,}89 \times 0{,}96 \times 0{,}67 \approx \mathbf{0{,}572}
+\]
+\end{boxoutils}
+
+\textbf{Interprétation publiée}~: l'opposabilité supérieure à celle
+d'Helios ($67\%$ contre~$50\%$) reflète un \textbf{contexte
+institutionnel plus riche} ($H(C)=11$~bits contre~$8$)~: les
+preuves cryptographiques résolvent les deux tiers de l'incertitude
+réglementaire. Mais le tiers restant, jugement réglementaire sur
+la matérialité, évaluation du risque systémique, priorisation des
+mesures d'exécution, demeure structurellement
+\textbf{inaccessible}, ce qui constitue exactement la limite
+documentée au Ch.~\ref{chap:for-cloud} de ce cours~: l'opacité
+cryptographique qui protège la confidentialité des clients
+empêche l'audit ciblé lorsqu'un schéma suspect émerge.
+
+% ============================================================================
+\section{Étude de Cas~3~: ECDSA. Signature Juridique}
+\label{sec:cas-ecdsa}
+% ============================================================================
+
+\subsection{Formalisation du protocole}
+
+Référence~\cite{johnson2001ecdsa}~: authentification standard via
+ECDSA sur la courbe NIST~P-256 ($256$~bits de sécurité),
+équation de vérification $sG = R + eP_{\mathrm{pub}}$.
+
+\begin{itemize}
+    \item \textbf{Contexte}~: litige contractuel civil avec
+          infrastructure PKI établie, $H(C) \approx 20$~bits, décomposé
+          en~:
+          compréhension de l'infrastructure PKI
+          ($\approx 2^{10}=1024$~types de certificats~: $10$~bits)~;
+          précédents jurisprudentiels
+          ($\approx 2^8=256$~catégories de précédents~: $8$~bits)~;
+          cadres statutaires (ESIGN Act, eIDAS, réglementations
+          étatiques~: $\approx 2^2=4$~cadres~: $2$~bits)~;
+    \item \textbf{Verdicts}~: espace de décision riche couvrant
+          validité, force d'authentification, poids juridique,
+          recevabilité procédurale, validité temporelle, confirmation
+          d'autorité, pertinence contextuelle, $H(V\mid C)
+          \approx 20$~bits.
+\end{itemize}
+
+\subsection{Calcul détaillé, étape par étape}
+
+\begin{boxoutils}{ECDSA, calcul publié, reproduit intégralement}
+\textbf{Confidentialité}. les messages signés sont publics~;
+seules les clés privées restent cachées~:
+\[
+\mathsf{Conf}(\text{ECDSA}) \approx 0{,}31
+\]
+
+\textbf{Fiabilité}. vérification déterministe, la falsification
+exige de résoudre le problème du logarithme discret elliptique~:
+\[
+\mathsf{Rel}(\text{ECDSA}) \approx 0{,}98
+\]
+
+\textbf{Opposabilité}. décomposition en \textbf{cinq} dimensions
+d'information extractible (contrairement aux zk-SNARKs qui
+minimisent intentionnellement la divulgation, ECDSA permet aux
+tribunaux d'évaluer indépendamment plusieurs dimensions
+institutionnelles via les cadres juridiques et techniques établis)~:
+
+\begin{tableaucours}{p{4.0cm}p{1.5cm}p{5.0cm}}{%
+    \tableauHeader{Dimension extraite} &
+    \tableauHeader{Bits} &
+    \tableauHeader{Contenu}
+}
+Vérification de propriété de
+    clé publique & 3 & Chaîne de certificats, confiance émetteur,
+    restrictions d'usage \\
+Liaison message-signature & 4 & Intégrité du hash, conformité
+    de format, non-répudiation \\
+Validité temporelle & 3 & Horodatage, période de validité du
+    certificat, statut de révocation (CRL/OCSP) \\
+Évaluation d'autorité légale & 3 & Vérification du signataire,
+    formation du contrat, conformité juridictionnelle \\
+Pertinence contextuelle & 5 & Type de transaction, conformité
+    réglementaire, profil de risque \\
+\textbf{Total} & \textbf{18} & \\
+\end{tableaucours}
+\vspace{-0.8em}
+\begin{center}{\small\itshape Tableau~28.2. Décomposition de
+$I(V;\Sigma\mid C)$ pour ECDSA (5~dimensions, total~18~bits)}\end{center}
+
+\[
+I(V;\Sigma\mid C) \approx 18~\text{bits}, \qquad
+\mathsf{Opp}(\text{ECDSA}, C_{\text{tribunal civil}}) =
+\frac{18}{20} \approx 0{,}90
+\]
+
+\textbf{Produit}~:
+\[
+\mathsf{Conf}\cdot\mathsf{Rel}\cdot\mathsf{Opp} \approx
+0{,}31 \times 0{,}98 \times 0{,}90 \approx \mathbf{0{,}273}
+\]
+\end{boxoutils}
+
+\textbf{Interprétation publiée}~: ECDSA atteint la plus haute
+opposabilité des trois protocoles ($90\%$) précisément
+\textbf{parce qu'il sacrifie la confidentialité par construction}~:
+sa transparence permet aux tribunaux d'évaluer indépendamment
+plusieurs dimensions à travers des cadres juridiques et techniques
+établis de longue date (ESIGN Act, eIDAS, Ch.~11~(UE~SEC4031)
+de ce cours). C'est, des trois protocoles, celui dont le produit
+$\mathsf{Conf}\cdot\mathsf{Rel}\cdot\mathsf{Opp}$ est le \textbf{plus
+faible} ($0{,}273$), illustrant que l'opposabilité maximale ne
+garantit pas le meilleur compromis global, exactement la tension
+documentée au Ch.~\ref{chap:CRO}.
+
+% ============================================================================
+\section{Tableau de Synthèse Publié}
+\label{sec:tableau-synthese}
+% ============================================================================
+
+\begin{tableaucours}{p{3.0cm}p{1.6cm}p{1.6cm}p{1.6cm}p{2.4cm}}{%
+    \tableauHeader{Système} &
+    \tableauHeader{$\mathsf{Conf}$} &
+    \tableauHeader{$\mathsf{Rel}$} &
+    \tableauHeader{$\mathsf{Opp}$} &
+    \tableauHeader{$\mathsf{Conf}\cdot\mathsf{Rel}\cdot\mathsf{Opp}$}
+}
+Helios (vote) & $0{,}92$ & $0{,}95$ & $0{,}50$ & $0{,}437$ \\
+zk-SNARK (conformité) & $0{,}89$ & $0{,}96$ & $0{,}67$ & $0{,}572$ \\
+ECDSA (signature) & $0{,}31$ & $0{,}98$ & $0{,}90$ & $0{,}273$ \\
+\end{tableaucours}
+\vspace{-0.8em}
+\begin{center}{\small\itshape Tableau~28.3. Synthèse intégrale des trois
+analyses publiées dans~\cite{minka2026clo}, Table~1}\end{center}
+
+\begin{boiteRemarque}{Ce que ce tableau ne contient pas, et pourquoi}
+Remarquez que ce tableau ne comporte que \textbf{trois} primitives~:
+ce sont les seules pour lesquelles un calcul complet, avec
+décomposition bit par bit publiée et vérifiable, existe dans la
+littérature à la date de rédaction de ce cours. AES, ChaCha20,
+RSA, Kyber, Dilithium, zk-STARKs et les signatures à seuil sont des
+primitives importantes (plusieurs rencontrées au Ch.~\ref{chap:quantique}
+de ce cours) mais \textbf{n'ont pas fait l'objet d'un calcul CLO
+publié}. Leur attribuer des scores inventés, comme le faisait une
+version antérieure de ce chapitre, constituerait exactement le type
+de fausse précision scientifique dénoncé au Ch.~\ref{chap:CRO}.
+La Section~\ref{sec:discussion-qualitative} les aborde, mais
+\textbf{uniquement qualitativement}, en signalant explicitement
+l'absence de calcul publié.
+\end{boiteRemarque}
+
+% ============================================================================
+\section{Régimes de Capacité Institutionnelle}
+\label{sec:regimes}
+% ============================================================================
+
+\subsection{Définition des trois régimes}
+
+Le second article~\cite{minka2026conditional} introduit une
+classification opérationnelle directement utile pour la conception
+de systèmes~: pour un paramètre de sécurité $\lambda$ donné,
+trois régimes de capacité institutionnelle $\Delta$ sont définis
+selon la borne $\Delta/\lambda$.
+
+\begin{tableaucours}{p{2.8cm}p{2.5cm}p{2.5cm}p{3.5cm}}{%
+    \tableauHeader{Régime} &
+    \tableauHeader{Plage de $\Delta$ ($\lambda=128$)} &
+    \tableauHeader{Borne $\Delta/\lambda$} &
+    \tableauHeader{Protocoles adaptés}
+}
+\textbf{Faible capacité} & $<13$~bits & $<0{,}10$ &
+    Privilégier la transparence (style ECDSA)~; tribunaux de
+    petites créances \\
+\textbf{Capacité moyenne} & $13$--$64$~bits & $0{,}10$--$0{,}50$ &
+    Protocoles équilibrés (style Helios)~; agences réglementaires
+    avec personnel technique \\
+\textbf{Capacité élevée} & $>64$~bits & $>0{,}50$ &
+    Protocoles préservant la confidentialité (style zk-SNARK)~;
+    cours de sécurité nationale, cellules de renseignement
+    financier \\
+\end{tableaucours}
+\vspace{-0.8em}
+\begin{center}{\small\itshape Tableau~28.4. Régimes de capacité
+institutionnelle (d'après~\cite{minka2026conditional}, Table~1,
+pour $\lambda=128$)}\end{center}
+
+\subsection{Capacités $\Delta$ implicites~: validation croisée}
+
+Une contribution remarquable du second article est de
+\textbf{retrouver}, à partir des produits CLO publiés dans le
+premier article, la capacité institutionnelle $\Delta$ implicite
+de chaque contexte, une forme de validation croisée entre les
+deux publications.
+
+\begin{tableaucours}{p{2.8cm}p{2.2cm}p{1.5cm}p{2.5cm}p{2.0cm}}{%
+    \tableauHeader{Système} &
+    \tableauHeader{Produit CLO} &
+    \tableauHeader{$\lambda$} &
+    \tableauHeader{$\Delta$ implicite} &
+    \tableauHeader{Régime}
+}
+Helios & $0{,}437$ & $128$ & $\gtrsim 56$~bits & Moyen-Élevé \\
+zk-SNARK & $0{,}572$ & $128$ & $\gtrsim 73$~bits & Élevé \\
+ECDSA & $0{,}273$ & $128$ & $\gtrsim 35$~bits & Moyen \\
+\end{tableaucours}
+\vspace{-0.8em}
+\begin{center}{\small\itshape Tableau~28.5. Capacités $\Delta$
+implicites, retrouvées à partir des produits CLO publiés
+(d'après~\cite{minka2026conditional}, Table~2)}\end{center}
+
+\begin{boiteRemarque}{La cohérence comme argument de validité}
+Ces trois valeurs de $\Delta$ implicite (35, 56, 73~bits) tombent
+\textbf{toutes} dans la plage cognitivement plausible $[20,80]$~bits
+dérivée indépendamment à partir des travaux de Miller sur la mémoire
+de travail (Ch.~\ref{chap:CRO}, Section~4). Plus précisément, les
+auteurs notent un \textbf{facteur d'amplification} de~$1{,}8$
+à~$3{,}7\times$ par rapport à la capacité individuelle de
+base ($\approx 20$~bits), cohérent avec les facteurs de
+documentation ($1{,}5\times$), de délibération collective
+($1{,}5\times$) et de formation spécialisée ($1{,}3\times$)
+identifiés au chapitre précédent. \textbf{Cette convergence entre
+deux articles indépendants, utilisant des méthodes de calcul
+différentes (calcul direct vs.\ inversion de la borne théorique),
+constitue un argument de cohérence interne pour le cadre dans son
+ensemble}, exactement le type de convergence multi-sources
+valorisé depuis le Ch.~\ref{chap:for-sys} de ce cours.
+\end{boiteRemarque}
+
+% ============================================================================
+\section{Discussion Qualitative~: Primitives Non Encore Analysées}
+\label{sec:discussion-qualitative}
+% ============================================================================
+
+Cette section aborde, \textbf{uniquement de façon qualitative} et
+en s'appuyant sur les propriétés cryptographiques établies présentées
+au Ch.~\ref{chap:quantique}, des primitives rencontrées ailleurs
+dans ce cours mais ne disposant pas d'un calcul CLO publié.
+
+\begin{tableaucours}{p{2.8cm}p{4.0cm}p{4.5cm}}{%
+    \tableauHeader{Primitive} &
+    \tableauHeader{Positionnement qualitatif attendu} &
+    \tableauHeader{Justification (sans calcul publié)}
+}
+AES-256 & Probablement proche de Helios en structure
+    (forte $\mathsf{Conf}$/$\mathsf{Rel}$, $\mathsf{Opp}$ limitée) &
+    Sans la clé, aucune vérification institutionnelle n'est
+    possible~: structurellement analogue à la confidentialité
+    ElGamal d'Helios \\
+CRYSTALS-Kyber & Probablement comparable au zk-SNARK
+    (haute $\mathsf{Conf}$, $\mathsf{Opp}$ contrainte par la
+    nouveauté) & Standard récent (FIPS~203, Ch.~\ref{chap:quantique})~:
+    jurisprudence et formation des décideurs encore limitées,
+    plausiblement analogue à la situation des zk-SNARKs \\
+zk-STARKs & Possiblement entre Helios et zk-SNARK & Transparent
+    (pas de \textit{trusted setup}, contrairement aux zk-SNARKs)~:
+    pourrait offrir une $\mathsf{Rel}$ légèrement supérieure, mais
+    aucune donnée publiée ne permet de quantifier cet écart \\
+\end{tableaucours}
+\vspace{-0.8em}
+\begin{center}{\small\itshape Tableau~28.6. Positionnement qualitatif,
+sans valeurs numériques inventées}\end{center}
+
+\begin{boxalert}
+\textbf{Ce tableau est une invitation à la recherche, pas un résultat}
+
+Les positionnements du Tableau~28.6 sont des \textbf{hypothèses
+qualitatives raisonnables}, pas des résultats établis. Les calculer
+rigoureusement (formalisation complète, estimation triangulée de
+$H(C)$, décomposition bit par bit de $I(V;\Sigma\mid C)$) constitue
+précisément le type de contribution que l'Exercice~28.3 de ce
+chapitre vous invite à esquisser.
+\end{boxalert}
+
+% ============================================================================
+\section{Implications pour la Conception de Systèmes Forensiques}
+\label{sec:implications-conception-prim}
+% ============================================================================
+
+\subsection{Quatre étapes de sélection de protocole}
+
+D'après~\cite{minka2026conditional}, Section~VI-C~:
+
+\begin{enumerate}
+    \item \textbf{Évaluer la capacité institutionnelle}~: estimer
+          $\Delta$ via évaluation cognitive, disponibilité d'experts,
+          complexité procédurale (méthode du Tableau~28.1, appliquée
+          à l'institution plutôt qu'au protocole).
+    \item \textbf{Identifier le régime cible}~: déterminer si le
+          contexte relève du régime Faible, Moyen ou Élevé
+          (Tableau~28.4).
+    \item \textbf{Sélectionner le protocole adapté}~: régime
+          faible~$\to$ privilégier la transparence (style ECDSA)~;
+          régime moyen~$\to$ protocoles équilibrés (style Helios)~;
+          régime élevé~$\to$ protocoles préservant la confidentialité
+          (style zk-SNARK).
+    \item \textbf{Renforcer la capacité si nécessaire}~: si le
+          protocole souhaité excède la capacité institutionnelle
+          disponible, investir dans la formation d'experts, la
+          documentation technique, les processus de délibération
+          collaborative, ou les mécanismes de témoignage expert
+          externe (Ch.~12~(UE~SEC4031), experts agréés
+          Décret~69/DF/544).
+\end{enumerate}
+
+\subsection{Application au contexte forensique camerounais}
+
+\begin{boxscenario}{Positionner le système judiciaire camerounais dans
+les régimes de capacité}
+En s'appuyant sur les estimations de $H(C)$ du Tableau~25.2 du
+Ch.~\ref{chap:bench} (juridiction générale~$\approx 8$~bits,
+régulateurs spécialisés~$\approx 11$~bits) et sur le paramètre de
+sécurité usuel $\lambda = 128$~bits~:
+
+\begin{itemize}
+    \item Un \textbf{tribunal de première instance camerounais
+          non spécialisé} se situe, par analogie avec le calcul
+          Helios ($H(C)\approx 8$~bits), dans un \textbf{régime
+          de capacité faible à moyenne}~: $\Delta/\lambda \approx
+          8/128 \approx 0{,}06$, proche de la borne du régime
+          ``Faible''. \textbf{Implication}~: privilégier les
+          preuves transparentes (signatures ECDSA, eIDAS,
+          Ch.~11~(UE~SEC4031)) plutôt que des protocoles
+          cryptographiquement sophistiqués mais opaques.
+    \item Une \textbf{cellule spécialisée de lutte contre la
+          cybercriminalité} (formée, avec accès à une expertise
+          forensique dédiée, Ch.~12~(UE~SEC4031)), par analogie
+          avec le contexte régulateur du zk-SNARK
+          ($H(C)\approx 11$~bits), se rapproche du \textbf{régime
+          moyen}~: $\Delta/\lambda \approx 11/128 \approx 0{,}09$.
+    \item \textbf{Recommandation directement actionnable}~: la
+          stratégie de formation des magistrats évoquée au
+          Ch.~\ref{chap:bench} (Recommandation~3) n'est pas
+          seulement souhaitable en abstrait, elle constitue,
+          au sens précis du Tableau~28.4, le levier permettant de
+          \textbf{faire progresser le système judiciaire camerounais
+          d'un régime de capacité faible vers un régime moyen},
+          élargissant ainsi l'éventail des protocoles cryptographiques
+          dont les preuves resteraient opposables devant les
+          tribunaux.
+\end{itemize}
+\end{boxscenario}
+
+\separateur
+
+\begin{boxresume}
+\textbf{Ce qu'il faut retenir de ce chapitre~:}
+\begin{itemize}
+    \item La méthodologie CLO procède en \textbf{quatre étapes}~:
+          formalisation, estimation triangulée de $H(C)$ (trois
+          méthodes convergentes), calcul des trois mesures,
+          interprétation institutionnelle.
+
+    \item \textbf{Trois calculs intégralement publiés et reproduits}~:
+          Helios ($0{,}92 \times 0{,}95 \times 0{,}50 = 0{,}437$)~;
+          zk-SNARK ($0{,}89 \times 0{,}96 \times 0{,}67 = 0{,}572$)~;
+          ECDSA ($0{,}31 \times 0{,}98 \times 0{,}90 = 0{,}273$).
+          Chaque mesure d'opposabilité est décomposée bit par bit,
+          dimension par dimension.
+
+    \item \textbf{ECDSA atteint la plus haute opposabilité} ($90\%$)
+          mais le \textbf{plus faible produit global} ($0{,}273$)~:
+          la transparence maximale n'est pas le meilleur compromis
+          général.
+
+    \item \textbf{Trois régimes de capacité institutionnelle}
+          (Faible~$<13$~bits, Moyen~$13$--$64$, Élevé~$>64$, pour
+          $\lambda=128$) guident le choix de protocole~: transparence
+          en régime faible, équilibre en régime moyen, confidentialité
+          en régime élevé.
+
+    \item \textbf{Validation croisée remarquable}~: les capacités
+          $\Delta$ implicites retrouvées à partir des produits CLO
+          publiés (35 à~73~bits) convergent avec l'estimation
+          cognitive indépendante de Miller, cohérence interne
+          entre les deux articles.
+
+    \item \textbf{Rigueur méthodologique non négociable}~: seules
+          les primitives effectivement calculées dans la littérature
+          publiée reçoivent des valeurs numériques dans ce chapitre.
+          Les autres (AES, Kyber, Dilithium, zk-STARKs) sont
+          discutées qualitativement, sans invention de scores.
+
+    \item \textbf{Application camerounaise}~: la formation des
+          magistrats (Ch.~\ref{chap:bench}) constitue, dans le
+          vocabulaire précis de ce chapitre, le levier permettant
+          de faire progresser le système judiciaire d'un régime
+          de capacité faible vers un régime moyen.
+\end{itemize}
+\end{boxresume}
+
+\bigskip
+
+\begin{boxexo}[title={\ding{45}\quad Exercice~28.1. Reproduire un calcul publié \niveaubase}]
+\begin{enumerate}[(a)]
+    \item Pour le cas zk-SNARK (Section~\ref{sec:cas-zksnark}),
+          vérifiez par le calcul que
+          $0{,}89 \times 0{,}96 \times 0{,}67 \approx 0{,}572$.
+    \item Si l'estimation de $H(C)$ pour le régulateur passait
+          de~$11$ à~$16$~bits (régulateur encore plus spécialisé),
+          et si $I(V;\Sigma\mid C)$ restait à~$2$~bits, quelle
+          serait la nouvelle valeur de $\mathsf{Opp}$~? Le produit
+          global augmenterait-il ou diminuerait-il~? Justifiez par
+          le calcul.
+    \item Expliquez, en une phrase, pourquoi $H(V\mid C)$ pour
+          ECDSA ($20$~bits) est nettement supérieur à celui d'Helios
+          ($2$~bits), en vous appuyant sur la nature des espaces de
+          verdicts respectifs.
+\end{enumerate}
+\end{boxexo}
+
+\begin{boxexo}[title={\ding{45}\quad Exercice~28.2. Régimes de capacité appliqués \niveaumoyen}]
+\begin{enumerate}[(a)]
+    \item Pour $\lambda = 256$~bits (sécurité renforcée, pertinente
+          face aux préoccupations post-quantiques du
+          Ch.~\ref{chap:quantique}), recalculez les bornes
+          $\Delta/\lambda$ des trois régimes du Tableau~28.4.
+          Qu'observez-vous sur la difficulté relative à atteindre
+          le régime ``Élevé'' à mesure que $\lambda$ augmente~?
+    \item Un laboratoire forensique national nouvellement créé
+          dispose d'experts formés mais d'une jurisprudence encore
+          limitée. Dans quel régime le situeriez-vous~? Quel type
+          de protocole recommanderiez-vous en priorité~?
+    \item En vous appuyant sur le Tableau~28.5, expliquez pourquoi
+          la convergence entre les capacités $\Delta$ implicites
+          et l'estimation cognitive de Miller constitue un argument
+          scientifique pertinent, et quelles réserves méthodologiques
+          devraient néanmoins accompagner cette interprétation
+          (référez-vous à l'avertissement méthodologique de ce
+          chapitre).
+\end{enumerate}
+\end{boxexo}
+
+\begin{boxexo}[title={\ding{45}\quad Exercice~28.3. Esquisser un calcul original \niveauexpert}]
+Choisissez une primitive \textbf{non couverte} par les publications
+analysées dans ce chapitre~: AES-256, CRYSTALS-Kyber, ou
+CRYSTALS-Dilithium (toutes rencontrées au Ch.~\ref{chap:quantique}),
+appliquée à un contexte forensique camerounais de votre choix
+(par exemple~: chiffrement BitLocker d'un disque saisi, signature
+post-quantique d'un rapport d'expertise).
+\begin{enumerate}[(a)]
+    \item Formalisez le protocole selon les quatre composantes
+          $\mathcal{M}, \Sigma, \mathcal{C}, \mathcal{V}$
+          (Étape~1 de la méthodologie, Section~\ref{sec:methodologie}).
+    \item Estimez $H(C)$ pour votre contexte choisi en appliquant
+          au moins deux des trois méthodes
+          (Section~\ref{sec:trois-methodes}), en justifiant vos
+          hypothèses aussi explicitement que les calculs publiés
+          analysés dans ce chapitre.
+    \item Proposez une décomposition dimension par dimension de
+          $I(V;\Sigma\mid C)$, sur le modèle du Tableau~28.2
+          (ECDSA), avec au moins trois dimensions justifiées.
+    \item Calculez $\mathsf{Opp}$ et situez votre primitive dans
+          un régime de capacité (Tableau~28.4). Comparez votre
+          résultat aux trois protocoles publiés
+          (Tableau~28.3), votre estimation est-elle cohérente
+          avec le positionnement qualitatif suggéré au
+          Tableau~28.6~?
+    \item Rédigez un paragraphe de conclusion identifiant
+          explicitement les limites de votre propre estimation
+          (sur le modèle de l'avertissement méthodologique des
+          auteurs en ouverture de ce chapitre), qu'est-ce qui
+          rendrait votre calcul rigoureux au sens d'une publication
+          évaluée par les pairs, et qu'est-ce qui en l'état reste
+          une approximation pédagogique~?
+\end{enumerate}
+\end{boxexo}
+
+\bigskip
+
+\begin{boxinfo}
+\textbf{Transition.} Ce chapitre clôt l'exploration théorique du
+Trilemme CRO entamée au Chapitre~\ref{chap:CRO}. Vous disposez
+désormais des outils mathématiques (théorie de l'information), des
+résultats établis (théorèmes prouvés et publiés) et de la méthode
+de calcul reproductible nécessaires pour appliquer ce cadre à
+n'importe quel système de preuve numérique que vous rencontrerez
+dans votre pratique professionnelle, qu'il s'agisse d'un système
+existant ou d'un protocole que vous serez amené à concevoir ou
+évaluer.
+\end{boxinfo}
+
+% ============================================================================
+% Références bibliographiques propres à ce chapitre
+% (entrées supplémentaires à intégrer dans D_bibliographie.tex,
+% en complément de celles du Ch.26)
+% ============================================================================
+% @inproceedings{groth2016zksnark,
+%   author    = {Groth, Jens},
+%   title     = {On the Size of Pairing-Based Non-Interactive Arguments},
+%   booktitle = {Proc. Annu. Int. Conf. Theory Appl. Cryptograph. Techn.},
+%   pages     = {305--326},
+%   year      = {2016}
+% }

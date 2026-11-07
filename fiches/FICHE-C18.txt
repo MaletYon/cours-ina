@@ -1,0 +1,235 @@
+NDAP SUKULU · INA · fiche FICHE-C18
+Chapitre 18 : Forensique IoT et systèmes embarqués
+
+Version papier, à utiliser en attendant l'ouverture du portail NDAP SUKULU.
+La fiche complète compte 40 questions. Répondez sur la grille en fin de fiche.
+Durée indicative : 60 minutes. Seuil de réussite : 60 %.
+Les corrections figurent dans le livret de correction du cours.
+
+========================================================================
+Questions à choix multiple (une seule bonne réponse)
+========================================================================
+
+ 1. Quelle mémoire d'un appareil IoT conserve le firmware et les logs persistants hors tension ?
+      a) La flash NAND ou NOR
+      b) La RAM
+      c) Le cache CPU
+      d) Les registres
+
+ 2. Quelle mémoire IoT est volatile et perdue à l'extinction ?
+      a) La RAM (DRAM ou SRAM)
+      b) La flash NAND
+      c) L'eMMC
+      d) La carte SD
+
+ 3. Que contient typiquement l'EEPROM d'un appareil IoT ?
+      a) La configuration critique, des clés et des calibrations
+      b) Les vidéos de l'utilisateur
+      c) Le navigateur web
+      d) Les courriels
+
+ 4. Comment la RFC 3227 s'applique-t-elle à l'IoT ?
+      a) On collecte d'abord la RAM volatile, puis les logs sur flash, puis le firmware complet
+      b) On commence par le firmware
+      c) On ignore la volatilité
+      d) On ne collecte que la carte SD
+
+ 5. Un suspect déclenche un factory reset sur son routeur. Qu'efface cette action ?
+
+      a) Les logs, mais pas le firmware ni la partition système
+      b) Le firmware entier et le matériel
+      c) Rien du tout
+      d) La mémoire flash physique
+
+ 6. Pourquoi un routeur est-il une cible forensique prioritaire ?
+      a) Victime, il contient les logs de l'intrusion ; au suspect, il contient des traces
+      b) Il n'a aucune mémoire
+      c) Il ne journalise jamais
+      d) Il est toujours chiffré
+
+ 7. Quel système équipe souvent les routeurs analysables en ligne de commande ?
+      a) OpenWRT ou DD-WRT, du Linux embarqué
+      b) Windows Server
+      c) macOS
+      d) iOS
+
+ 8. À quoi sert l'interface UART en forensique embarquée ?
+      a) Accéder à l'appareil en série quand l'interface d'administration est inaccessible
+      b) Chiffrer le disque
+      c) Envoyer des SMS
+      d) Afficher une page web
+
+ 9. Quelles broches cherche-t-on pour un accès UART sur une carte ?
+      a) TX, RX, GND et parfois VCC
+      b) Uniquement l'alimentation
+      c) Le port HDMI
+      d) Le lecteur de carte SIM
+
+10. Quel outil identifie et extrait les systèmes de fichiers d'un firmware ?
+      a) Binwalk
+      b) Wireshark
+      c) RegRipper
+      d) sqlite3
+
+11. Quel système de fichiers compressé rencontre-t-on souvent dans un firmware extrait ?
+      a) squashfs
+      b) NTFS
+      c) APFS
+      d) FAT32
+
+12. Après extraction d'un firmware, quel fichier contient les hash des mots de passe ?
+
+      a) /etc/shadow
+      b) /etc/hostname
+      c) /boot/grub
+      d) /dev/null
+
+13. Quel fichier liste les comptes utilisateurs dans un firmware Linux ?
+      a) /etc/passwd
+      b) /etc/shadow
+      c) /etc/mtab
+      d) /proc/cpuinfo
+
+14. Quel appareil IoT est cité comme fréquemment compromis au Cameroun ?
+      a) Les routeurs ADSL ou 4G, comme la MTN Box ou l'Orange HomeBox
+      b) Les supercalculateurs
+      c) Les satellites
+      d) Les montres mécaniques
+
+15. Quelle est une spécificité forensique majeure de l'IoT ?
+      a) Une volatilité extrême et l'absence de write blocker adapté
+      b) Des disques standard faciles à imager
+      c) Des logs centralisés garantis
+      d) L'absence totale de mémoire
+
+16. Sur un routeur, où se trouve souvent le syslog actif, et quelle en est la conséquence ?
+      a) En RAM, donc volatile et perdu à l'extinction
+      b) Sur un cloud externe garanti
+      c) Dans l'EEPROM uniquement
+      d) Il n'existe pas
+
+17. Quelle option de binwalk extrait automatiquement le contenu d'un firmware ?
+      a) L'option -e
+      b) L'option -z
+      c) L'option --delete
+      d) L'option --encrypt
+
+18. Quel petit matériel permet de dialoguer avec un port UART depuis un PC ?
+      a) Un convertisseur USB-to-UART, comme un CH340G ou un FT232RL
+      b) Un câble HDMI
+      c) Une imprimante
+      d) Un lecteur de DVD
+
+19. Que recherche-t-on comme fichiers de clés dans un firmware extrait ?
+      a) authorized_keys et les fichiers .key ou .pem
+      b) Les fichiers .mp3
+      c) Les fichiers .docx
+      d) Les fichiers .jpg
+
+20. Quelle mémoire IoT non volatile est amovible ?
+      a) La carte SD
+      b) La RAM
+      c) Le cache
+      d) Les registres CPU
+
+========================================================================
+Vrai ou faux
+========================================================================
+
+21. Un factory reset de routeur efface le firmware et la partition système.
+      Vrai / Faux
+
+22. La flash NAND conserve ses données même hors tension.
+      Vrai / Faux
+
+23. L'accès UART implique en général l'ouverture physique de l'appareil.
+      Vrai / Faux
+
+24. Le syslog en RAM d'un routeur survit à une coupure d'alimentation.
+      Vrai / Faux
+
+25. Binwalk sert à identifier et extraire les composants d'un firmware.
+      Vrai / Faux
+
+26. En IoT, on collecte la RAM volatile avant les données persistantes de la flash.
+      Vrai / Faux
+
+27. Les appareils IoT se laissent imager aussi facilement qu'un disque dur standard.
+      Vrai / Faux
+
+28. Un routeur victime d'une attaque peut contenir les logs qui prouvent l'intrusion.
+      Vrai / Faux
+
+29. Le fichier /etc/shadow d'un firmware peut contenir les hash des mots de passe.
+      Vrai / Faux
+
+30. Les box Internet des opérateurs ne sont jamais des cibles de compromission.
+      Vrai / Faux
+
+========================================================================
+Textes à trous
+========================================================================
+
+31. L'outil d'analyse et d'extraction de firmware cité dans le chapitre s'appelle ______.
+
+32. L'interface série permettant d'accéder à une carte embarquée porte le sigle ______.
+
+33. La mémoire non volatile qui stocke le firmware et les logs persistants est la ______ NAND.
+
+34. Le système de fichiers compressé fréquent dans un firmware s'appelle ______.
+
+35. Le fichier qui contient les hash des mots de passe sous Linux est /etc/______.
+
+36. Le fichier qui liste les comptes utilisateurs sous Linux est /etc/______.
+
+37. La mémoire IoT volatile, perdue à l'extinction, est la ______.
+
+38. La remise aux réglages d'usine d'un appareil s'appelle en anglais le factory ______.
+
+39. Un système Linux embarqué libre très répandu sur les routeurs est ______.
+
+40. L'ordre de collecte selon la volatilité, appliqué aussi à l'IoT, vient de la RFC ______.
+
+========================================================================
+Grille de réponses   Nom : ............................  Matricule : ............
+========================================================================
+ 1. ............................................
+ 2. ............................................
+ 3. ............................................
+ 4. ............................................
+ 5. ............................................
+ 6. ............................................
+ 7. ............................................
+ 8. ............................................
+ 9. ............................................
+10. ............................................
+11. ............................................
+12. ............................................
+13. ............................................
+14. ............................................
+15. ............................................
+16. ............................................
+17. ............................................
+18. ............................................
+19. ............................................
+20. ............................................
+21. ............................................
+22. ............................................
+23. ............................................
+24. ............................................
+25. ............................................
+26. ............................................
+27. ............................................
+28. ............................................
+29. ............................................
+30. ............................................
+31. ............................................
+32. ............................................
+33. ............................................
+34. ............................................
+35. ............................................
+36. ............................................
+37. ............................................
+38. ............................................
+39. ............................................
+40. ............................................

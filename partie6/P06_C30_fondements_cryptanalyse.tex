@@ -1,0 +1,543 @@
+% ============================================================================
+% Fichier  : partie6/P06_C30_fondements_cryptanalyse.tex
+% Titre    : Fondements de la Conception et Cryptanalyse
+% Auteur   : MINKA MI NGUIDJOÏ Thierry Emmanuel
+% Version  : 2.0 -- Juin 2026
+% ============================================================================
+
+\chapter{Fondements de la Conception et Cryptanalyse}
+\label{chap:cryptanal}
+
+\epigraph{%
+    « La sécurité n'est pas un produit, mais un processus. »%
+}{Bruce Schneier}
+
+\niveauChapitre{Recherche}{%
+    Cryptographie symétrique et asymétrique requises.
+    Chapitres~\ref{chap:CRO} et~\ref{chap:prim-crypt} (Trilemme CRO
+    formalisé et appliqué) recommandés~: ce chapitre relie la
+    conception sécurisée et la cryptanalyse au cadre théorique déjà
+    établi.%
+}
+
+\begin{boxobjectifs}
+\begin{itemize}
+    \item Maîtriser les quatre principes fondamentaux de la conception
+          cryptographique sécurisée et leur justification.
+    \item Relier le Trilemme CRO (Ch.~\ref{chap:CRO}) à la conception
+          de protocoles~: comprendre en quoi il constitue une boussole
+          de conception, pas seulement un outil d'analyse a posteriori.
+    \item Classer rigoureusement les vulnérabilités cryptographiques
+          selon une taxonomie à six catégories.
+    \item Distinguer les modèles d'analyse \textit{black-box} et
+          \textit{white-box} et savoir quand chacun s'applique.
+    \item Comprendre les enjeux de la cryptanalyse post-quantique
+          en lien avec le Chapitre~\ref{chap:quantique}.
+    \item Adopter une posture critique et rigoureuse face aux
+          publications scientifiques en cours, en distinguant
+          résultat établi et prépublication non encore évaluée.
+\end{itemize}
+\end{boxobjectifs}
+
+\bigskip
+
+% ============================================================================
+\section*{De l'analyse à la conception~: l'autre face du Trilemme}
+% ============================================================================
+
+Les Chapitres~\ref{chap:CRO} et~\ref{chap:prim-crypt} ont analysé
+des protocoles \textbf{existants} à travers le cadre CRO~: comment
+mesurer, a posteriori, le compromis confidentialité-fiabilité-
+opposabilité d'Helios, d'un zk-SNARK, d'ECDSA. Ce chapitre inverse
+la perspective~: comment \textbf{concevoir} un protocole en
+anticipant ce compromis, et comment la \textbf{cryptanalyse},
+la discipline qui teste la résistance d'un protocole à un adversaire
+actif, constitue le complément indispensable de toute conception
+sérieuse.
+
+\separateur
+
+% ============================================================================
+\section{Philosophie de la Conception Sécurisée}
+\label{sec:philosophie-conception}
+% ============================================================================
+
+\subsection{Quatre principes fondamentaux}
+
+La conception de protocoles cryptographiques dignes de confiance
+repose sur des principes qui anticipent délibérément la présence
+d'un adversaire actif, et non simplement d'un environnement
+défaillant.
+
+\begin{boxdef}
+\textbf{Devoir de méfiance} (\textit{Zero Trust})~: ne faire confiance
+à aucun composant, message ou entité sans vérification préalable et
+explicite. Aucune confiance implicite n'est accordée du seul fait
+qu'un acteur se trouve ``à l'intérieur'' d'un périmètre supposé sûr.
+
+\textbf{Minimalisme}~: réduire la surface d'attaque au strict
+nécessaire. Toute fonctionnalité, tout code, toute complexité
+supplémentaire constitue une opportunité additionnelle pour
+l'attaquant, principe directement lié à la réduction de
+$H(\Sigma)$ (Ch.~\ref{chap:CRO}), l'entropie de l'espace des preuves.
+
+\textbf{Défense en profondeur}~: empiler plusieurs mécanismes de
+sécurité indépendants, de sorte que la compromission d'une seule
+couche n'entraîne pas l'effondrement de l'ensemble du système.
+
+\textbf{\textit{Fail-safe defaults}}~: un système doit refuser
+l'accès par défaut~; l'autorisation n'est accordée qu'explicitement,
+après vérification réussie, jamais l'inverse.
+\end{boxdef}
+
+\begin{boxCRO}
+\textbf{Analyse CRO. Les quatre principes relus à travers le
+cadre formalisé}
+
+Ces quatre principes, bien antérieurs à la formalisation du Trilemme
+CRO, peuvent désormais être relus avec les outils des
+Chapitres~\ref{chap:CRO} et~\ref{chap:prim-crypt}~:
+
+Le \textbf{minimalisme} agit directement sur $H(\Sigma)$~: moins de
+complexité signifie un espace de preuves plus restreint, donc
+potentiellement plus facile à interpréter institutionnellement
+(rappelons la borne~$\mathsf{Opp} \leq H(C)/H(V\mid C)$ du
+Théorème~2, Ch.~\ref{chap:CRO}, où un espace de preuves trop riche
+nuit à l'opposabilité si le contexte $H(C)$ ne suit pas).
+
+La \textbf{défense en profondeur} est, formellement, une instance
+de l'architecture en couches (Gold-Iron-Clay, Ch.~\ref{chap:CRO})~:
+chaque couche apporte une force dominante distincte plutôt que de
+chercher une primitive unique optimisant simultanément les trois
+dimensions, ce que le théorème d'impossibilité interdit.
+
+\cro{$\sim$ selon couche}{$\uparrow$ via minimalisme}{$\uparrow$ via espace de preuves restreint}
+\end{boxCRO}
+
+\subsection{Le Trilemme CRO comme boussole de conception}
+
+Le Chapitre~\ref{chap:CRO} a établi, avec preuve mathématique
+publiée, qu'\textbf{aucune construction ne peut maximiser
+simultanément confidentialité, fiabilité et opposabilité} au-delà
+d'un certain seuil conjoint (Théorème~3). Cette impossibilité n'est pas
+une fatalité paralysante pour la conception, elle en est, au
+contraire, la \textbf{boussole}~: une conception sécurisée ne
+cherche pas l'optimum impossible, mais l'\textbf{équilibre
+le mieux adapté au cas d'usage}, en suivant la méthode de sélection
+de protocole établie au Ch.~\ref{chap:prim-crypt}
+(Section~\ref{sec:implications-conception-prim})~: évaluer la
+capacité institutionnelle cible, identifier le régime correspondant,
+choisir l'architecture en conséquence.
+
+\begin{boiteRemarque}{Sur les travaux de l'auteur en cours de
+publication~: protocole ZK-NR}
+Au-delà du cadre CRO (Ch.~\ref{chap:CRO}-\ref{chap:prim-crypt}),
+l'auteur de ce cours développe, dans le cadre de travaux
+de~recherche en cours, un protocole nommé \textit{ZK-NR}~\cite{minka2025zknr}
+(\textit{Zero-Knowledge Non-Repudiation}), visant à combiner
+plusieurs primitives (engagements de Merkle, preuves de type
+STARK, signatures à seuil, signatures post-quantiques) pour des
+scénarios de non-répudiation à forte criticité, une application
+directe de la logique de défense en profondeur de ce chapitre.
+
+\textbf{Statut à la date de rédaction de ce cours}~: contrairement
+au cadre CRO (Ch.~\ref{chap:CRO}-\ref{chap:prim-crypt}), publié et
+évalué par les pairs dans IEEE Access, le protocole ZK-NR ne fait
+pas, à ce stade, l'objet d'un article complet disponible pour
+vérification dans le cadre de ce cours. Conformément à la rigueur
+méthodologique appliquée tout au long de cette Partie~VI, ce
+chapitre s'abstient donc de présenter des détails techniques
+(architecture précise, preuves de sécurité, scores de performance)
+qui ne pourraient être vérifiés contre une publication accessible.
+\textbf{Ce qui peut être affirmé en toute rigueur}~: le projet
+illustre, par sa conception même (combinaison de primitives aux
+forces complémentaires), le principe de défense en profondeur
+appliqué à la non-répudiation, une instanciation conceptuelle
+légitime à mentionner, indépendamment de la disponibilité d'un
+article finalisé.
+\end{boiteRemarque}
+
+% ============================================================================
+\section{Taxonomie des Failles Cryptographiques}
+\label{sec:taxonomie-failles}
+% ============================================================================
+
+Comprendre l'attaquant nécessite de catégoriser systématiquement
+ses vecteurs d'attaque possibles. Cette taxonomie, standard en
+cryptographie, structure toute analyse de sécurité rigoureuse.
+
+\begin{tableaucours}{p{3.5cm}p{7.5cm}}{%
+    \tableauHeader{Type de faille} &
+    \tableauHeader{Description et exemples}
+}
+\textbf{Conceptuelle (modèle)} & Faille dans la spécification
+    formelle du protocole. L'attaquant respecte scrupuleusement
+    le protocole tel que défini, mais en exploite une faiblesse
+    logique. \textit{Exemple~:} attaque par rejeu de session,
+    absence de protection contre la répétition
+    (\textit{replay protection}). \\
+\textbf{D'implémentation} & Faille dans le code source, malgré une
+    spécification formelle correcte. \textit{Exemple~:} fuite de
+    mémoire, gestion erronée des cas d'erreur, attaques par mesure
+    de temps d'exécution (\textit{timing attacks}). \\
+\textbf{Passive (écoute)} & L'adversaire observe uniquement, sans
+    altérer la communication. \textit{Exemple~:} analyse de trafic
+    (Ch.~\ref{chap:for-res}), cryptanalyse du texte chiffré
+    intercepté. \\
+\textbf{Active (modification)} & L'adversaire altère activement la
+    communication. \textit{Exemple~:} attaque de l'homme du milieu
+    (\textit{man-in-the-middle}), injection de messages forgés. \\
+\textbf{Contre les primitives} & Attaque visant directement le
+    fondement mathématique de la primitive. \textit{Exemple~:}
+    algorithme de Shor contre RSA/ECC (Ch.~\ref{chap:quantique}),
+    attaque par canal auxiliaire (consommation électrique,
+    rayonnement électromagnétique) sur une implémentation ECC. \\
+\textbf{Contre le protocole} & Attaque exploitant l'interaction
+    entre plusieurs primitives correctement implémentées
+    individuellement. \textit{Exemple~:} attaque par entrelacement
+    (\textit{interleaving}) entre deux sessions, confusion des
+    rôles entre prouveur et vérificateur. \\
+\end{tableaucours}
+\vspace{-0.8em}
+\begin{center}{\small\itshape Tableau~30.1. Taxonomie des failles
+de sécurité cryptographique}\end{center}
+
+\begin{boxscenario}{Application de la taxonomie~: l'affaire MVOM
+revisitée}
+Reprenons l'analyse de l'Opération MVOM (Ch.~\ref{chap:for-sys},
+\ref{chap:for-res}) à travers cette taxonomie~:
+
+\begin{itemize}
+    \item L'\textbf{accès SSH par force brute} relève d'une faille
+          \textbf{active}~: l'attaquant ne se contente pas
+          d'observer, il tente activement des authentifications.
+    \item L'utilisation du \textbf{chiffrement BitLocker} sur le
+          disque saisi, si elle avait été contournée par une faille
+          dans l'implémentation Windows plutôt que par obtention
+          légale de la clé, aurait relevé d'une faille
+          \textbf{d'implémentation}, distincte d'une attaque
+          \textbf{contre la primitive} AES elle-même
+          (Ch.~\ref{chap:quantique}~: AES reste robuste face aux
+          capacités actuelles).
+    \item La \textbf{tentative \texttt{StopLogging}}
+          (Ch.~\ref{chap:anti-for}) n'exploite aucune faille
+          cryptographique~: elle relève d'une catégorie distincte,
+          hors taxonomie cryptographique stricte, mais analogue
+          conceptuellement à une faille \textbf{conceptuelle}~: le
+          système de logging n'anticipait pas, dans sa conception
+          initiale, qu'un attaquant disposant de privilèges
+          administrateur chercherait à désactiver l'audit
+          lui-même.
+\end{itemize}
+\end{boxscenario}
+
+% ============================================================================
+\section{Introduction à la Cryptanalyse}
+\label{sec:intro-cryptanalyse}
+% ============================================================================
+
+\subsection{Objet et finalité}
+
+\begin{boxdef}
+\textbf{Cryptanalyse}~: discipline scientifique consistant à
+étudier et tenter de contourner les mécanismes de protection
+cryptographique d'un système. Son objectif \textbf{n'est pas
+exclusivement offensif}~: elle est indispensable à la validation
+de la solidité des constructions, exactement comme la falsification
+active (E9bis du PIU, Ch.~6~(UE~SEC4031)) est indispensable à la
+validation d'une hypothèse investigative, une hypothèse, ou un
+protocole, qui n'a jamais été sérieusement attaqué n'a pas démontré
+sa robustesse~; il n'a simplement pas encore été testé.
+\end{boxdef}
+
+Cette analogie entre cryptanalyse et falsification active n'est pas
+fortuite~: les deux disciplines partagent une même épistémologie
+poppérienne, la confiance se construit par résistance répétée
+à des tentatives sérieuses de réfutation, pas par l'absence de
+telles tentatives.
+
+\subsection{Approches \textit{black-box} et \textit{white-box}}
+
+\begin{boxdef}
+\textbf{Analyse \textit{black-box}}~: l'attaquant ne dispose que
+des entrées et sorties observables du système. Il déduit les
+vulnérabilités potentielles par observation du comportement
+externe, temps de réponse, consommation énergétique, messages
+d'erreur.
+
+\textbf{Analyse \textit{white-box}}~: l'attaquant dispose d'un
+accès total à l'implémentation, au code source, voire aux données
+internes en cours d'exécution. C'est le scénario le plus
+défavorable pour le défenseur, et le standard d'évaluation pour
+tout système fortement exposé.
+\end{boxdef}
+
+\begin{tableaucours}{p{2.8cm}p{4.0cm}p{4.5cm}}{%
+    \tableauHeader{Modèle} &
+    \tableauHeader{Information disponible} &
+    \tableauHeader{Pertinence forensique (ce cours)}
+}
+\textit{Black-box} & Entrées/sorties observables uniquement &
+    Analyse réseau (Ch.~\ref{chap:for-res})~: l'investigateur,
+    face à un trafic chiffré inconnu, raisonne en \textit{black-box}, métadonnées, motifs de connexion, sans accès au contenu \\
+\textit{White-box} & Code source, mémoire, état interne complet &
+    Analyse de firmware (Ch.~\ref{chap:for-iot}, Binwalk)~:
+    l'investigateur dispose d'un accès total au binaire extrait,
+    scénario \textit{white-box} par excellence \\
+\end{tableaucours}
+\vspace{-0.8em}
+\begin{center}{\small\itshape Tableau~30.2. Les deux modèles
+appliqués à la pratique forensique de ce cours}\end{center}
+
+\begin{boiteRemarque}{Le principe de Kerckhoffs, fondement du
+modèle white-box}
+L'adoption du modèle \textit{white-box} comme standard d'évaluation
+en cryptographie moderne découle directement du \textbf{principe de
+Kerckhoffs} (1883)~: la sécurité d'un système cryptographique doit
+reposer uniquement sur le secret de la clé, jamais sur le secret
+de l'algorithme. Un protocole dont la sécurité dépendrait de la
+confidentialité de sa conception échouerait, par construction,
+face à un adversaire \textit{white-box}, exactement le cas
+d'un firmware d'appareil IoT analysé après extraction
+(Ch.~\ref{chap:for-iot}), où l'algorithme complet est accessible
+à l'investigateur (et potentiellement à l'attaquant qui aurait
+pu l'extraire de la même façon).
+\end{boiteRemarque}
+
+% ============================================================================
+\section{Cryptanalyse Post-Quantique~: Anticiper Deux Horizons Temporels}
+\label{sec:cryptanalyse-pq}
+% ============================================================================
+
+Le Chapitre~\ref{chap:quantique} a détaillé les algorithmes de Shor
+et Grover et leurs implications pour les preuves numériques. Cette
+section les replace dans le cadre plus large de la
+\textbf{méthodologie cryptanalytique}~: une analyse de sécurité
+moderne ne peut plus se limiter à un seul horizon temporel.
+
+\begin{enumerate}
+    \item \textbf{Aujourd'hui}~: résistance aux attaques classiques
+          sur les capacités de calcul actuellement disponibles, l'horizon d'analyse traditionnel de la cryptanalyse.
+    \item \textbf{Demain}~: résistance aux attaques quantiques,
+          notamment via les algorithmes de \textbf{Shor} (rupture
+          de la cryptographie asymétrique) et de \textbf{Grover}
+          (accélération quadratique réduisant la sécurité effective
+          des clés symétriques), horizon détaillé au
+          Ch.~\ref{chap:quantique}, Sections~1 et~3.
+\end{enumerate}
+
+\begin{boxCRO}
+\textbf{Analyse CRO. ``Harvest Now, Decrypt Later'' comme
+problème cryptanalytique prospectif}
+
+La stratégie \textit{Harvest Now, Decrypt Later}
+(Ch.~\ref{chap:quantique}, section~26.2) transforme la cryptanalyse
+d'une discipline rétrospective (``ce protocole est-il cassé~?'')
+en discipline \textbf{prospective} (``ce protocole sera-t-il
+cassé, et quand~?''), rendant la cryptanalyse prospective
+absolument critique pour la protection des secrets à très longue
+durée de sensibilité, exactement comme établi au
+Ch.~\ref{chap:quantique} pour les données de santé ou les
+secrets d'État.
+
+$\mathcal{C}$~: cette stratégie inverse la temporalité habituelle
+de l'analyse de risque, la confidentialité d'aujourd'hui dépend
+d'une cryptanalyse qui n'existe pas encore.
+
+$\mathcal{R}$~: aucune méthode de cryptanalyse actuelle ne peut
+\textbf{prouver} la résistance future d'un protocole~; elle ne peut
+que documenter l'absence de faille connue \emph{à ce jour}, une
+limite épistémologique fondamentale, déjà signalée au
+Ch.~\ref{chap:quantique} concernant les calendriers spéculatifs.
+
+\cro{$\downarrow\downarrow$ pour données longue durée}{$\sim$ limite épistémologique assumée}{$\sim$}
+\end{boxCRO}
+
+% ============================================================================
+\section{De la Cryptanalyse à la Conception~: une Boucle Vertueuse}
+\label{sec:boucle-vertueuse}
+% ============================================================================
+
+\subsection{Le cycle conception-cryptanalyse-révision}
+
+La pratique mature de la cryptographie institutionnelle, telle
+qu'elle ressort des Chapitres~\ref{chap:CRO} et~\ref{chap:prim-crypt},
+suit un cycle itératif~:
+
+\begin{enumerate}
+    \item \textbf{Concevoir} un protocole en appliquant les quatre
+          principes de la Section~\ref{sec:philosophie-conception}
+          et en explicitant, dès la conception, le régime de
+          capacité institutionnelle visé (Ch.~\ref{chap:prim-crypt}).
+    \item \textbf{Soumettre} le protocole à une cryptanalyse
+          rigoureuse, \textit{white-box} de préférence
+          (Section~\ref{sec:intro-cryptanalyse}), analogue à la
+          revue par les pairs qui a validé les Théorèmes~1 à~3 du
+          Ch.~\ref{chap:CRO} avant publication.
+    \item \textbf{Documenter} les failles découvertes selon la
+          taxonomie de la Section~\ref{sec:taxonomie-failles}, en
+          distinguant leur catégorie précise.
+    \item \textbf{Réviser} la conception en réponse, en
+          réévaluant le positionnement CRO du protocole révisé
+          (méthode du Ch.~\ref{chap:prim-crypt}).
+    \item \textbf{Republier} ou redéployer, avec une documentation
+          transparente du processus, exactement la posture de
+          transparence méthodologique pratiquée par les auteurs
+          du cadre CRO eux-mêmes, qui identifient explicitement
+          les limites et pistes futures de leur propre travail.
+\end{enumerate}
+
+\subsection{Application au contexte forensique}
+
+\begin{boxjuris}
+\textbf{Cryptanalyse et admissibilité en droit camerounais}
+
+Un expert judiciaire camerounais (Ch.~12~(UE~SEC4031), experts
+agréés Décret~69/DF/544) appelé à témoigner sur la solidité d'un
+mécanisme cryptographique utilisé dans un dossier, par exemple,
+la robustesse d'une signature électronique contestée
+(Ch.~11~(UE~SEC4031), eIDAS), doit être en mesure de
+répondre, en contre-interrogatoire (Ch.~\ref{chap:rapport}), à des
+questions de cryptanalyse~: \textit{``Cet algorithme a-t-il fait
+l'objet d'une cryptanalyse publiée~? A-t-il résisté aux meilleures
+tentatives de la communauté scientifique~? Existe-t-il des attaques
+connues, même théoriques, contre cette construction~?''} La
+réponse attendue, conforme à la rigueur de ce chapitre, distingue
+toujours~: ce qui est \textbf{publié et vérifié} (par exemple, les
+théorèmes du Ch.~\ref{chap:CRO}), ce qui relève d'une
+\textbf{recherche en cours} non encore validée par les pairs (par
+exemple, le protocole ZK-NR évoqué en
+Section~\ref{sec:philosophie-conception}), et ce qui demeure une
+\textbf{question ouverte}.
+\end{boxjuris}
+
+\separateur
+
+\begin{boxresume}
+\textbf{Ce qu'il faut retenir de ce chapitre~:}
+\begin{itemize}
+    \item \textbf{Quatre principes de conception}~: Zero Trust,
+          minimalisme, défense en profondeur, \textit{fail-safe
+          defaults}, chacun directement reliable au cadre CRO
+          formalisé (Ch.~\ref{chap:CRO}).
+
+    \item Le \textbf{Trilemme CRO} fonctionne comme \textbf{boussole
+          de conception}, pas seulement comme outil d'analyse a
+          posteriori~: il guide le choix d'architecture vers
+          l'équilibre adapté au régime de capacité institutionnelle
+          cible (Ch.~\ref{chap:prim-crypt}).
+
+    \item \textbf{Taxonomie en six catégories}~: failles
+          conceptuelles, d'implémentation, passives, actives,
+          contre les primitives, contre le protocole, grille
+          systématique applicable à toute analyse de sécurité,
+          y compris en contexte forensique.
+
+    \item \textbf{Black-box vs white-box}~: deux modèles d'analyse
+          directement transposables à la pratique forensique de ce
+          cours (analyse réseau~$\approx$ black-box~; analyse de
+          firmware~$\approx$ white-box), enracinés dans le principe
+          de Kerckhoffs.
+
+    \item \textbf{Cryptanalyse post-quantique}~: deux horizons
+          temporels à anticiper simultanément (aujourd'hui/demain),
+          avec la stratégie \textit{Harvest Now, Decrypt Later}
+          transformant la cryptanalyse en discipline prospective
+          (Ch.~\ref{chap:quantique}).
+
+    \item \textbf{Cycle vertueux conception-cryptanalyse-révision}~:
+          la pratique mature ne sépare pas concevoir et attaquer~;
+          elle les itère, avec une documentation transparente
+          à chaque étape.
+
+    \item \textbf{Rigueur sur les travaux en cours}~: la distinction
+          entre résultat publié et évalué par les pairs (Trilemme
+          CRO), prépublication non encore évaluée par les pairs (ZK-NR), et
+          question ouverte, est elle-même une compétence
+          cryptanalytique et forensique, appliquée explicitement
+          dans ce chapitre à propos des propres travaux de l'auteur.
+\end{itemize}
+\end{boxresume}
+
+\bigskip
+
+\begin{boxexo}[title={\ding{45}\quad Exercice~30.1. Application de la taxonomie \niveaubase}]
+Pour chacune des situations suivantes, rencontrées dans ce cours,
+classez la faille selon la taxonomie du Tableau~30.1 (une ou
+plusieurs catégories peuvent s'appliquer, justifiez)~:
+\begin{enumerate}[(a)]
+    \item Un attaquant intercepte du trafic réseau chiffré sans
+          le modifier, dans l'espoir de le déchiffrer plus tard
+          (Ch.~\ref{chap:quantique}, \textit{Harvest Now, Decrypt
+          Later}).
+    \item Un développeur laisse une clé API en clair dans une
+          couche Docker, supprimée dans une couche ultérieure mais
+          toujours accessible dans l'historique
+          (Ch.~\ref{chap:containers}).
+    \item Un attaquant exploite l'algorithme de Shor contre une
+          signature RSA (Ch.~\ref{chap:quantique}).
+    \item Un acteur malveillant intercale ses propres messages
+          dans un échange SSH déjà établi.
+\end{enumerate}
+\end{boxexo}
+
+\begin{boxexo}[title={\ding{45}\quad Exercice~30.2. Conception sous contrainte CRO \niveaumoyen}]
+Vous devez concevoir un mécanisme de signature pour les rapports
+d'expertise forensique numérique au Cameroun (Ch.~\ref{chap:rapport}),
+destiné à être présenté devant des tribunaux de juridiction
+générale ($H(C) \approx 8$~bits selon le Ch.~\ref{chap:prim-crypt}).
+\begin{enumerate}[(a)]
+    \item En appliquant la méthode de sélection de protocole
+          (Ch.~\ref{chap:prim-crypt}, section~28.8.1), dans quel
+          régime de capacité institutionnelle ce contexte se
+          situe-t-il~? Quel type de protocole (transparent ou
+          préservant la confidentialité) recommanderiez-vous~?
+    \item Appliquez les quatre principes de conception
+          (Section~\ref{sec:philosophie-conception}) à ce
+          mécanisme~: que signifierait concrètement le
+          ``minimalisme'' pour une signature de rapport d'expertise~?
+    \item Quelle catégorie de faille (Tableau~30.1) vous semble la
+          plus critique à anticiper pour ce cas d'usage spécifique~?
+          Justifiez et proposez une contre-mesure de conception.
+\end{enumerate}
+\end{boxexo}
+
+\begin{boxexo}[title={\ding{45}\quad Exercice~30.3. Esprit critique face à un protocole en développement \niveauexpert}]
+Un consortium international vous présente un nouveau protocole de
+non-répudiation pour la chaîne de custody numérique, accompagné
+d'une présentation affirmant~: ``Notre protocole atteint
+simultanément confidentialité~$=0{,}95$, fiabilité~$=0{,}98$ et
+opposabilité~$=0{,}92$, soit un score combiné de~$0{,}857$, le
+plus élevé jamais documenté.''
+\begin{enumerate}[(a)]
+    \item En vous appuyant sur le Théorème~3 (Trilemme CRO
+          conditionnel, Ch.~\ref{chap:CRO}) et sur les valeurs
+          réellement publiées du Tableau~28.3 (Ch.~\ref{chap:prim-crypt},
+          produits CLO entre~$0{,}27$ et~$0{,}57$), évaluez la
+          plausibilité de cette affirmation.
+    \item Quelles questions précises poseriez-vous à ce consortium
+          pour vérifier la validité de ces chiffres (référez-vous
+          à la méthodologie en quatre étapes du
+          Ch.~\ref{chap:prim-crypt}, section~28.1)~?
+    \item Ce chapitre a traité le protocole ZK-NR, mentionné dans
+          le Prologue de ce cours, avec une prudence méthodologique
+          explicite face à l'absence d'article complet vérifiable.
+          Rédigez un court paragraphe expliquant pourquoi cette
+          même prudence devrait s'appliquer à l'affirmation du
+          consortium de cet exercice, en distinguant ce qui
+          relèverait d'un résultat publié et évalué par les pairs
+          de ce qui relève d'une affirmation commerciale non
+          vérifiée.
+\end{enumerate}
+\end{boxexo}
+
+\bigskip
+
+\begin{boxinfo}
+\textbf{Transition.} Ce chapitre clôt l'exploration de la
+conception et de la cryptanalyse fondées sur le cadre CRO. Le
+chapitre suivant aborde la \textbf{méthodologie d'analyse formelle}~:
+comment structurer rigoureusement une preuve de sécurité, et
+comment cette même rigueur méthodologique s'applique à la rédaction
+des preuves forensiques présentées tout au long de ce cours.
+\end{boxinfo}

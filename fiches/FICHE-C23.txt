@@ -1,0 +1,234 @@
+NDAP SUKULU · INA · fiche FICHE-C23
+Chapitre 23 : IA forensique
+
+Version papier, à utiliser en attendant l'ouverture du portail NDAP SUKULU.
+La fiche complète compte 40 questions. Répondez sur la grille en fin de fiche.
+Durée indicative : 60 minutes. Seuil de réussite : 60 %.
+Les corrections figurent dans le livret de correction du cours.
+
+========================================================================
+Questions à choix multiple (une seule bonne réponse)
+========================================================================
+
+ 1. Quels sont les deux visages de l'IA en forensique ?
+      a) L'IA comme outil d'investigation et l'IA comme objet d'investigation
+      b) L'IA locale et l'IA distante
+      c) L'IA gratuite et l'IA payante
+      d) L'IA rapide et l'IA lente
+
+ 2. Quel est le rôle de l'IA dans le triage forensique ?
+      a) Ordonner un volume de données selon leur pertinence probable
+      b) Décider de la culpabilité
+      c) Chiffrer les preuves
+      d) Supprimer les logs
+
+ 3. Quelle est la règle impérative de l'usage de l'IA comme outil ?
+      a) L'IA priorise, elle ne décide pas, et l'humain valide
+      b) L'IA décide seule
+      c) L'humain n'intervient jamais
+      d) L'IA remplace le juge
+
+ 4. Quelle approche de triage d'emails est la plus explicable, recommandée en première passe ?
+      a) La classification par mots-clés pondérés
+      b) Un réseau de neurones profond opaque
+      c) Un tirage au sort
+      d) Le chiffrement
+
+ 5. Que vaut une anomalie statistique détectée par l'IA dans des logs ?
+      a) Un indice à vérifier, pas une preuve en soi
+      b) Une preuve certaine de culpabilité
+      c) Rien du tout
+      d) Un aveu
+
+ 6. Comment présenter une correspondance faciale automatisée ?
+      a) Jamais comme une identification certaine sans validation humaine
+      b) Comme une preuve absolue
+      c) Sans aucune réserve
+      d) Comme un aveu
+
+ 7. Quelle technique produit un deepfake audio ?
+      a) Le clonage vocal par des modèles text-to-speech
+      b) Le hachage
+      c) Le file carving
+      d) Le timestomping
+
+ 8. Face aux clips audio deepfake de MUNGO, quelle première vérification sur les métadonnées est utile ?
+
+      a) Leur absence, car un deepfake généré n'en a souvent aucune
+      b) Leur présence prouve l'authenticité
+      c) Elles donnent le coupable
+      d) Elles sont sans intérêt
+
+ 9. Quelle analyse visuelle aide à examiner un clip audio suspect ?
+      a) L'analyse spectrale, le spectrogramme
+      b) La lecture du BIOS
+      c) Le calcul du hash du disque
+      d) L'analyse du registre
+
+10. Quelle analyse reste la plus fiable à ce jour contre les deepfakes audio ?
+      a) L'analyse contextuelle
+      b) Un détecteur unique
+      c) L'intuition
+      d) Le hasard
+
+11. Pourquoi aucun détecteur de deepfake n'offre une fiabilité absolue ?
+      a) Chaque progrès des détecteurs est suivi d'un progrès des générateurs
+      b) Les détecteurs sont interdits
+      c) Les deepfakes n'existent pas
+      d) La loi l'interdit
+
+12. Que désigne l'explicabilité (XAI) d'un modèle d'IA ?
+      a) La capacité d'expliquer une décision de manière compréhensible pour un humain
+      b) La vitesse du modèle
+      c) Le coût du modèle
+      d) La taille des données
+
+13. Pourquoi un modèle de deep learning complexe pose-t-il problème au tribunal ?
+      a) Il est peu explicable, une boîte noire difficile à défendre
+      b) Il est trop lent
+      c) Il est trop cher
+      d) Il est trop petit
+
+14. D'où proviennent les biais d'un modèle d'IA forensique ?
+      a) Des biais présents dans ses données d'entraînement
+      b) Du hasard pur
+      c) Du matériel
+      d) De la loi
+
+15. Quel biais guette les détecteurs de texte généré par IA ?
+      a) Un biais discriminatoire contre les locuteurs non natifs
+      b) Aucun biais
+      c) Un biais en faveur du suspect
+      d) Un biais matériel
+
+16. Quelle donnée l'expert doit-il connaître pour défendre un outil IA ?
+      a) Le taux de faux positifs de l'outil
+      b) Le prix de l'outil
+      c) La couleur de l'interface
+      d) Le nom du développeur
+
+17. Que faire si un outil IA n'a pas de validation indépendante ?
+      a) Le mentionner explicitement comme une limite
+      b) Le cacher
+      c) L'ignorer
+      d) Affirmer qu'il est parfait
+
+18. Quel type de modèle produit du texte synthétique ?
+      a) Un grand modèle de langage (LLM)
+      b) Un write blocker
+      c) Un pare-feu
+      d) Un spectrogramme
+
+19. Quelle technologie est à l'origine de nombreux deepfakes vidéo ?
+      a) Les GAN et les modèles de diffusion
+      b) Les write blockers
+      c) Les crontabs
+      d) Les ruches de registre
+
+20. Que ne doit jamais affirmer un rapport à propos d'un clip suspect ?
+      a) Que c'est un deepfake avec une certitude absolue
+      b) Qu'il présente des indices à documenter
+      c) Que le détecteur a un taux de faux positifs
+      d) Que l'analyse contextuelle apporte un éclairage
+
+========================================================================
+Vrai ou faux
+========================================================================
+
+21. En forensique, l'IA peut décider seule de la culpabilité sans validation humaine.
+      Vrai / Faux
+
+22. Une anomalie statistique est automatiquement une preuve de malveillance.
+      Vrai / Faux
+
+23. Pour le tribunal, on privilégie les méthodes explicables.
+      Vrai / Faux
+
+24. Les détecteurs de deepfake offrent une fiabilité absolue et définitive.
+      Vrai / Faux
+
+25. Le taux d'erreur de la reconnaissance faciale varie selon les populations.
+      Vrai / Faux
+
+26. Un outil d'IA peut hériter de biais discriminatoires via ses données.
+      Vrai / Faux
+
+27. L'IA sert surtout à accélérer le triage de grands volumes de données.
+      Vrai / Faux
+
+28. L'analyse contextuelle est inutile face à un deepfake audio.
+      Vrai / Faux
+
+29. Reconnaître la limite d'un outil renforce la crédibilité de l'expert.
+      Vrai / Faux
+
+30. Un modèle boîte noire est sans problème en contexte judiciaire.
+      Vrai / Faux
+
+========================================================================
+Textes à trous
+========================================================================
+
+31. La capacité d'un modèle à expliquer sa décision porte le sigle anglais ______.
+
+32. La représentation visuelle du spectre d'un son s'appelle un ______.
+
+33. Le texte synthétique est produit par un grand modèle de langage, de sigle ______.
+
+34. Les réseaux générateurs à l'origine de nombreux deepfakes portent le sigle ______.
+
+35. La règle d'or est que l'IA priorise mais que l'______ valide.
+
+36. La détection de comportements anormaux d'utilisateurs porte le sigle ______.
+
+37. L'expert doit connaître le taux de faux ______ de l'outil IA employé.
+
+38. Les contenus truqués produits par IA pour imiter une personne s'appellent des ______.
+
+39. Les détecteurs de texte IA risquent un biais ______ contre les non-natifs.
+
+40. L'IA comme outil sert d'abord à résoudre le problème du ______ de données.
+
+========================================================================
+Grille de réponses   Nom : ............................  Matricule : ............
+========================================================================
+ 1. ............................................
+ 2. ............................................
+ 3. ............................................
+ 4. ............................................
+ 5. ............................................
+ 6. ............................................
+ 7. ............................................
+ 8. ............................................
+ 9. ............................................
+10. ............................................
+11. ............................................
+12. ............................................
+13. ............................................
+14. ............................................
+15. ............................................
+16. ............................................
+17. ............................................
+18. ............................................
+19. ............................................
+20. ............................................
+21. ............................................
+22. ............................................
+23. ............................................
+24. ............................................
+25. ............................................
+26. ............................................
+27. ............................................
+28. ............................................
+29. ............................................
+30. ............................................
+31. ............................................
+32. ............................................
+33. ............................................
+34. ............................................
+35. ............................................
+36. ............................................
+37. ............................................
+38. ............................................
+39. ............................................
+40. ............................................
