@@ -13,7 +13,7 @@ INA = {
     "logo_d": "enspy",
     "n_jours": 30,
     "annee": "2026-2027",
-    "dossier": COURS + r"\SEC4052\Présentation",
+    "dossier": COURS + r"\ENSPY\SEC4052\Présentation",
     "fil_rouge": "MVOM, BAOBAB, WOURI, MBONGO, FAKO, MUNGO, SANAGA, DIBAMBA",
     "parties": [
         ("Partie IV", "Forensique opérationnelle", "C14–C21"),
