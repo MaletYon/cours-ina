@@ -1,0 +1,8 @@
+Procès-verbal de saisie (extrait) - scellé EV-020
+
+Appareil : routeur « box » d'accès, saisi le 02/04/2026 à 10:15 au siège de la
+société victime. Extraction du firmware par l'interface UART, puis Binwalk.
+Empreinte SHA-256 de firmware.bin calculée à la saisie :
+8cadea249d05f995d15b790704294dc9f7bc5ce41ef7cc820e44f71742fcebb5
+
+(Pièce fictive établie pour le cours SEC4052 (Investigation Numérique Avancée). Noms, adresses, dates et montants fictifs.)

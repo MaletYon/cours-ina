@@ -1,0 +1,5 @@
+scelle;description;date;heure;sha256_acquisition
+EV-001;image E01 du poste PC-COMPTA-02;2026-03-13;15:03;9f2c1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a
+EV-001bis;capture mémoire du poste PC-COMPTA-02;2026-03-13;15:41;41d07c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c
+EV-003;export des journaux du pare-feu;2026-03-13;16:20;c3e8050505050505050505050505050505050505050505050505050505050505
+EV-004;image E01 du serveur srv-app;2026-03-13;17:02;77abe4e4e4e4e4e4e4e4e4e4e4e4e4e4e4e4e4e4e4e4e4e4e4e4e4e4e4e4e4e4

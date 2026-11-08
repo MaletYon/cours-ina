@@ -1,0 +1,9 @@
+Architecture réseau de TRANSBOIS SA (extrait)
+
+- Les postes (192.168.10.0/24) sortent sur Internet par le proxy 10.0.0.1:3128.
+  Le pare-feu voit donc le proxy (10.0.0.1) comme source des flux sortants.
+- Le résolveur DNS interne journalise toutes les requêtes des postes.
+- Le proxy et le résolveur sont synchronisés par NTP. L'horloge du pare-feu ne
+  l'est pas : son écart se mesure en rapprochant un même flux dans deux journaux.
+
+(Pièce fictive établie pour le cours SEC4052 (Investigation Numérique Avancée). Noms, adresses, dates et montants fictifs.)

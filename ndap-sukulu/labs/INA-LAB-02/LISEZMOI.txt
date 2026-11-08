@@ -1,0 +1,30 @@
+INA-LAB-02 (ancien LAB-04), forensique réseau opérationnelle
+
+Les preuves de l'enquête se trouvent dans ce dossier, qui est en lecture seule.
+  baobab_beaconing.pcap   opération BAOBAB   (46105 octets, 284 trames)
+  wouri_bec.pcap          opération WOURI    (1385 octets, 13 trames)
+  MANIFESTE_SHA256.txt    empreintes de référence des deux captures
+
+Marche à suivre.
+
+1. Vérifier l'intégrité avant toute analyse. Ouvrez un terminal (icône dans
+   la barre des tâches ou Applications, Terminal), puis tapez :
+       cd ~/preuves
+       sha256sum -c MANIFESTE_SHA256.txt
+   Les deux captures doivent afficher OK. Cette vérification établit que les
+   preuves n'ont pas été altérées, geste premier de la chaîne de custody.
+
+2. Ouvrir une capture dans Wireshark. Lancez Wireshark depuis le menu
+   Applications, puis Fichier, Ouvrir, puis choisissez la capture dans ~/preuves.
+   Vous pouvez aussi double-cliquer sur le fichier .pcap dans ce dossier.
+
+3. Conduire l'analyse. Pour l'opération BAOBAB, examinez les conversations et
+   les flux TCP ainsi que le trafic DNS. Pour l'opération WOURI, reconstituez
+   la session SMTP et lisez ses en-têtes. Le rappel de cours, replié en haut
+   de la page du lab, résume la démarche attendue.
+
+4. Répondre. Saisissez vos réponses dans le volet Points de contrôle, à droite
+   de la page du lab, puis enregistrez. Quand vous avez terminé, cliquez sur
+   Terminer et corriger pour obtenir votre note.
+
+Toute votre activité dans le terminal est journalisée.

@@ -1,0 +1,15 @@
+Fiche d'analyse CLO - registre numérique de scellés signé (projet SCFC)
+
+Contexte : procès pénal devant un tribunal de grande instance camerounais.
+Estimations retenues par l'équipe (estimations théoriques, à la manière du ch. 28) :
+  Conf(P)            = 0,80
+  Rel(P)             = 0,97
+  I(V ; Sigma | C)   = 3 bits
+  H(V | C)           = 4 bits
+Paramètre de sécurité : lambda = 128 bits.
+
+Second contexte (question F6) : un tribunal de juridiction générale dont
+l'entropie contextuelle est estimée à H(C) = 8 bits, saisi d'un litige
+dont l'incertitude du verdict vaut H(V | C) = 20 bits.
+
+(Pièce fictive établie pour le cours SEC4052 (Investigation Numérique Avancée). Noms, adresses, dates et montants fictifs.)

@@ -1,0 +1,29 @@
+INA-LAB-07, OSINT et traçage (opération BAOBAB 2)
+
+Les pièces du lab se trouvent dans le dossier preuves, en lecture seule, et
+une copie de travail modifiable dans le dossier travail (ouvert au démarrage).
+  whois.txt                       WHOIS constatés
+  certificats_ct.csv              journal de transparence des certificats
+  dns_passif.csv                  historique DNS passif
+  profils_constates.csv           profils constatés
+  transactions_portefeuille.csv   transactions du portefeuille
+  note_banque.txt                 note de la banque
+  MANIFESTE_SHA256.txt            empreintes de référence (preuves)
+
+Marche à suivre.
+
+1. Vérifier l'intégrité avant toute analyse. Ouvrez un terminal, puis tapez :
+       cd ~/preuves
+       sha256sum -c MANIFESTE_SHA256.txt
+   Chaque fichier doit afficher OK.
+
+2. Partie A : les infrastructures. Reliez le faux site à Baobab Invest par l'adresse et par le certificat.
+
+3. Partie B : les personnes et les fonds. Reliez les profils par le pseudonyme et la photo ; suivez le portefeuille.
+
+4. Répondre. Saisissez vos réponses dans le volet Points de contrôle de la
+   page du lab, puis enregistrez. Nombres avec un point ou une virgule
+   décimale ; codes et listes comme indiqué dans chaque question. Quand vous
+   avez terminé, cliquez sur Terminer et corriger pour obtenir votre note.
+
+Toute votre activité dans le terminal est journalisée.

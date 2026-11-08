@@ -1,0 +1,28 @@
+INA-LAB-09, détection de l'anti-forensique (opération MVOM)
+
+Les pièces du lab se trouvent dans le dossier preuves, en lecture seule, et
+une copie de travail modifiable dans le dossier travail (ouvert au démarrage).
+  mft_extrait.csv            $MFT : horodatages $SI et $FN
+  usnjrnl_extrait.csv        $UsnJrnl
+  security_evtx_export.csv   journal Security exporté
+  aide_evenements.txt        aide sur les événements
+  MANIFESTE_SHA256.txt       empreintes de référence (preuves)
+
+Marche à suivre.
+
+1. Vérifier l'intégrité avant toute analyse. Ouvrez un terminal, puis tapez :
+       cd ~/preuves
+       sha256sum -c MANIFESTE_SHA256.txt
+   Chaque fichier doit afficher OK.
+
+2. Partie A : comparez les quatre horodatages $SI entre eux, puis à $FN et au $UsnJrnl.
+
+3. Partie B : cherchez l'événement 1102, puis comptez les événements par heure :
+       cut -d';' -f1 security_evtx_export.csv | cut -c12-13 | sort | uniq -c
+
+4. Répondre. Saisissez vos réponses dans le volet Points de contrôle de la
+   page du lab, puis enregistrez. Nombres avec un point ou une virgule
+   décimale ; codes et listes comme indiqué dans chaque question. Quand vous
+   avez terminé, cliquez sur Terminer et corriger pour obtenir votre note.
+
+Toute votre activité dans le terminal est journalisée.

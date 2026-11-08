@@ -1,0 +1,11 @@
+Fiche d'extraction (extrait)
+
+Partie A. Scellé EV-010 : téléphone de FOUDA Clément (victime, affaire BAOBAB).
+  Extraction logique ADB, remise volontaire. Bases mmssms.db (table sms) et
+  calllog.db (table calls). Dates en millisecondes depuis 1970, en UTC.
+  calls.type : 1 entrant, 2 sortant, 3 manqué. sms.type : 1 reçu, 2 envoyé.
+Partie B. Scellé EV-002 : téléphone de MBONGO Joseph. Photo extraite de
+  /sdcard/WhatsApp/Media/WhatsApp Images/.
+Heure légale du Cameroun : UTC+1, sans heure d'été.
+
+(Pièce fictive établie pour le cours SEC4052 (Investigation Numérique Avancée). Noms, adresses, dates et montants fictifs.)

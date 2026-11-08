@@ -15,7 +15,7 @@ Ce cours prolonge l'UE SEC4031 (Introduction à l'investigation numérique). Il 
 |---|---|---|
 | Le livre du cours | [`INA_main.pdf`](INA_main.pdf) | Traité complet (Parties IV à VI, 19 chapitres, annexes), compilé depuis [`INA_main.tex`](INA_main.tex) |
 | Les présentations | [`Présentation/`](Présentation/) | 31 présentations PowerPoint : vision d'ensemble et 30 séances de 2 heures, avec notes du présentateur |
-| Les fiches d'exercices | [`fiches/`](fiches/) | 19 fiches de 40 questions au format texte, une par chapitre, à distribuer en attendant l'ouverture de NDAP SUKULU |
+| Les fiches d'exercices | [`fiches/`](fiches/) | 19 fiches de 40 questions au format texte, une par chapitre, en complément de NDAP SUKULU |
 | Le livret de correction | [`correction/`](correction/) | Accès réservé : voir la page du dossier |
 | Les sources LaTeX | `front/`, `partie4/` à `partie6/`, `annexes/`, `bibliographie/`, `figures/`, [`Style_IN.sty`](Style_IN.sty) | Sources du livre |
 
@@ -33,9 +33,16 @@ Les chapitres de la Partie IV occupent deux séances chacun ; ceux des Parties V
 
 ## NDAP SUKULU, la salle de classe compagnon
 
-*Ndap sukulu* signifie « la salle de classe » en bassa, et *Malet Yon* « ton enseignant ». NDAP SUKULU est l'environnement compagnon du cours : une fiche d'auto-évaluation de 40 questions par chapitre, corrigée automatiquement, des labs sur pièces et un tableau de bord de progression. Le code de cours est **SEC4052**.
+*Ndap sukulu* signifie « la salle de classe » en bassa, et *Malet Yon* « ton enseignant ». NDAP SUKULU est l'environnement d'évaluation du cours : une fiche de 20 questions tirées d'une banque de 100 par chapitre, et douze laboratoires pratiques, minutés et en nombre de tentatives limité. Le code de cours est **SEC4052**. La présentation complète figure au début du livre.
 
-> **NDAP SUKULU en local.** La version téléchargeable et installable sur votre poste, avec un module autonome pour ce cours, est en cours de finalisation. En attendant, les fiches d'auto-évaluation de chaque chapitre (40 questions) sont fournies au format texte dans [`fiches/`](fiches/).
+| Utilisation | Où |
+|---|---|
+| En ligne | `https://maletyon.github.io/cours-ina/ndap-sukulu/` |
+| Sur un ordinateur, sans Internet | archive téléchargeable dans [`ndap-sukulu/`](ndap-sukulu/) |
+| Sur un téléphone (fiches seulement) | `https://maletyon.github.io/cours-ina/ndap-sukulu/telephone/` |
+| Si votre réseau bloque `github.io` | adresse de secours `https://raw.githack.com/MaletYon/cours-ina/main/ndap-sukulu/`, ou [archive à télécharger](https://github.com/MaletYon/cours-ina/raw/main/ndap-sukulu/NDAP_SUKULU_INA_ordinateur.zip) pour travailler hors ligne |
+
+La connexion se fait avec le matricule et le mot de passe remis par l'enseignant. Les copies sont remises à l'enseignant sous forme d'un fichier chiffré ; il les corrige et publie les résultats, que chacun consulte dans l'application. Le mode d'emploi complet, pour l'étudiant et pour l'enseignant, est dans [`ndap-sukulu/README.md`](ndap-sukulu/README.md). Les fiches de 40 questions au format texte restent disponibles dans [`fiches/`](fiches/).
 
 | Lab | Chapitre | Sujet |
 |---|---|---|

@@ -1,0 +1,16 @@
+=== banque-sanaga.example (constaté le 20/02/2026 à 10:02)
+Creation Date: 2009-06-11
+Registrar: Registrar Exemple SA
+Registrant Organization: Banque Sanaga SA
+
+=== banque-sanaga-connexion.example (constaté le 20/02/2026 à 10:05)
+Creation Date: 2026-01-27
+Registrar: Registrar Discret Ltd
+Registrant: REDACTED FOR PRIVACY
+
+=== baobab-invest.example (constaté le 20/02/2026 à 10:07)
+Creation Date: 2025-11-03
+Registrar: Registrar Discret Ltd
+Registrant: REDACTED FOR PRIVACY
+
+(Pièce fictive établie pour le cours SEC4052 (Investigation Numérique Avancée). Noms, adresses, dates et montants fictifs.)

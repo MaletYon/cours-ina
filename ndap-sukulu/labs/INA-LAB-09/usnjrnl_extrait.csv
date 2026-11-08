@@ -1,0 +1,7 @@
+horodatage;fichier;raison
+2026-03-12 17:40:11;bilan.xlsx;DataOverwrite|Close
+2026-03-13 02:19:15;rootkit.dll;FileCreate
+2026-03-13 02:19:16;rootkit.dll;DataExtend|Close
+2026-03-13 02:19:58;rootkit.dll;BasicInfoChange|Close
+2026-03-13 02:20:02;igfxupd.exe;FileCreate
+2026-03-13 02:20:40;igfxupd.exe;BasicInfoChange|Close

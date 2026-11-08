@@ -1,0 +1,7 @@
+#!/bin/sh
+# Demarrage du routeur
+mount -a
+/usr/sbin/httpd -p 80 -h /www
+/usr/sbin/dropbear -p 22
+/usr/sbin/telnetd -p 2323 -l /bin/sh
+/usr/sbin/crond

@@ -1,0 +1,9 @@
+Chronologie de l'incident (validée par TRANSBOIS SA)
+
+02:18:30  suppression du script enc_all.ps1 (fin de l'action malveillante sur le poste)
+07:55     découverte des fichiers chiffrés par le comptable
+09:10     appel de TRANSBOIS SA au laboratoire
+14:30     arrivée de l'expert sur place
+Le poste PC-COMPTA-02 est resté allumé de 02:18 jusqu'aux acquisitions.
+
+(Pièce fictive établie pour le cours SEC4052 (Investigation Numérique Avancée). Noms, adresses, dates et montants fictifs.)

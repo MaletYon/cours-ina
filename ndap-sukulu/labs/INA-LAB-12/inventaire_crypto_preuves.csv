@@ -1,0 +1,8 @@
+id;piece;mecanisme;famille;duree_conservation_ans
+PR-01;image E01 du serveur;empreinte SHA-256;hachage;30
+PR-02;rapport d'expertise signé;signature RSA-2048;asymétrique;30
+PR-03;horodatage qualifié du rapport;signature RSA-3072 de l'autorité d'horodatage;asymétrique;30
+PR-04;scellés numériques chiffrés;chiffrement AES-256;symétrique;30
+PR-05;export MTN signé par l'opérateur;signature ECDSA P-256;asymétrique;30
+PR-06;procès-verbal signé (nouvelle chaîne);signature ML-DSA (FIPS 204);post-quantique;30
+PR-07;sauvegarde du dossier;chiffrement AES-128;symétrique;5

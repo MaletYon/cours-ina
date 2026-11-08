@@ -1,0 +1,10 @@
+Opération MVOM - conservation des preuves cloud (extrait)
+
+- Compte AWS de TRANSBOIS SA (111122223333), région af-south-1.
+- Le journal CloudTrail est écrit dans un bucket protégé en écriture unique
+  (Object Lock). Export remis : cloudtrail_2026-03-13.json (heures UTC).
+- L'historique d'état des instances provient d'AWS Config, service distinct de
+  CloudTrail, qui n'a pas été arrêté.
+- L'adresse de l'attaquant est masquée (185.220.XX.XX), comme dans le rapport.
+
+(Pièce fictive établie pour le cours SEC4052 (Investigation Numérique Avancée). Noms, adresses, dates et montants fictifs.)

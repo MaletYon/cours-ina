@@ -1,0 +1,10 @@
+Fiche de l'outil de tri (extrait)
+
+Outil : classifieur de courriels « TriMail » version 3.2 (fictif), modèle du 01/2026.
+Règle d'usage du laboratoire : un message est retenu comme « pertinent » si son
+score est supérieur ou égal au seuil. Seuil par défaut : 0,50.
+Échantillon de contrôle : 60 messages vérifiés un à un par deux enquêteurs
+(colonne verification_humaine).
+L'éditeur annonce un taux de faux positifs de 3 %.
+
+(Pièce fictive établie pour le cours SEC4052 (Investigation Numérique Avancée). Noms, adresses, dates et montants fictifs.)

@@ -1,0 +1,27 @@
+INA-LAB-03, journaux réseau sans capture (opération MVOM)
+
+Les pièces du lab se trouvent dans le dossier preuves, en lecture seule, et
+une copie de travail modifiable dans le dossier travail (ouvert au démarrage).
+  dns_resolveur.csv       requêtes DNS des postes
+  proxy_acces.csv         accès web par le proxy
+  parefeu.csv             journal du pare-feu
+  note_architecture.txt   architecture et horloges
+  MANIFESTE_SHA256.txt    empreintes de référence (preuves)
+
+Marche à suivre.
+
+1. Vérifier l'intégrité avant toute analyse. Ouvrez un terminal, puis tapez :
+       cd ~/preuves
+       sha256sum -c MANIFESTE_SHA256.txt
+   Chaque fichier doit afficher OK.
+
+2. Partie A : le DNS. Cherchez les noms anormalement longs : grep TXT dns_resolveur.csv
+
+3. Partie B : le proxy et le pare-feu. Rapprochez le même flux dans les deux journaux.
+
+4. Répondre. Saisissez vos réponses dans le volet Points de contrôle de la
+   page du lab, puis enregistrez. Nombres avec un point ou une virgule
+   décimale ; codes et listes comme indiqué dans chaque question. Quand vous
+   avez terminé, cliquez sur Terminer et corriger pour obtenir votre note.
+
+Toute votre activité dans le terminal est journalisée.

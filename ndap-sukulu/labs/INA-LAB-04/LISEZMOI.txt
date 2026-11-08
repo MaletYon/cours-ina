@@ -1,0 +1,28 @@
+INA-LAB-04, forensique mobile (affaires BAOBAB et MBONGO)
+
+Les pièces du lab se trouvent dans le dossier preuves, en lecture seule, et
+une copie de travail modifiable dans le dossier travail (ouvert au démarrage).
+  mmssms.db                 SMS du téléphone de la victime
+  calllog.db                journal d'appels de la victime
+  IMG-20260115-WA0003.jpg   photo du téléphone du suspect
+  fiche_extraction.txt      conditions d'extraction
+  MANIFESTE_SHA256.txt      empreintes de référence (preuves)
+
+Marche à suivre.
+
+1. Vérifier l'intégrité avant toute analyse. Ouvrez un terminal, puis tapez :
+       cd ~/preuves
+       sha256sum -c MANIFESTE_SHA256.txt
+   Chaque fichier doit afficher OK.
+
+2. Partie A : ouvrez les bases avec sqlite3, par exemple :
+       sqlite3 mmssms.db "SELECT datetime(date/1000,'unixepoch','+1 hour'), address, type, body FROM sms ORDER BY date;"
+
+3. Partie B : lisez les métadonnées de la photo : exiftool -n IMG-20260115-WA0003.jpg
+
+4. Répondre. Saisissez vos réponses dans le volet Points de contrôle de la
+   page du lab, puis enregistrez. Nombres avec un point ou une virgule
+   décimale ; codes et listes comme indiqué dans chaque question. Quand vous
+   avez terminé, cliquez sur Terminer et corriger pour obtenir votre note.
+
+Toute votre activité dans le terminal est journalisée.

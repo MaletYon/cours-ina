@@ -1,0 +1,45 @@
+INA-LAB-12, lab de synthèse du cours (opération DIBAMBA)
+
+Les pièces du lab se trouvent dans le dossier preuves, en lecture seule, et
+une copie de travail modifiable dans le dossier travail (ouvert au démarrage).
+  mtn_journal_simswap.csv          journal des changements de SIM de l'opérateur
+  momo_transactions_dibamba.csv    transactions Mobile Money du 5 mai 2026
+  ecoute_legale_resume_flux.csv    résumé des flux de l'écoute légale
+  whois_mtn-verification.cm.txt    WHOIS du domaine suspect
+  dns_passif.csv                   historique des résolutions DNS
+  note_astreinte_0100.txt          note d'astreinte de 01:00 et canaux disponibles
+  pv_tangue_non_corrige.txt        procès-verbal TANGUE à corriger
+  benchmark_pays.csv               comparaison des modèles nationaux
+  recommandations_proposees.txt    recommandations à trier
+  inventaire_crypto_preuves.csv    inventaire cryptographique des preuves archivées
+  fiche_CLO_registre_scelles.txt   fiche d'analyse CLO
+  annonce_SAFESEAL.txt             annonce commerciale d'un protocole
+  MANIFESTE_SHA256.txt             empreintes de référence (preuves)
+
+Marche à suivre.
+
+1. Vérifier l'intégrité avant toute analyse. Ouvrez un terminal, puis tapez :
+       cd ~/preuves
+       sha256sum -c MANIFESTE_SHA256.txt
+   Chaque fichier doit afficher OK.
+
+2. Partie A : chronologie. Croisez le journal des SIM swap et les transactions (heures, montants).
+
+3. Partie B : réseau et OSINT. Lisez les flux de l'écoute légale, le WHOIS et le DNS passif.
+
+4. Partie C : coopération. Lisez la note d'astreinte : quelle action d'abord, avant quelle heure ?
+
+5. Partie D : erreurs. Relisez le procès-verbal TANGUE phrase par phrase.
+
+6. Partie E : benchmarking. Situez le Cameroun et triez les recommandations.
+
+7. Partie F : crypto-forensique. Classez les preuves face au quantique, puis calculez la fiche CLO.
+
+8. Partie G : lecture critique. Appliquez la grille du chapitre 29 à l'annonce SAFESEAL.
+
+9. Répondre. Saisissez vos réponses dans le volet Points de contrôle de la
+   page du lab, puis enregistrez. Nombres avec un point ou une virgule
+   décimale ; codes et listes comme indiqué dans chaque question. Quand vous
+   avez terminé, cliquez sur Terminer et corriger pour obtenir votre note.
+
+Toute votre activité dans le terminal est journalisée.

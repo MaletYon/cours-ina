@@ -1,0 +1,11 @@
+Cluster Kubernetes de TRANSBOIS SA (extrait)
+
+- L'audit log de l'API Server est envoyé en temps réel vers le SIEM, hors du cluster
+  (export remis : k8s_audit.jsonl, heures UTC).
+- Un agent de sauvegarde copie l'état des conteneurs toutes les 30 minutes et à
+  chaque alerte de ressources (copie de 02:18:00 pour prod-webapp-3).
+- Les pods utilisent des images signées du registre interne ; l'empreinte en
+  exécution doit être identique à l'empreinte du registre.
+- L'adresse externe est masquée (185.220.XX.XX), comme dans le rapport.
+
+(Pièce fictive établie pour le cours SEC4052 (Investigation Numérique Avancée). Noms, adresses, dates et montants fictifs.)

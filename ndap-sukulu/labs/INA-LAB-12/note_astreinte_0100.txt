@@ -1,0 +1,16 @@
+Note d'astreinte - SCFC - nuit du 5 au 6 mai 2026, 01:00
+
+- Le parquet de permanence peut délivrer une réquisition d'urgence.
+- MTN Cameroun conserve le journal des SIM swap 90 jours.
+- L'hébergeur du serveur 51.83.104.27 (France) fait tourner ses journaux de connexion
+  toutes les 2 heures à partir de 01:00 : sans demande de conservation, les
+  journaux de 23:00-01:00 seront écrasés à 03:00.
+- La France est partie à la Convention de Budapest.
+- Canaux disponibles (lettres à reporter dans les réponses) :
+    A  demande d'entraide judiciaire (MLAT) au ministère de la Justice français
+    B  demande de conservation urgente par le BCN INTERPOL (réseau 24/7, Budapest art. 29)
+    C  courriel direct au support de l'hébergeur, sans voie officielle
+    D  réquisition d'urgence à MTN Cameroun (art. 57 loi n° 2010/012)
+    E  attendre la fin de l'enquête nationale avant toute demande internationale
+
+(Pièce fictive établie pour le cours SEC4052 (Investigation Numérique Avancée). Noms, adresses, dates et montants fictifs.)

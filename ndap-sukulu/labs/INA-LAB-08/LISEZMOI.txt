@@ -1,0 +1,27 @@
+INA-LAB-08, relecture d'un rapport d'expertise (opération MVOM)
+
+Les pièces du lab se trouvent dans le dossier preuves, en lecture seule, et
+une copie de travail modifiable dans le dossier travail (ouvert au démarrage).
+  projet_rapport_MVOM.txt           projet de rapport à relire
+  formulaire_custody.csv            formulaire de custody
+  annexe_G_empreintes_analyse.csv   empreintes recalculées à l'analyse (annexe G)
+  chronologie_incident.txt          chronologie de l'incident
+  MANIFESTE_SHA256.txt              empreintes de référence (preuves)
+
+Marche à suivre.
+
+1. Vérifier l'intégrité avant toute analyse. Ouvrez un terminal, puis tapez :
+       cd ~/preuves
+       sha256sum -c MANIFESTE_SHA256.txt
+   Chaque fichier doit afficher OK.
+
+2. Partie A : la section Constatations. Pour chaque phrase : est-ce un fait vérifiable ou une interprétation ?
+
+3. Partie B : le dossier probatoire. Comparez les empreintes et l'ordre des acquisitions.
+
+4. Répondre. Saisissez vos réponses dans le volet Points de contrôle de la
+   page du lab, puis enregistrez. Nombres avec un point ou une virgule
+   décimale ; codes et listes comme indiqué dans chaque question. Quand vous
+   avez terminé, cliquez sur Terminer et corriger pour obtenir votre note.
+
+Toute votre activité dans le terminal est journalisée.

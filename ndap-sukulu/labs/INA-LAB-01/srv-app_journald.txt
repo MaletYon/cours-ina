@@ -1,0 +1,17 @@
+-- Journal de srv-app exporte (journalctl -u ssh --since 2026-03-12 --until 2026-03-14) --
+Mar 12 08:02:11 srv-app sshd[1022]: Accepted publickey for admin from 10.0.0.5 port 51022 ssh2
+Mar 12 18:40:57 srv-app sshd[1180]: Failed password for admin from 10.0.0.5 port 51811 ssh2
+Mar 12 18:41:03 srv-app sshd[1180]: Accepted password for admin from 10.0.0.5 port 51811 ssh2
+Mar 13 02:13:45 srv-app sshd[2301]: Failed password for root from 185.220.XX.XX port 40110 ssh2
+Mar 13 02:13:49 srv-app sshd[2302]: Failed password for root from 185.220.XX.XX port 40117 ssh2
+Mar 13 02:13:52 srv-app sshd[2303]: Failed password for root from 185.220.XX.XX port 40124 ssh2
+Mar 13 02:13:56 srv-app sshd[2304]: Failed password for root from 185.220.XX.XX port 40131 ssh2
+Mar 13 02:14:00 srv-app sshd[2305]: Failed password for root from 185.220.XX.XX port 40138 ssh2
+Mar 13 02:14:04 srv-app sshd[2306]: Failed password for root from 185.220.XX.XX port 40145 ssh2
+Mar 13 02:14:08 srv-app sshd[2307]: Failed password for root from 185.220.XX.XX port 40152 ssh2
+Mar 13 02:14:09 srv-app sshd[2309]: Accepted password for root from 185.220.XX.XX port 40161 ssh2
+Mar 13 02:14:09 srv-app systemd-logind[512]: New session 88 of user root.
+Mar 13 02:15:02 srv-app useradd[2350]: new user: name=support2, UID=1004, GID=1004, home=/home/support2, shell=/bin/bash
+Mar 13 02:15:10 srv-app usermod[2356]: add 'support2' to group 'sudo'
+Mar 13 02:21:40 srv-app sshd[2309]: pam_unix(sshd:session): session closed for user root
+Mar 13 08:05:33 srv-app sshd[2511]: Accepted publickey for admin from 10.0.0.5 port 52017 ssh2

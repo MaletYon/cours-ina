@@ -1,0 +1,8 @@
+Note de la Banque Sanaga SA au Parquet (extrait)
+
+Le 14/02/2026, des clients ont signalé une page imitant notre page de connexion
+(ebanking.banque-sanaga.example). Plusieurs d'entre eux ont ensuite versé des fonds sur
+« Baobab Invest ». Notre seul domaine est banque-sanaga.example.
+Portefeuille communiqué par la plateforme d'échange : bc1qbaobabfictif0000000000000000000xyz
+
+(Pièce fictive établie pour le cours SEC4052 (Investigation Numérique Avancée). Noms, adresses, dates et montants fictifs.)

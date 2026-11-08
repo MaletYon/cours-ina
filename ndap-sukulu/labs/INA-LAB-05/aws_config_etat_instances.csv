@@ -1,0 +1,6 @@
+horodatage;instance;etat
+2026-03-13T01:00:00Z;i-0a1b2c3d4e;running
+2026-03-13T02:16:09Z;i-0f9e8d7c6b5a43210;pending
+2026-03-13T02:16:41Z;i-0f9e8d7c6b5a43210;running
+2026-03-13T02:23:11Z;i-0f9e8d7c6b5a43210;shutting-down
+2026-03-13T02:24:02Z;i-0f9e8d7c6b5a43210;terminated

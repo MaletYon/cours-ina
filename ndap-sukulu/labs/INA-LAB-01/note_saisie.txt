@@ -1,0 +1,9 @@
+Opération MVOM - TRANSBOIS SA - note de saisie (extrait)
+
+Les exports ci-joints ont été produits sur les copies de travail des images
+EV-001 (poste PC-COMPTA-02) et EV-004 (serveur srv-app). Outils : RECmd
+(UserAssist), PECmd (Prefetch), MFTECmd ($UsnJrnl), journalctl.
+Heures : heure locale du Cameroun (UTC+1) pour tous les exports.
+L'adresse externe est masquée (185.220.XX.XX), comme dans le rapport.
+
+(Pièce fictive établie pour le cours SEC4052 (Investigation Numérique Avancée). Noms, adresses, dates et montants fictifs.)

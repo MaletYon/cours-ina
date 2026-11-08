@@ -1,0 +1,10 @@
+Annonce commerciale - SAFESEAL, « le sceau infalsifiable des preuves numériques »
+
+[G-A] SAFESEAL est décrit dans une prépublication déposée sur ePrint le 2 avril 2026 ; aucune évaluation par les pairs n'est mentionnée.
+[G-B] Le protocole combine SHA-256, des signatures BLS agrégées et un horodatage ; chaque primitive est citée avec sa référence publiée.
+[G-C] Le fournisseur annonce un score CRO de 0,98 « certifié », sans publier la méthode de calcul.
+[G-D] La sécurité globale de la combinaison est « démontrée formellement » ; la preuve n'est pas fournie.
+[G-E] La documentation consacre une section aux limites reconnues par les auteurs.
+[G-F] La brochure affirme que SAFESEAL est « post-quantique » ; il n'utilise aucun algorithme FIPS 203, 204 ou 205.
+
+(Pièce fictive établie pour le cours SEC4052 (Investigation Numérique Avancée). Noms, adresses, dates et montants fictifs.)

@@ -1,0 +1,19 @@
+Projet de rapport d'expertise - Opération MVOM - version 0.3
+Expert : NKENG. Destinataire : le Procureur de la République.
+
+Section 3. Constatations
+
+[C1] Le journal journald de srv-app enregistre 7 tentatives de connexion SSH échouées sur le compte root depuis l'adresse 185.220.XX.XX entre 02:13:45 et 02:14:08.
+[C2] Une connexion au compte root réussit à 02:14:09 depuis la même adresse.
+[C3] L'attaquant, manifestement expérimenté, a choisi la nuit pour ne pas être vu.
+[C4] Le $UsnJrnl du poste PC-COMPTA-02 enregistre la création du fichier enc_all.ps1 à 02:16:50 et sa suppression à 02:18:30.
+[C5] Ce script est sans aucun doute le rançongiciel qui a chiffré les fichiers.
+[C6] Le $UsnJrnl enregistre la modification de 847 fichiers .docx entre 02:18:31 et 02:21:31.
+[C7] L'adresse 185.220.XX.XX appartient à M. ONAMBELE, qui est donc l'auteur de l'attaque.
+
+Section 4. Analyse
+
+[A1] La séquence est cohérente, avec un niveau de confiance élevé,
+avec un accès SSH par force brute suivi du dépôt et de l'exécution d'un script de chiffrement.
+
+(Pièce fictive établie pour le cours SEC4052 (Investigation Numérique Avancée). Noms, adresses, dates et montants fictifs.)

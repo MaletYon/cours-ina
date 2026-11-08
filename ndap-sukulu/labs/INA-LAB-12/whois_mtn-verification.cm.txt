@@ -1,0 +1,13 @@
+Domain Name: mtn-verification.cm
+Registry Domain ID: D-CM-2026-0418873
+Registrar: REGISTRAR-EXEMPLE SARL
+Creation Date: 2026-04-29T21:14:07Z
+Registry Expiry Date: 2027-04-29T21:14:07Z
+Registrant Organization: REDACTED FOR PRIVACY
+Name Server: ns1.hebergeur-exemple.fr
+Name Server: ns2.hebergeur-exemple.fr
+DNSSEC: unsigned
+
+Résolution au 05/05/2026 23:40 : mtn-verification.cm A 51.83.104.27
+
+(Pièce fictive établie pour le cours SEC4052 (Investigation Numérique Avancée). Noms, adresses, dates et montants fictifs.)

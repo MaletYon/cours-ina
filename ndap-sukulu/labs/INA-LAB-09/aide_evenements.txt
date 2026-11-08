@@ -1,0 +1,10 @@
+Identifiants d'événements Windows utiles (journal Security)
+
+4624 ouverture de session réussie    4634 fermeture de session
+4672 privilèges spéciaux attribués  4688 création de processus
+1102 le journal d'audit a été effacé
+Export du fichier Security.evtx du poste, tel que trouvé à l'acquisition.
+Volume habituel sur ce poste : 110 à 135 événements par heure, jour et nuit
+(tâches planifiées et sauvegarde).
+
+(Pièce fictive établie pour le cours SEC4052 (Investigation Numérique Avancée). Noms, adresses, dates et montants fictifs.)

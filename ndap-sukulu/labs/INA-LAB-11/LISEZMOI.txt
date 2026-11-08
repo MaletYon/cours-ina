@@ -1,0 +1,28 @@
+INA-LAB-11, forensique des conteneurs (opération MVOM)
+
+Les pièces du lab se trouvent dans le dossier preuves, en lecture seule, et
+une copie de travail modifiable dans le dossier travail (ouvert au démarrage).
+  k8s_audit.jsonl                 audit log de l'API Server
+  docker_diff_prod-webapp-3.txt   différences du conteneur avec son image
+  empreintes_images.csv           empreintes des images
+  note_architecture.txt           architecture du cluster
+  MANIFESTE_SHA256.txt            empreintes de référence (preuves)
+
+Marche à suivre.
+
+1. Vérifier l'intégrité avant toute analyse. Ouvrez un terminal, puis tapez :
+       cd ~/preuves
+       sha256sum -c MANIFESTE_SHA256.txt
+   Chaque fichier doit afficher OK.
+
+2. Partie A : filtrez l'audit log, par exemple :
+       jq -r 'select(.objectRef.subresource=="exec" or .verb=="delete") | [.stageTimestamp,.verb,.objectRef.name,.user.username] | @tsv' k8s_audit.jsonl
+
+3. Partie B : lisez le docker diff et comparez les empreintes d'images.
+
+4. Répondre. Saisissez vos réponses dans le volet Points de contrôle de la
+   page du lab, puis enregistrez. Nombres avec un point ou une virgule
+   décimale ; codes et listes comme indiqué dans chaque question. Quand vous
+   avez terminé, cliquez sur Terminer et corriger pour obtenir votre note.
+
+Toute votre activité dans le terminal est journalisée.

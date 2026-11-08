@@ -1,0 +1,11 @@
+# docker diff, copie du conteneur prod-webapp-3 conservée par l'agent de
+# sauvegarde du nœud à 02:18:00 (avant l'éviction), comparée à son image.
+# A = ajouté, C = modifié, D = supprimé
+C /tmp
+A /tmp/.cache
+A /tmp/.cache/kworkerd
+A /tmp/.cache/config.json
+C /etc
+C /etc/crontab
+C /var/log/app
+D /var/log/app/access.log

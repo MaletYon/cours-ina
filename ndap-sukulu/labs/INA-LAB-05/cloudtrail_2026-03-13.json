@@ -1,0 +1,158 @@
+{
+  "Records": [
+    {
+      "eventTime": "2026-03-13T01:05:12Z",
+      "eventSource": "signin.amazonaws.com",
+      "eventName": "ConsoleLogin",
+      "awsRegion": "af-south-1",
+      "sourceIPAddress": "41.202.10.5",
+      "userIdentity": {
+        "type": "IAMUser",
+        "arn": "arn:aws:iam::111122223333:user/admin.transbois"
+      },
+      "requestParameters": {},
+      "responseElements": {}
+    },
+    {
+      "eventTime": "2026-03-13T01:06:40Z",
+      "eventSource": "ec2.amazonaws.com",
+      "eventName": "DescribeInstances",
+      "awsRegion": "af-south-1",
+      "sourceIPAddress": "41.202.10.5",
+      "userIdentity": {
+        "type": "IAMUser",
+        "arn": "arn:aws:iam::111122223333:user/admin.transbois"
+      },
+      "requestParameters": {},
+      "responseElements": {}
+    },
+    {
+      "eventTime": "2026-03-13T02:13:45Z",
+      "eventSource": "sts.amazonaws.com",
+      "eventName": "AssumeRole",
+      "awsRegion": "af-south-1",
+      "sourceIPAddress": "185.220.XX.XX",
+      "userIdentity": {
+        "type": "AssumedRole",
+        "arn": "arn:aws:sts::111122223333:assumed-role/EC2-Admin/session-x"
+      },
+      "requestParameters": {
+        "roleArn": "arn:aws:iam::111122223333:role/EC2-Admin"
+      },
+      "responseElements": {}
+    },
+    {
+      "eventTime": "2026-03-13T02:14:03Z",
+      "eventSource": "ec2.amazonaws.com",
+      "eventName": "DescribeInstances",
+      "awsRegion": "af-south-1",
+      "sourceIPAddress": "185.220.XX.XX",
+      "userIdentity": {
+        "type": "AssumedRole",
+        "arn": "arn:aws:sts::111122223333:assumed-role/EC2-Admin/session-x"
+      },
+      "requestParameters": {},
+      "responseElements": {}
+    },
+    {
+      "eventTime": "2026-03-13T02:14:11Z",
+      "eventSource": "ec2.amazonaws.com",
+      "eventName": "GetConsoleOutput",
+      "awsRegion": "af-south-1",
+      "sourceIPAddress": "185.220.XX.XX",
+      "userIdentity": {
+        "type": "AssumedRole",
+        "arn": "arn:aws:sts::111122223333:assumed-role/EC2-Admin/session-x"
+      },
+      "requestParameters": {
+        "instanceId": "i-0a1b2c3d4e"
+      },
+      "responseElements": {}
+    },
+    {
+      "eventTime": "2026-03-13T02:16:02Z",
+      "eventSource": "ec2.amazonaws.com",
+      "eventName": "RunInstances",
+      "awsRegion": "af-south-1",
+      "sourceIPAddress": "185.220.XX.XX",
+      "userIdentity": {
+        "type": "AssumedRole",
+        "arn": "arn:aws:sts::111122223333:assumed-role/EC2-Admin/session-x"
+      },
+      "requestParameters": {
+        "instanceType": "t2.xlarge"
+      },
+      "responseElements": {
+        "instancesSet": {
+          "items": [
+            {
+              "instanceId": "i-0f9e8d7c6b5a43210",
+              "instanceType": "t2.xlarge"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "eventTime": "2026-03-13T02:17:55Z",
+      "eventSource": "s3.amazonaws.com",
+      "eventName": "PutObject",
+      "awsRegion": "af-south-1",
+      "sourceIPAddress": "185.220.XX.XX",
+      "userIdentity": {
+        "type": "AssumedRole",
+        "arn": "arn:aws:sts::111122223333:assumed-role/EC2-Admin/session-x"
+      },
+      "requestParameters": {
+        "bucketName": "transbois-backup",
+        "key": "dump/compta_2026.tar.gz"
+      },
+      "responseElements": {
+        "bytesTransferredIn": 47185920
+      }
+    },
+    {
+      "eventTime": "2026-03-13T02:19:48Z",
+      "eventSource": "cloudtrail.amazonaws.com",
+      "eventName": "StopLogging",
+      "awsRegion": "af-south-1",
+      "sourceIPAddress": "185.220.XX.XX",
+      "userIdentity": {
+        "type": "AssumedRole",
+        "arn": "arn:aws:sts::111122223333:assumed-role/EC2-Admin/session-x"
+      },
+      "requestParameters": {
+        "name": "trail-principal"
+      },
+      "responseElements": {}
+    },
+    {
+      "eventTime": "2026-03-13T07:42:10Z",
+      "eventSource": "cloudtrail.amazonaws.com",
+      "eventName": "StartLogging",
+      "awsRegion": "af-south-1",
+      "sourceIPAddress": "41.202.10.5",
+      "userIdentity": {
+        "type": "IAMUser",
+        "arn": "arn:aws:iam::111122223333:user/admin.transbois"
+      },
+      "requestParameters": {
+        "name": "trail-principal"
+      },
+      "responseElements": {}
+    },
+    {
+      "eventTime": "2026-03-13T07:43:02Z",
+      "eventSource": "cloudtrail.amazonaws.com",
+      "eventName": "LookupEvents",
+      "awsRegion": "af-south-1",
+      "sourceIPAddress": "41.202.10.5",
+      "userIdentity": {
+        "type": "IAMUser",
+        "arn": "arn:aws:iam::111122223333:user/admin.transbois"
+      },
+      "requestParameters": {},
+      "responseElements": {}
+    }
+  ]
+}

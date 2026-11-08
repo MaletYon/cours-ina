@@ -1,0 +1,12 @@
+Procès-verbal d'investigation, opération TANGUE (version non corrigée)
+
+[P1] Le 14 mars 2026 à 14h30, l'OPJ BITA s'est rendu au domicile de BELLO Armand, muni d'une autorisation du procureur.
+[P2] L'OPJ a allumé le PC pour constater les faits ; l'écran montrait un dossier nommé fraudes.
+[P3] L'OPJ a photographié l'écran et noté l'heure affichée.
+[P4] Le lendemain, l'OPJ a confié le PC à l'analyste SONG ; aucun document de transfert n'a été rédigé.
+[P5] L'analyste a ouvert l'image forensique avec l'Explorateur Windows pour naviguer rapidement, avant Autopsy.
+[P6] L'image E01 a été acquise avec FTK Imager 4.7.3.81 derrière un bloqueur d'écriture.
+[P7] Le rapport indique : l'accusé est coupable de fraude informatique selon l'article 72.
+[P8] Les empreintes du disque original sont conservées uniquement dans le fichier E01.
+
+(Pièce fictive établie pour le cours SEC4052 (Investigation Numérique Avancée). Noms, adresses, dates et montants fictifs.)

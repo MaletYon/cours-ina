@@ -1,0 +1,29 @@
+INA-LAB-01, forensique système (opération MVOM)
+
+Les pièces du lab se trouvent dans le dossier preuves, en lecture seule, et
+une copie de travail modifiable dans le dossier travail (ouvert au démarrage).
+  srv-app_journald.txt            journal systemd du serveur Linux
+  srv-app_root_bash_history.txt   historique bash du compte root
+  PC-COMPTA-02_userassist.csv     UserAssist du poste Windows
+  PC-COMPTA-02_prefetch.csv       Prefetch du poste Windows
+  PC-COMPTA-02_usnjrnl.csv        journal USN du poste Windows
+  note_saisie.txt                 conditions de production des exports
+  MANIFESTE_SHA256.txt            empreintes de référence (preuves)
+
+Marche à suivre.
+
+1. Vérifier l'intégrité avant toute analyse. Ouvrez un terminal, puis tapez :
+       cd ~/preuves
+       sha256sum -c MANIFESTE_SHA256.txt
+   Chaque fichier doit afficher OK.
+
+2. Partie A : le serveur Linux. grep "Failed password" srv-app_journald.txt | wc -l
+
+3. Partie B : le poste Windows. Ouvrez les CSV dans le tableur (séparateur ;) ou filtrez-les avec grep.
+
+4. Répondre. Saisissez vos réponses dans le volet Points de contrôle de la
+   page du lab, puis enregistrez. Nombres avec un point ou une virgule
+   décimale ; codes et listes comme indiqué dans chaque question. Quand vous
+   avez terminé, cliquez sur Terminer et corriger pour obtenir votre note.
+
+Toute votre activité dans le terminal est journalisée.
