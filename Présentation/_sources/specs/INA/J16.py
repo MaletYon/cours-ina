@@ -13,7 +13,7 @@ SPEC = [
         ("40 min", "**DIBAMBA** : simulation d'examen"),
         ("20 min", "**Débriefing** · fiche C21 · présentation du lab de synthèse"),
     ]},
-    {"k": "scenario", "title": "Opération SANAGA : le brief", "label": "Hôpital Général de Yaoundé · 22 mars 2026, 06 h 30", "text": [
+    {"k": "scenario", "title": "Opération SANAGA : le brief", "label": "Hôpital des Sept Collines (fictif), Yaoundé · 22 mars 2026, 06 h 30", "text": [
         "Rançongiciel : bloc chirurgical, pharmacie, dossiers patients paralysés ; **15 bitcoins** exigés en 48 heures.",
         "Données de santé de **12 000 patients** peut-être exfiltrées.",
         "Un patient en soins intensifs dépend d'un équipement connecté au réseau compromis ; la « sauvegarde d'hier » est introuvable."]},
