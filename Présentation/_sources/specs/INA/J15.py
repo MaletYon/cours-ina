@@ -59,9 +59,9 @@ SPEC = [
         "Saisir avant de notifier ; cinq hypothèses avant de conclure",
         "**MUNGO** : conserver d'abord ; l'IA oriente ; la déontologie sous pression politique",
     ]},
-    {"k": "maison", "lecture": ["Chapitre 21, sections 21.1 et 21.2", "Préparer : sections 21.3 à 21.5 (SANAGA, TANGUE, DIBAMBA)"]},
+    {"k": "maison", "lecture": ["Chapitre 21, sections 21.1 et 21.2", "Préparer : sections 21.3 à 21.5 (NTEM, TANGUE, DIBAMBA)"]},
     {"k": "fin", "next": "Jour 16 · Cas intégrateurs (2)", "items": [
-        "SANAGA : un hôpital et une vie en jeu",
+        "NTEM : un hôpital et une vie en jeu",
         "TANGUE revisitée : diagnostiquer une investigation viciée",
         "DIBAMBA : la simulation d'examen"]},
 ]

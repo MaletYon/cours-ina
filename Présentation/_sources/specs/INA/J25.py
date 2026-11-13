@@ -49,7 +49,7 @@ SPEC = [
         "Rendre l'arbitrage **explicite, justifié, documenté**",
     ]},
     {"k": "exercice", "title": "Application à une affaire du cours", "duree": "25 minutes, en équipe",
-     "text": "Reprenez une affaire (MVOM, FAKO ou SANAGA). Identifiez la preuve centrale et le contexte d'interprétation.",
+     "text": "Reprenez une affaire (MVOM, FAKO ou NTEM). Identifiez la preuve centrale et le contexte d'interprétation.",
      "questions": [
         "Quelle mesure (Conf, Rel, Opp) a été sacrifiée, et pourquoi ?",
         "Estimez qualitativement H(C) pour le tribunal concerné.",

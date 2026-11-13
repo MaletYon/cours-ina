@@ -21,7 +21,7 @@ SPEC = [
     ]},
     {"k": "table", "title": "Ce qui fait tomber un dossier", "kicker": "Retour sur les cas du cours", "head": ["Erreur", "Où on l'a vue", "La parade"], "widths": [3.8, 3.4, 5.2], "rows": [
         ["Agir sans base légale", "TANGUE, MUNGO", "Autorisation d'abord, consignée"],
-        ["Perdre la preuve volatile", "SANAGA, conteneurs", "RAM et état avant l'isolement"],
+        ["Perdre la preuve volatile", "NTEM, conteneurs", "RAM et état avant l'isolement"],
         ["Rompre la custody", "TANGUE", "Un formulaire à chaque transfert"],
         ["Une seule source", "FAKO", "Croiser ; cinq hypothèses"],
         ["Qualifier à la place du juge", "Rapport, chapitre 20", "Constater, analyser, s'arrêter là"],

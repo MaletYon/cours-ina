@@ -44,7 +44,7 @@
 % ============================================================================
 
 Le Chapitre~9~(UE~SEC4031) a introduit Wireshark avec ses filtres
-de base et le cas WOURI. Ce chapitre va plus loin~: comment capturer
+de base et le cas NKAM. Ce chapitre va plus loin~: comment capturer
 intelligemment dans un réseau réel, comment analyser le trafic chiffré,
 comment détecter l'exfiltration de données, et comment reconstituer
 l'activité réseau quand on n'a pas de capture (mais des logs).
@@ -327,7 +327,7 @@ sha256sum /output/smtp_objects/attachment.pdf
 \end{lstlisting}
 \end{boxoutils}
 
-\begin{boxscenario}{Cas WOURI. Reconstruction complète de l'email BEC}
+\begin{boxscenario}{Cas NKAM. Reconstruction complète de l'email BEC}
 La capture réseau de SOTRADI~SA (\texttt{sotradi\_capture.pcap})
 contient la session SMTP du phishing. Analyse~:
 
@@ -671,7 +671,7 @@ incident\_baobab.pcap -q -z "conv,tcp"} révèle~:
 \end{boxexo}
 
 \begin{boxexo}[title={\ding{45}\quad Exercice~15.3. Corrélation multi-sources \niveauexpert}]
-Vous disposez des sources suivantes pour l'Opération WOURI~:
+Vous disposez des sources suivantes pour l'Opération NKAM~:
 \begin{itemize}
     \item Capture \texttt{sotradi.pcap} (trafic réseau 14--15~janvier 2026)~;
     \item Logs pare-feu Palo Alto (30~jours)~;

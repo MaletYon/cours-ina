@@ -3,7 +3,7 @@ SPEC = [
      "sub": "Toute tentative d'effacement produit elle-même de nouvelles traces.",
      "right": "Partie V · Chapitre C22 §22.1-22.2"},
     {"k": "synthese", "title": "Rappel de la séance précédente", "kicker": "Jour 16 · Cas intégrateurs (2)", "items": [
-        "SANAGA : la vie d'abord, la RAM avant l'isolement",
+        "NTEM : la vie d'abord, la RAM avant l'isolement",
         "TANGUE : diagnostiquer, puis **régulariser** ce qui peut l'être",
         "DIBAMBA : conserver avant la rotation",
     ]},

@@ -28,7 +28,7 @@ Questions à choix multiple (une seule bonne réponse)
       c) Du trafic HTTPS sur le port 443
       d) Des réponses DNS vides
 
- 4. Scénario WOURI. Un courriel affiche l'expéditeur contact@medequip-portugal.com, mais son en-tête X-Originating-IP indique 203.0.113.200 et Received mentionne un relais sans rapport. Que concluez-vous, au stade de la constatation ?
+ 4. Scénario NKAM. Un courriel affiche l'expéditeur contact@medequip-portugal.com, mais son en-tête X-Originating-IP indique 203.0.113.200 et Received mentionne un relais sans rapport. Que concluez-vous, au stade de la constatation ?
 
       a) L'expéditeur est authentifié, aucun problème
       b) Il y a une divergence entre expéditeur annoncé et origine réelle, à documenter
@@ -121,7 +121,7 @@ Questions à choix multiple (une seule bonne réponse)
       c) Pour augmenter la taille des fichiers
       d) Cela n'a pas d'intérêt réel
 
-19. Scénario WOURI. L'en-tête Received d'un courriel indique un transit par les serveurs d'un fournisseur de messagerie étranger, l'expéditeur annoncé étant un autre domaine. Que fournit cet élément ?
+19. Scénario NKAM. L'en-tête Received d'un courriel indique un transit par les serveurs d'un fournisseur de messagerie étranger, l'expéditeur annoncé étant un autre domaine. Que fournit cet élément ?
 
       a) Une trace du relais réel emprunté par le message
       b) La preuve que le message est authentique

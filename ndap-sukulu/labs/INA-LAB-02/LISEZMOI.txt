@@ -2,7 +2,7 @@ INA-LAB-02 (ancien LAB-04), forensique réseau opérationnelle
 
 Les preuves de l'enquête se trouvent dans ce dossier, qui est en lecture seule.
   baobab_beaconing.pcap   opération BAOBAB   (46105 octets, 284 trames)
-  wouri_bec.pcap          opération WOURI    (1385 octets, 13 trames)
+  wouri_bec.pcap          opération NKAM    (1385 octets, 13 trames)
   MANIFESTE_SHA256.txt    empreintes de référence des deux captures
 
 Marche à suivre.
@@ -19,7 +19,7 @@ Marche à suivre.
    Vous pouvez aussi double-cliquer sur le fichier .pcap dans ce dossier.
 
 3. Conduire l'analyse. Pour l'opération BAOBAB, examinez les conversations et
-   les flux TCP ainsi que le trafic DNS. Pour l'opération WOURI, reconstituez
+   les flux TCP ainsi que le trafic DNS. Pour l'opération NKAM, reconstituez
    la session SMTP et lisez ses en-têtes. Le rappel de cours, replié en haut
    de la page du lab, résume la démarche attendue.
 

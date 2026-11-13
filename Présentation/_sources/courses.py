@@ -14,7 +14,7 @@ INA = {
     "n_jours": 30,
     "annee": "2026-2027",
     "dossier": COURS + r"\ENSPY\SEC4052\Présentation",
-    "fil_rouge": "MVOM, BAOBAB, WOURI, MBONGO, FAKO, MUNGO, SANAGA, DIBAMBA",
+    "fil_rouge": "MVOM, BAOBAB, NKAM, MBONGO, FAKO, MUNGO, NTEM, DIBAMBA",
     "parties": [
         ("Partie IV", "Forensique opérationnelle", "C14–C21"),
         ("Partie V", "Anti-forensique, IA et défis émergents", "C22–C25"),
@@ -37,7 +37,7 @@ INA = {
         13: ("Le rapport forensique (1) : principes et structure", "C20 (1re moitié)", [], []),
         14: ("Le rapport forensique (2) : annexes, pièges, relecture", "C20 (2e moitié)", ["C20"], ["LAB-08"]),
         15: ("Cas intégrateurs (1) : FAKO et MUNGO", "C21 §21.1-21.2", [], []),
-        16: ("Cas intégrateurs (2) : SANAGA, TANGUE, DIBAMBA", "C21 §21.3-21.5", ["C21"], []),
+        16: ("Cas intégrateurs (2) : NTEM, TANGUE, DIBAMBA", "C21 §21.3-21.5", ["C21"], []),
         17: ("Anti-forensique (1) : principes, système, réseau", "C22 §22.1-22.3", [], []),
         18: ("Anti-forensique (2) : mobile, IoT, rapport", "C22 §22.4-22.5", ["C22"], ["LAB-09"]),
         19: ("IA et forensique : outil, objet, limites", "C23", ["C23"], ["LAB-10"]),

@@ -1,5 +1,5 @@
 SPEC = [
-    {"k": "title", "tag": "Jour 16 / 30 · Séance de 2 heures", "title": "Cas intégrateurs (2) : SANAGA, TANGUE, DIBAMBA",
+    {"k": "title", "tag": "Jour 16 / 30 · Séance de 2 heures", "title": "Cas intégrateurs (2) : NTEM, TANGUE, DIBAMBA",
      "sub": "Une action sans base légale, une constatation sans source : zéro point, même juste.",
      "right": "Partie IV · Chapitre C21 §21.3-21.5"},
     {"k": "synthese", "title": "Rappel de la séance précédente", "kicker": "Jour 15 · FAKO et MUNGO", "items": [
@@ -8,16 +8,16 @@ SPEC = [
         "MUNGO : **conserver d'abord** ; déontologie sous pression",
     ]},
     {"k": "agenda", "items": [
-        ("35 min", "**SANAGA** : rançongiciel à l'hôpital, dix minutes pour décider"),
+        ("35 min", "**NTEM** : rançongiciel à l'hôpital, dix minutes pour décider"),
         ("25 min", "**TANGUE revisitée** : neuf violations"),
         ("40 min", "**DIBAMBA** : simulation d'examen"),
         ("20 min", "**Débriefing** · fiche C21 · présentation du lab de synthèse"),
     ]},
-    {"k": "scenario", "title": "Opération SANAGA : le brief", "label": "Hôpital des Sept Collines (fictif), Yaoundé · 22 mars 2026, 06 h 30", "text": [
+    {"k": "scenario", "title": "Opération NTEM : le brief", "label": "Hôpital des Sept Collines (fictif), Yaoundé · 22 mars 2026, 06 h 30", "text": [
         "Rançongiciel : bloc chirurgical, pharmacie, dossiers patients paralysés ; **15 bitcoins** exigés en 48 heures.",
         "Données de santé de **12 000 patients** peut-être exfiltrées.",
         "Un patient en soins intensifs dépend d'un équipement connecté au réseau compromis ; la « sauvegarde d'hier » est introuvable."]},
-    {"k": "table", "title": "SANAGA : décisions immédiates et médiates", "kicker": "Vous arrivez à 07 h 00", "head": ["Question", "Réponse attendue"], "widths": [3.2, 9.2], "rows": [
+    {"k": "table", "title": "NTEM : décisions immédiates et médiates", "kicker": "Vous arrivez à 07 h 00", "head": ["Question", "Réponse attendue"], "widths": [3.2, 9.2], "rows": [
         ["La vie du patient", "Elle prime : laisser l'équipe médicale isoler ou basculer l'équipement ; ne rien faire qui le menace ; documenter"],
         ["Les 30 premières minutes", "Photographier, **RAM** (clés, processus), connexions, isolement sans couper le vital, journaux, disques"],
         ["Données de santé", "Notification sans délai (loi n° 2024/017, art. 22), sécurité (art. 27), patients informés"],
@@ -53,7 +53,7 @@ SPEC = [
         "À faire après la séance 30, quand toute la Partie VI aura été vue",
     ]},
     {"k": "synthese", "items": [
-        "**SANAGA** : la vie d'abord ; la RAM avant l'isolement ; l'expert n'est pas le décideur",
+        "**NTEM** : la vie d'abord ; la RAM avant l'isolement ; l'expert n'est pas le décideur",
         "**TANGUE** : neuf violations, deux fatales, plusieurs régularisables",
         "**DIBAMBA** : conserver avant la rotation, qualifier par textes, rapporter par pièces",
     ]},

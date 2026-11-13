@@ -71,13 +71,13 @@ Questions à choix multiple (une seule bonne réponse)
       c) En les republiant
       d) En payant les auteurs
 
-11. De quoi traite l'opération SANAGA ?
+11. De quoi traite l'opération NTEM ?
       a) Un ransomware frappant un hôpital
       b) Une fraude bancaire
       c) Un trafic d'influence
       d) Une intrusion IoT
 
-12. Qu'est-ce qui caractérise l'opération SANAGA pour l'investigateur ?
+12. Qu'est-ce qui caractérise l'opération NTEM pour l'investigateur ?
       a) Des décisions critiques à prendre sous pression
       b) L'absence de toute urgence
       c) Une analyse purement théorique
@@ -175,7 +175,7 @@ Textes à trous
 
 33. Les faux clips audio générés par IA dans MUNGO sont des ______.
 
-34. L'opération SANAGA met en scène un ______ frappant un hôpital.
+34. L'opération NTEM met en scène un ______ frappant un hôpital.
 
 35. La fraude de l'examen DIBAMBA repose sur un SIM ______.
 

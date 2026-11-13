@@ -45,7 +45,7 @@ SPEC = [
         ["J09-J10", "Forensique IoT : routeur, firmware, NVR", "C18"],
         ["J11-J12", "OSINT et lecture d'une attaque", "C19"],
         ["J13-J14", "Le rapport forensique", "C20"],
-        ["J15-J16", "Cas intégrateurs : FAKO, MUNGO, SANAGA, TANGUE, DIBAMBA", "C21"],
+        ["J15-J16", "Cas intégrateurs : FAKO, MUNGO, NTEM, TANGUE, DIBAMBA", "C21"],
     ]},
     {"k": "table", "title": "Le calendrier (2/3)", "kicker": "Partie V · jours 17 à 22", "head": ["Jour", "Thème", "Contenu"], "widths": [1.1, 7.8, 2.5], "rows": [
         ["J17-J18", "Anti-forensique et contremesures", "C22"],
@@ -64,7 +64,7 @@ SPEC = [
     ]},
     {"k": "table", "title": "Les douze labs de NDAP SUKULU", "kicker": "Une heure chacun, trois pour le dernier", "head": ["Lab", "Sujet", "Ch."], "widths": [1.7, 9.1, 1.0], "rows": [
         ["INA-LAB-01", "Timeline Linux et Windows (MVOM)", "14"],
-        ["INA-LAB-02", "Beaconing et courriel frauduleux (BAOBAB, WOURI)", "15"],
+        ["INA-LAB-02", "Beaconing et courriel frauduleux (BAOBAB, NKAM)", "15"],
         ["INA-LAB-03", "Journaux réseau sans capture (MVOM)", "15"],
         ["INA-LAB-04", "SMS, appels, EXIF (BAOBAB, MBONGO)", "16"],
         ["INA-LAB-05", "CloudTrail et fenêtre aveugle (MVOM)", "17"],

@@ -8,14 +8,14 @@ SPEC = [
         "Exfiltration, **tunnel DNS**, **beaconing**",
     ]},
     {"k": "agenda", "items": [
-        ("25 min", "**Reconstituer un courriel SMTP** : WOURI"),
+        ("25 min", "**Reconstituer un courriel SMTP** : NKAM"),
         ("10 min", "**FTP** : des transferts en clair"),
         ("25 min", "**Sans capture** : pare-feu, proxy, DNS"),
         ("25 min", "**Corrélation** multi-sources et horloges"),
         ("15 min", "**Admissibilité** des journaux réseau"),
-        ("20 min", "**Exercice** : plan WOURI · fiche C15 · LAB-03"),
+        ("20 min", "**Exercice** : plan NKAM · fiche C15 · LAB-03"),
     ]},
-    {"k": "scenario", "title": "Reconstituer un courriel frauduleux", "label": "WOURI · capture de SOTRADI SA", "text": [
+    {"k": "scenario", "title": "Reconstituer un courriel frauduleux", "label": "NKAM · capture de SOTRADI SA", "text": [
         "Repérer la session **SMTP** suspecte, puis Follow TCP Stream : enveloppe et en-têtes.",
         "**MAIL FROM** : contact@medequip-portugal.com ; **X-Originating-IP** : 91.XXX.XX.XX ; **Received** : transit par des serveurs étrangers.",
         "Constatation : l'en-tête désigne une adresse **enregistrée** dans un pays selon le WHOIS consulté à une date donnée ; ni l'identité ni la nationalité de l'auteur ne sont établies."]},
@@ -43,7 +43,7 @@ SPEC = [
         "**Intégrité** : empreinte SHA-256 à la saisie ; **custody** du serveur au tribunal",
         "Un **expert agréé** atteste l'authenticité et l'interprétation",
     ]},
-    {"k": "exercice", "title": "Plan d'investigation WOURI", "duree": "20 minutes, en binôme",
+    {"k": "exercice", "title": "Plan d'investigation NKAM", "duree": "20 minutes, en binôme",
      "text": "Sources : capture sotradi.pcap (14-15 janvier), journaux pare-feu, proxy et DNS (30 jours), image du poste du comptable, RAM du serveur de messagerie.",
      "questions": [
         "Dans quel ordre analyser, avec quelle question pour chaque source ?",
